@@ -19,6 +19,7 @@ module "sbeacon" {
   metadata-bucket-prefix      = var.metadata-bucket-prefix
   lambda-layers-bucket-prefix = var.lambda-layers-bucket-prefix
   dataportal-bucket-prefix    = var.dataportal-bucket-prefix
+  ses-source-email            = var.ses-source-email
   beacon-ui-url               = module.webgui.cloudfront-url
   cognito-user-pool-arn       = module.cognito.cognito_user_pool_arn
   cognito-user-pool-id        = module.cognito.cognito_user_pool_id

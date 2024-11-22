@@ -4,3 +4,4 @@ builds
 .pnpm-store
 errored.tfstate
 *.tfvars
+backend.tf

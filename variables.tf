@@ -4,7 +4,6 @@ variable "region" {
   description = "AWS region"
 }
 
-
 variable "common-tags" {
   type        = map(string)
   description = "A set of tags to attach to every created resource."
@@ -50,4 +49,9 @@ variable "lambda-layers-bucket-prefix" {
 variable "dataportal-bucket-prefix" {
   type        = string
   description = "Prefix for the dataportal S3 bucket"
+}
+
+variable "ses-source-email" {
+  type        = string
+  description = "Address from which to send SES emails"
 }
