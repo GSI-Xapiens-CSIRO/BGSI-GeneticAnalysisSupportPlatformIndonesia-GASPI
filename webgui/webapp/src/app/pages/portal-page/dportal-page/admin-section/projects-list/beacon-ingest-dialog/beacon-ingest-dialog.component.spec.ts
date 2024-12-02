@@ -8,10 +8,9 @@ describe('BeaconIngestDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BeaconIngestDialogComponent]
-    })
-    .compileComponents();
-    
+      imports: [BeaconIngestDialogComponent],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(BeaconIngestDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

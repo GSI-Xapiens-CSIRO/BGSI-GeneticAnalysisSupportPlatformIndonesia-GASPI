@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { DataSubmissionFormComponent } from './data-submission-form/data-submission-form.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ProjectsListComponent } from './projects-list/projects-list.component';
 import { NotebooksComponent } from './admin-notebooks-list/admin-notebooks-list.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-section',
@@ -18,4 +19,16 @@ import { NotebooksComponent } from './admin-notebooks-list/admin-notebooks-list.
   templateUrl: './admin-section.component.html',
   styleUrl: './admin-section.component.scss',
 })
-export class AdminSectionComponent {}
+export class AdminSectionComponent implements AfterViewInit {
+  protected selectedIndex = 0;
+  constructor(private router: Router) {}
+  ngAfterViewInit(): void {
+    this.router.events.subscribe(() => {
+      this.onSubTabChange(0);
+    });
+  }
+
+  onSubTabChange(index: number) {
+    this.selectedIndex = index;
+  }
+}

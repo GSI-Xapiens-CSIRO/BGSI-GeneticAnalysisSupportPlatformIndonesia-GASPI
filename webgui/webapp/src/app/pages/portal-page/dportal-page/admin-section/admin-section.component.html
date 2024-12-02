@@ -2,7 +2,11 @@
   <mat-card-content>
     <h2>Project Management</h2>
 
-    <mat-tab-group dynamicHeight="true" selectedIndex="0">
+    <mat-tab-group
+      dynamicHeight="true"
+      [(selectedIndex)]="selectedIndex"
+      (selectedIndexChange)="onSubTabChange($event)"
+    >
       <mat-tab label="Onboarding">
         <ng-template matTabContent>
           <app-data-submission-form />

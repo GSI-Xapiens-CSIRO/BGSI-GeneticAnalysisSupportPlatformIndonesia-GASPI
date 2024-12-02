@@ -21,7 +21,7 @@
           matInput
           type="text"
           placeholder="Doe"
-          value="{{ data.firstName }}"
+          value="{{ data.lastName }}"
           disabled
         />
         <mat-error>Field is required</mat-error>
@@ -49,6 +49,8 @@
         >
         <mat-checkbox
           color="primary"
+          formControlName="administrators"
+          value="administrators"
           value="data-manager"
           aria-disabled="true"
           [disabled]="true"

@@ -7,41 +7,73 @@
       <div class="flex flex-col gap-2">
         <mat-form-field>
           <mat-label>First name</mat-label>
-          <input matInput type="text" placeholder="John" formControlName="firstName" />
+          <input
+            matInput
+            type="text"
+            placeholder="John"
+            formControlName="firstName"
+          />
           <mat-error>Field is required</mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Last name</mat-label>
-          <input matInput type="text" placeholder="Doe" formControlName="lastName" />
+          <input
+            matInput
+            type="text"
+            placeholder="Doe"
+            formControlName="lastName"
+          />
           <mat-error>Field is required</mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Email address</mat-label>
-          <input matInput type="email" placeholder="user@domain.com" formControlName="email" />
+          <input
+            matInput
+            type="email"
+            placeholder="user@domain.com"
+            formControlName="email"
+          />
           <mat-error>Valid email is required</mat-error>
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2">
         <label for="Role Group">Role Access: </label>
         <div class="flex flex-1 flex-col">
-          <mat-checkbox formControlName="administrators" color="primary">Admin
-            access</mat-checkbox>
-          <mat-checkbox formControlName="roleAccess" color="primary" value="data-manager" aria-disabled="true"
-            [disabled]="true">Data
-            Manager
-            Access</mat-checkbox>
-          <mat-checkbox formControlName="roleAccess" color="primary" value="" aria-disabled="true" [disabled]="true"
-            [checked]="true">Basic User Access</mat-checkbox>
+          <mat-checkbox formControlName="administrators" color="primary"
+            >Admin access</mat-checkbox
+          >
+          <mat-checkbox formControlName="administrators" color="primary"
+            >Data Manager Access</mat-checkbox
+          >
+          <mat-checkbox
+            formControlName="roleAccess"
+            color="primary"
+            value=""
+            aria-disabled="true"
+            [disabled]="true"
+            [checked]="true"
+            >Basic User Access</mat-checkbox
+          >
         </div>
       </div>
     </form>
     <br />
     <div class="flex space-x-[10px]">
-      <button class="w-[110px]" mat-raised-button color="primary" (click)="cancel()">
+      <button
+        class="w-[110px]"
+        mat-raised-button
+        color="primary"
+        (click)="cancel()"
+      >
         Cancel
       </button>
-      <button class="w-[120px]" mat-raised-button color="primary" (click)="createUser()"
-        [disabled]="newUserForm.invalid">
+      <button
+        class="w-[120px]"
+        mat-raised-button
+        color="primary"
+        (click)="createUser()"
+        [disabled]="newUserForm.invalid"
+      >
         Create User
       </button>
     </div>

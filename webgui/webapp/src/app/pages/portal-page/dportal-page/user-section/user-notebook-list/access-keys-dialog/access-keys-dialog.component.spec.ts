@@ -8,10 +8,9 @@ describe('AccessKeysDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AccessKeysDialogComponent]
-    })
-    .compileComponents();
-    
+      imports: [AccessKeysDialogComponent],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AccessKeysDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
