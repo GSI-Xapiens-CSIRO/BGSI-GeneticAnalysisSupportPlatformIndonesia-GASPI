@@ -16,7 +16,5 @@ metadata-bucket-prefix="gasi-metadata-"
 lambda-layers-bucket-prefix="gasi-lambda-layers-"
 dataportal-bucket-prefix="gasi-dataportal-"
 
+# ses email
 ses-source-email="admin@example.com"
-
-pricing_access_key_id=""
-pricing_access_secret_key_id=""

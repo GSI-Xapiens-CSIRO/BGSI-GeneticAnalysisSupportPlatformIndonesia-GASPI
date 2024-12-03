@@ -78,7 +78,7 @@ export class FiltersTabComponent {
     });
 
     this.form.controls['scope'].valueChanges.subscribe((scope) => {
-      if (scope === ScopeTypes.DATASETS || scope == ScopeTypes.COHORTS) {
+      if (scope === ScopeTypes.DATASETS) {
         this.form.controls['id'].enable();
         this.form.controls['id'].markAsTouched();
         this.form.controls['stats'].setValue(false);
@@ -100,10 +100,7 @@ export class FiltersTabComponent {
     let result$;
     let endpoint: any;
 
-    if (
-      form.scope === ScopeTypes.DATASETS ||
-      form.scope == ScopeTypes.COHORTS
-    ) {
+    if (form.scope === ScopeTypes.DATASETS) {
       result$ = this.fs.fetch_by_scope_and_id(form.scope, form.id, query);
       endpoint = `${environment.api_endpoint_sbeacon.endpoint}${form.scope}/${form.id}/filtering_terms`;
     } else {

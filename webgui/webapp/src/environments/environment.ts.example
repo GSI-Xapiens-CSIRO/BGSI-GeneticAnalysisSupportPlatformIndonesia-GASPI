@@ -1,10 +1,4 @@
-export interface PricingCredentials {
-  accessKeyId: string;
-  secretAccessKey: string;
-}
-
 export const environment = {
-  pricingCredentials: PricingCredentials,
   production: false,
   config_max_variant_search_base_range: 5000,
   auth: {

@@ -15,6 +15,7 @@ import {
 } from '@angular/forms';
 import { examples } from './examples';
 import { QueryService } from 'src/app/services/query.service';
+import { DportalService } from 'src/app/services/dportal.service';
 import {
   parseFilters,
   parseRequestParameters,
@@ -51,6 +52,10 @@ import { customQueries } from './custom-queries';
 // import { result, query, endpoint } from './test_responses/individuals';
 // import { result, query } from './test_responses/biosamples';
 
+interface Project {
+  name: string;
+}
+
 const allowedReturns = {
   individuals: {
     biosamples: true,
@@ -77,16 +82,13 @@ const allowedReturns = {
     biosamples: true,
     g_variants: true,
   },
-  cohorts: {
-    individuals: true,
-  },
 };
 
 @Component({
   selector: 'app-query-tab',
   templateUrl: './query-tab.component.html',
   styleUrl: './query-tab.component.scss',
-  providers: [QueryService],
+  providers: [QueryService, DportalService],
   standalone: true,
   imports: [
     MatCardModule,
@@ -113,6 +115,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
   protected loading = false;
   protected form: FormGroup;
   protected examples: any = examples;
+  protected myProjects: Project[] = [];
   protected scopeTypes = ScopeTypes;
   protected filterTypes = FilterTypes;
   // TODO bug fix for https://github.com/angular/components/issues/13870
@@ -136,28 +139,16 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
   page!: number;
   private subscription: Subscription | null = null;
 
-  ngOnInit(): void {}
-
-  ngAfterViewInit(): void {
-    // TODO bug fix for https://github.com/angular/components/issues/13870
-    setTimeout(() => (this.disableAnimation = false));
-  }
-
-  ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = null;
-    }
-  }
-
   constructor(
     private fb: FormBuilder,
     private qs: QueryService,
+    private dps: DportalService,
     public dg: MatDialog,
     private sb: MatSnackBar,
     private ss: SpinnerService,
   ) {
     this.form = this.fb.group({
+      projects: [[], Validators.required],
       scope: this.fb.control(ScopeTypes.INDIVIDUALS, [Validators.required]),
       granularity: this.fb.control('count', Validators.required),
       skip: this.fb.control({ value: 0, disabled: true }, [
@@ -258,6 +249,38 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
+  ngOnInit(): void {
+    this.list();
+  }
+
+  list() {
+    this.dps
+      .getMyProjects()
+      .pipe(catchError(() => of(null)))
+      .subscribe((projects: any) => {
+        if (!projects || !Array.isArray(projects)) {
+          this.sb.open('Unable to get projects.', 'Close', { duration: 60000 });
+        } else {
+          this.myProjects = projects.map((p: Project) => ({
+            ...p,
+            expanded: false,
+          }));
+        }
+      });
+  }
+
+  ngAfterViewInit(): void {
+    // TODO bug fix for https://github.com/angular/components/issues/13870
+    setTimeout(() => (this.disableAnimation = false));
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
+    }
+  }
+
   closePanel(index: number) {
     this.openPanels[index] = false;
   }
@@ -266,6 +289,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ss.start();
     const form: any = this.form.value;
     const query = {
+      projects: form.projects,
       query: {
         filters: serializeFilters(form.filters, form.scope),
         requestedGranularity: form.granularity,
@@ -353,6 +377,12 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
   reset() {
     this.customQuery = false;
+    this.form.reset();
+
+    const projectsControl = this.form.get('projects');
+    if (projectsControl) {
+      projectsControl.setValue([]);
+    }
     (this.form.get('filters') as FormArray).clear();
 
     this.form.patchValue({

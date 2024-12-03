@@ -51,8 +51,6 @@ module "webgui" {
   data_portal_bucket           = module.sbeacon.data-portal-bucket
   api_endpoint_sbeacon         = "${module.sbeacon.api_url}${module.sbeacon.api_stage}/"
   api_endpoint_svep            = module.svep.api_url
-  pricing_access_key_id        = var.pricing_access_key_id
-  pricing_access_secret_key_id = var.pricing_access_secret_key_id
 
   common-tags = merge(var.common-tags, {
     "NAME" = "portal-frontend"

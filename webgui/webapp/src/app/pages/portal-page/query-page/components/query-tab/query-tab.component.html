@@ -223,6 +223,20 @@
     </mat-card-content>
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="run()">
+        <h3>Select projects</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
+          <mat-form-field>
+            <mat-label>Projects</mat-label>
+            <mat-select formControlName="projects" multiple required>
+              @for (project of myProjects; track project) {
+                <mat-option [value]="project.name">
+                  {{ project.name }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>Select one or more projects</mat-hint>
+          </mat-form-field>
+        </div>
         <h3>Select scope and granularity</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
           <mat-form-field>
@@ -234,7 +248,6 @@
               <mat-option value="analyses">Analyses</mat-option>
               <mat-option value="g_variants">Genomic Variants</mat-option>
               <mat-option value="datasets">Datasets</mat-option>
-              <mat-option value="cohorts">Cohorts</mat-option>
             </mat-select>
             <mat-hint>Main scope to query</mat-hint>
           </mat-form-field>
@@ -334,11 +347,6 @@
                   _.get(allowedReturns[form.value.scope], "datasets", false)
                 ) {
                   <mat-option value="datasets">Datasets</mat-option>
-                }
-                @if (
-                  _.get(allowedReturns[form.value.scope], "cohorts", false)
-                ) {
-                  <mat-option value="cohorts">Cohorts</mat-option>
                 }
               </mat-select>
               @if (form.value.customReturn) {

@@ -69,13 +69,3 @@ variable "api_endpoint_svep" {
   type        = string
   description = "API endpoint for svep."
 }
-
-variable "pricing_access_key_id" {
-  type        = string
-  description = "Access key for AWS sdk Pricing plan."
-}
-
-variable "pricing_access_secret_key_id" {
-  type        = string
-  description = "Secret key for AWS sdk Pricing plan."
-}

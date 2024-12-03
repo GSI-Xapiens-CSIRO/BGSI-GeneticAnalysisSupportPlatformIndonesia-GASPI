@@ -13,9 +13,6 @@ data "external" "build" {
     data_portal_bucket           = var.data_portal_bucket
     api_endpoint_sbeacon         = var.api_endpoint_sbeacon
     api_endpoint_svep            = var.api_endpoint_svep
-    pricing_access_key_id        = var.pricing_access_key_id
-    pricing_access_secret_key_id = var.pricing_access_secret_key_id
-
   }
   working_dir = path.module
 }
