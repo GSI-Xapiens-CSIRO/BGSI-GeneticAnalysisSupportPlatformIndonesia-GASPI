@@ -91,6 +91,10 @@ init-sbeacon:
 .PHONY: deploy-hub01
 deploy-hub01:
 	@( \
+		set -e; \
+		export AWS_PROFILE="GXC-TF-User-Executor-Hub01"; \
+		export AWS_DEFAULT_REGION="$(AWS_REGION)"; \
+		echo "Starting Hub01 deployment..."; \
 		$(MAKE) set-hub01-env && \
 		$(MAKE) init-submodule && \
 		$(MAKE) init-terraform && \
@@ -101,6 +105,10 @@ deploy-hub01:
 .PHONY: deploy-hub02
 deploy-hub02:
 	@( \
+		set -e; \
+		export AWS_PROFILE="GXC-TF-User-Executor-Hub02"; \
+		export AWS_DEFAULT_REGION="$(AWS_REGION)"; \
+		echo "Starting Hub02 deployment..."; \
 		$(MAKE) set-hub02-env && \
 		$(MAKE) init-submodule && \
 		$(MAKE) init-terraform && \
