@@ -55,14 +55,29 @@ export class UserQuotaService {
         const userSub = u.attributes.sub;
         return this.getUserQuota(userSub).pipe(
           catchError(() => of(null)),
-          map((res) => ({
-            userSub,
-            quotaQueryCount: res?.Usage.quotaQueryCount || 0,
-            usageCount: res?.Usage.usageCount || 0,
-            quotaSize: res?.Usage.quotaSize || 0,
-            usageSize: res?.Usage.usageSize || 0,
-            costEstimation: res?.CostEstimation || 0,
-          })),
+          map(({ success, data }) => {
+            // If the user does not have a quota, return default values
+            // And prevent the error from being thrown
+            if (!success) {
+              return {
+                userSub,
+                quotaQueryCount: 0,
+                usageCount: 0,
+                quotaSize: 0,
+                usageSize: 0,
+                costEstimation: 0,
+              };
+            }
+
+            return {
+              userSub,
+              quotaQueryCount: data?.Usage.quotaQueryCount,
+              usageCount: data?.Usage.usageCount,
+              quotaSize: data?.Usage.quotaSize,
+              usageSize: data?.Usage.usageSize,
+              costEstimation: data?.CostEstimation,
+            };
+          }),
         );
       }),
     );

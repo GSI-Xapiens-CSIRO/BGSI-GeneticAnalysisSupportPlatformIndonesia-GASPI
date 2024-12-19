@@ -120,14 +120,15 @@ export class AdminUserClickDialogComponent implements OnInit {
     forkJoin({ userQuota: userQuota$, userGroups: userGroups$ }).subscribe(
       ({ userQuota, userGroups }) => {
         // Process user quota response
-        if (userQuota) {
-          this.costEstimation = userQuota.CostEstimation;
-          this.usageSize = userQuota.Usage.usageSize;
-          this.usageCount = userQuota.Usage.usageCount;
+        const { success, data } = userQuota;
+        if (success) {
+          this.costEstimation = data.CostEstimation;
+          this.usageSize = data.Usage.usageSize;
+          this.usageCount = data.Usage.usageCount;
 
           this.form.patchValue({
-            quotaSize: bytesToGigabytes(userQuota.Usage.quotaSize),
-            quotaQueryCount: userQuota.Usage.quotaQueryCount,
+            quotaSize: bytesToGigabytes(data.Usage.quotaSize),
+            quotaQueryCount: data.Usage.quotaQueryCount,
           });
         }
 
