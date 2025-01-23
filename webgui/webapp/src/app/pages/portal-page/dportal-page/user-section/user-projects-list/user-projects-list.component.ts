@@ -114,7 +114,6 @@ export class UserProjectsListComponent implements OnInit {
   }
 
   listPagination() {
-    this.dataSource.data = [];
     this.dps
       .getMyProjectsPagination(this.pageSize, this.pageTokens.at(-1))
       .pipe(catchError(() => of(null)))
@@ -123,6 +122,15 @@ export class UserProjectsListComponent implements OnInit {
           this.sb.open('API request failed', 'Okay', { duration: 60000 });
           this.dataSource.data = [];
         } else {
+          //handle if there no data on next page (set page index and last page to prev value)
+          if (data && data.data.length <= 0) {
+            this.paginator.pageIndex--;
+            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.lastPage--;
+            return;
+          }
+
+          this.dataSource.data = [];
           this.pageTokens.push(data.last_evaluated_key);
           this.dataSource.data = data.data.map((project: Project) => ({
             name: project.name,

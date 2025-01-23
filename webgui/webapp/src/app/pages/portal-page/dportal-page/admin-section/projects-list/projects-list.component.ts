@@ -141,7 +141,6 @@ export class ProjectsListComponent {
 
   list(pageToken?: string) {
     this.loading = true;
-    this.dataSource.data = [];
     this.dps
       .getAdminProjects(this.pageSize, pageToken ?? this.pageTokens.at(-1))
       .pipe(catchError(() => of(null)))
@@ -150,6 +149,16 @@ export class ProjectsListComponent {
           this.sb.open('API request failed', 'Okay', { duration: 60000 });
           this.dataSource.data = [];
         } else {
+          //handle if there no data on next page (set page index and last page to prev value)
+          if (data && data.data.length <= 0) {
+            this.paginator.pageIndex--;
+            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.lastPage--;
+            this.loading = false;
+            return;
+          }
+
+          this.dataSource.data = [];
           //handle for refresh page or edit data dont push token when refresh data
           if (!pageToken) {
             this.pageTokens.push(data.last_evaluated_key);

@@ -1,5 +1,21 @@
 <app-component-spinner [loading]="loading" />
-<br />
+<div class="flex flex-row justify-between items-center mt-2 mb-2">
+  <h2 class="flex p-0 m-2">Project List</h2>
+  <div class="flex flex-row space-x-[10px] items-center">
+    <button
+      mat-raised-button
+      color="primary"
+      class="w-[110px]"
+      (click)="index()"
+      type="button"
+    >
+      Index
+    </button>
+    <button mat-mini-fab color="primary" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+</div>
 <table mat-table [dataSource]="dataSource" style="margin-bottom: 1rem">
   <!-- Name Column -->
   <ng-container matColumnDef="name">
@@ -108,17 +124,3 @@
   length="9999"
 ></mat-paginator>
 <br />
-<div class="flex flex-row space-x-[10px] items-center">
-  <button
-    mat-raised-button
-    color="primary"
-    class="w-[110px]"
-    (click)="index()"
-    type="button"
-  >
-    Index
-  </button>
-  <button mat-mini-fab color="primary" (click)="refresh()">
-    <mat-icon>refresh</mat-icon>
-  </button>
-</div>

@@ -19,6 +19,81 @@
     </button>
   </div>
 </div>
+<mat-expansion-panel #panel style="margin-bottom: 1rem">
+  <mat-expansion-panel-header>
+    <mat-panel-title> New Instance </mat-panel-title>
+    <mat-panel-description>
+      Configure and start a new notebook instance
+    </mat-panel-description>
+  </mat-expansion-panel-header>
+
+  <form
+    [formGroup]="instanceForm"
+    class="flex flex-col space-y-1 border-2 border-solid rounded-md p-2 border-primary-50"
+  >
+    <mat-form-field class="w-full">
+      <mat-label>Notebook Name</mat-label>
+      <input
+        matInput
+        formControlName="instanceName"
+        placeholder="5-30 character name"
+      />
+      <mat-error
+        >Enter a name. It can include hyphens (-), not spaces</mat-error
+      >
+    </mat-form-field>
+
+    <mat-form-field class="w-full">
+      <mat-label>Instance Type</mat-label>
+      <mat-select formControlName="instanceType">
+        @for (instance of instanceTypes; track instance) {
+          <mat-option [value]="instance.name">
+            {{ instance.name }} (RAM: {{ instance.ram }} CPU:
+            {{ instance.cpu }})
+          </mat-option>
+        }
+      </mat-select>
+      <mat-error>Please select a type</mat-error>
+    </mat-form-field>
+    <mat-form-field class="w-full">
+      <mat-label>Volume (5 GB to 16384 GB)</mat-label>
+      <mat-select formControlName="volumeSize">
+        @for (vol of volumeSizes; track vol) {
+          <mat-option [value]="vol.size">
+            {{ vol.note }}
+          </mat-option>
+        }
+      </mat-select>
+      <mat-error>Please select a volume</mat-error>
+    </mat-form-field>
+
+    @if (estimatedPrice) {
+      <div class="text-red-500 font-semibold">
+        Cost Estimation ${{ estimatedPrice }}/Month
+      </div>
+    }
+
+    <div class="flex flex-row space-x-[10px]">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="resetForm()"
+        type="button"
+      >
+        Reset
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="instanceForm.invalid"
+        (click)="create(instanceForm.value, panel)"
+        type="button"
+      >
+        Start
+      </button>
+    </div>
+  </form>
+</mat-expansion-panel>
 <div class="flex flex-col space-y-1 relative">
   @for (notebook of notebooks; track notebook) {
     <app-notebook-item
@@ -29,80 +104,4 @@
   } @empty {
     <div>No notebooks yet! Please start a notebook to continue.</div>
   }
-  <br />
-  <mat-expansion-panel #panel>
-    <mat-expansion-panel-header>
-      <mat-panel-title> New Instance </mat-panel-title>
-      <mat-panel-description>
-        Configure and start a new notebook instance
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-
-    <form
-      [formGroup]="instanceForm"
-      class="flex flex-col space-y-1 border-2 border-solid rounded-md p-2 border-primary-50"
-    >
-      <mat-form-field class="w-full">
-        <mat-label>Notebook Name</mat-label>
-        <input
-          matInput
-          formControlName="instanceName"
-          placeholder="5-30 character name"
-        />
-        <mat-error
-          >Enter a name. It can include hyphens (-), not spaces</mat-error
-        >
-      </mat-form-field>
-
-      <mat-form-field class="w-full">
-        <mat-label>Instance Type</mat-label>
-        <mat-select formControlName="instanceType">
-          @for (instance of instanceTypes; track instance) {
-            <mat-option [value]="instance.name">
-              {{ instance.name }} (RAM: {{ instance.ram }} CPU:
-              {{ instance.cpu }})
-            </mat-option>
-          }
-        </mat-select>
-        <mat-error>Please select a type</mat-error>
-      </mat-form-field>
-      <mat-form-field class="w-full">
-        <mat-label>Volume (5 GB to 16384 GB)</mat-label>
-        <mat-select formControlName="volumeSize">
-          @for (vol of volumeSizes; track vol) {
-            <mat-option [value]="vol.size">
-              {{ vol.note }}
-            </mat-option>
-          }
-        </mat-select>
-        <mat-error>Please select a volume</mat-error>
-      </mat-form-field>
-
-      @if (estimatedPrice) {
-        <div class="text-red-500 font-semibold">
-          Cost Estimation ${{ estimatedPrice }}/Month
-        </div>
-      }
-
-      <div class="flex flex-row space-x-[10px]">
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="resetForm()"
-          type="button"
-        >
-          Reset
-        </button>
-        <button
-          mat-raised-button
-          color="primary"
-          [disabled]="instanceForm.invalid"
-          (click)="create(instanceForm.value, panel)"
-          type="button"
-        >
-          Start
-        </button>
-      </div>
-    </form>
-  </mat-expansion-panel>
 </div>
