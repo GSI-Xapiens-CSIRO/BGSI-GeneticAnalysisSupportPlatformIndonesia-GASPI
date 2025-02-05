@@ -1,84 +1,84 @@
-<div class="flex flex-row justify-between w-full items-center">
-  <h2 class="flex">My Projects</h2>
-  <button
-    mat-mini-fab
-    color="primary"
-    class="flex items-center"
-    (click)="refreshData()"
+<div class="flex flex-col" style="min-height: 100%; max-height: 85vh">
+  <div class="flex flex-row justify-between w-full items-center">
+    <h2 class="flex">My Projects</h2>
+    <button
+      mat-mini-fab
+      color="primary"
+      class="flex items-center"
+      (click)="refreshData()"
+    >
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+  <div
+    class="no-scrollbar flex flex-col justify-between flex-1 overflow-scroll"
   >
-    <mat-icon>refresh</mat-icon>
-  </button>
-</div>
-<div class="flex flex-col space-y-1 h-full no-scrollbar">
-  <div class="flex flex-col justify-between h-5/6 no-scrollbar">
-    <div class="overflow-scroll no-scrollbar">
-      <table mat-table [dataSource]="dataSource">
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <td
-            mat-cell
-            *matCellDef="let element"
-            class="flex justify-start align-top"
-            style="border: none"
-          >
-            <!-- {{ element.name }} {{element.description}} -->
-            <div class="flex flex-col w-full">
-              <div class="flex flex-row justify-between w-full items-center">
-                <div class="flex flex-col">
-                  <div>{{ element.name }}</div>
-                  <div class="text-sm italic text-gray-500 ml-2">
-                    {{ element.description }}
-                  </div>
+    <table mat-table [dataSource]="dataSource">
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <td
+          mat-cell
+          *matCellDef="let element"
+          class="flex justify-start align-top"
+          style="border: none"
+        >
+          <div class="flex flex-col w-full">
+            <div class="flex flex-row justify-between w-full items-center">
+              <div class="flex flex-col">
+                <div>{{ element.name }}</div>
+                <div class="text-sm italic text-gray-500 ml-2">
+                  {{ element.description }}
                 </div>
-                @if (element.files.length > 0) {
-                  <button
-                    mat-mini-fab
-                    color="primary"
-                    class="flex items-center"
-                    style="
-                      box-shadow: 0 2px 5px 0.5px gray;
-                      width: 2rem;
-                      height: 2rem;
-                    "
-                    matTooltip="Click to view files"
-                    (click)="element.expanded = !element.expanded"
-                  >
-                    <mat-icon style="font-size: 1.5rem">folder_open</mat-icon>
-                  </button>
-                }
               </div>
-              @if (element.expanded) {
-                <div class="flex flex-col ml-2 space-y-1">
-                  @for (file of element.files; track file) {
-                    <div class="flex flex-row items-center space-x-2">
-                      <button
-                        mat-mini-fab
-                        color="primary"
-                        style="
-                          box-shadow: 0 2px 5px 0.5px gray;
-                          width: 2rem;
-                          height: 2rem;
-                        "
-                        class="flex items-center mt-2 mb-2 justify-center"
-                        matTooltip="Copy access URL"
-                        (click)="copy(element.name, file)"
-                      >
-                        <mat-icon style="font-size: 1.3rem; padding-top: 0.3rem"
-                          >file_copy</mat-icon
-                        >
-                      </button>
-                      <div>{{ file.split("/").pop() }}</div>
-                    </div>
-                  }
-                </div>
+              @if (element.files.length > 0) {
+                <button
+                  mat-mini-fab
+                  color="primary"
+                  class="flex items-center"
+                  style="
+                    box-shadow: 0 2px 5px 0.5px gray;
+                    width: 2rem;
+                    height: 2rem;
+                  "
+                  matTooltip="Click to view files"
+                  (click)="element.expanded = !element.expanded"
+                >
+                  <mat-icon style="font-size: 1.5rem">folder_open</mat-icon>
+                </button>
               }
             </div>
-          </td>
-        </ng-container>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
-    </div>
-
+            @if (element.expanded) {
+              <div class="flex flex-col ml-2 space-y-1">
+                @for (file of element.files; track file) {
+                  <div class="flex flex-row items-center space-x-2">
+                    <button
+                      mat-mini-fab
+                      color="primary"
+                      style="
+                        box-shadow: 0 2px 5px 0.5px gray;
+                        width: 2rem;
+                        height: 2rem;
+                      "
+                      class="flex items-center mt-2 mb-2 justify-center"
+                      matTooltip="Copy access URL"
+                      (click)="copy(element.name, file)"
+                    >
+                      <mat-icon style="font-size: 1.3rem; padding-top: 0.3rem"
+                        >file_copy</mat-icon
+                      >
+                    </button>
+                    <div>{{ file.split("/").pop() }}</div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+  <div class="mt-auto">
     <mat-paginator
       #paginator
       [pageSizeOptions]="[5, 10, 50]"

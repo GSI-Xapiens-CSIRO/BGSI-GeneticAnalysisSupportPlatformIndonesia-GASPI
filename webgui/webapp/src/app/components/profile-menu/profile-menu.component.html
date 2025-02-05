@@ -12,10 +12,20 @@
       </button>
     </div>
     <mat-menu class="mt-3" #menu="matMenu">
-      <a mat-menu-item class="bui-content-menu-item" [routerLinkActive]="'active'" [routerLink]="['profile']">
+      <a
+        mat-menu-item
+        class="bui-content-menu-item"
+        [routerLinkActive]="'active'"
+        [routerLink]="['profile']"
+      >
         Profile
       </a>
-      <a mat-menu-item class="bui-content-menu-item" [routerLink]="[]" (click)="onLogout()">
+      <a
+        mat-menu-item
+        class="bui-content-menu-item"
+        [routerLink]="[]"
+        (click)="onLogout()"
+      >
         Logout
       </a>
     </mat-menu>
