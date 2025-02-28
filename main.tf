@@ -1,3 +1,9 @@
+provider "aws" {
+  region = var.region
+}
+
+data "aws_caller_identity" "this" {}
+
 module "cognito" {
   source                   = "./cognito"
   region                   = var.region
@@ -11,6 +17,23 @@ module "cognito" {
 
   common-tags = merge(var.common-tags, {
     "NAME" = "cognito-infrastructure"
+  })
+}
+
+module "pgxflow" {
+  count = var.enable-pgxflow ? 1 : 0
+  
+  source                      = "./pgxflow"
+  region                      = var.region
+  data-portal-bucket-name     = module.sbeacon.data-portal-bucket
+  data-portal-bucket-arn      = module.sbeacon.data-portal-bucket-arn 
+  method-max-request-rate     = var.pgxflow-method-max-request-rate
+  method-queue-size           = var.pgxflow-method-queue-size
+  web_acl_arn                 = module.security.web_acl_arn
+  cognito-user-pool-arn       = module.cognito.cognito_user_pool_arn
+  
+  common-tags = merge(var.common-tags, {
+    "NAME" = "pgxflow-backend"
   })
 }
 

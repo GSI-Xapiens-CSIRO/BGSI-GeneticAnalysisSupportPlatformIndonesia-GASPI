@@ -69,6 +69,12 @@ variable "bui-ssm-parameter-name" {
   default     = "bui-ssm-beacon-ui-url"
 }
 
+variable "enable-pgxflow" {
+  description = "Enables the Pharmacogenomics workflow"
+  type        = bool
+  default     = false
+}
+
 variable "enable-inspector" {
   description = "Enables inspector scanning"
   type        = bool
@@ -97,6 +103,18 @@ variable "svep-method-max-request-rate" {
 variable "svep-method-queue-size" {
   type        = number
   description = "Number of requests allowed to be queued per method for svep API."
+  default     = 1000
+}
+
+variable "pgxflow-method-max-request-rate" {
+  type        = number
+  description = "Number of requests allowed per second per method for pgxflow API."
+  default     = 100
+}
+
+variable "pgxflow-method-queue-size" {
+  type        = number
+  description = "Number of requests allowed to be queued per method for pgxflow API."
   default     = 1000
 }
 
