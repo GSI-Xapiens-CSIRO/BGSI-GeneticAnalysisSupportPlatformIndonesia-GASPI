@@ -70,6 +70,7 @@ export class AnnotationViewerComponent implements OnChanges {
   protected annotations: ClinicalAnnotation[] = [];
   protected pageSize = 5;
   private pageTokens = new Map<number, any>();
+  protected pageIndex = 0;
 
   constructor(
     private cs: ClinicService,
@@ -80,8 +81,7 @@ export class AnnotationViewerComponent implements OnChanges {
 
   resetPagination() {
     this.pageTokens = new Map<number, string>();
-    this.paginator.pageIndex = 0;
-    this.pageSize = this.paginator.pageSize;
+    this.pageIndex = 0;
   }
 
   refresh() {
@@ -98,7 +98,8 @@ export class AnnotationViewerComponent implements OnChanges {
   }
 
   pageChange(event: PageEvent) {
-    if (this.pageSize != this.paginator.pageSize) {
+    if (this.pageSize != event.pageSize) {
+      this.pageSize = event.pageSize;
       this.resetPagination();
       this.refresh();
     } else {
@@ -145,7 +146,7 @@ export class AnnotationViewerComponent implements OnChanges {
   list(page: number) {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
-      this.paginator.pageIndex--;
+      this.pageIndex--;
       this.sb.open('No more items to show', 'Okay', { duration: 60000 });
       return;
     }
@@ -165,8 +166,8 @@ export class AnnotationViewerComponent implements OnChanges {
           });
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
-          if (res.annotations.length <= 0 && this.paginator.pageIndex > 0) {
-            this.paginator.pageIndex--;
+          if (res.annotations.length <= 0 && this.pageIndex > 0) {
+            this.pageIndex--;
             this.sb.open('No more items to show', 'Okay', { duration: 60000 });
             return;
           }

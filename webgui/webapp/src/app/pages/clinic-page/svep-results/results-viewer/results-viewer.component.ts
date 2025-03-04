@@ -32,10 +32,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  MatCheckboxChange,
-  MatCheckboxModule,
-} from '@angular/material/checkbox';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
 
 type SVEPResult = {
   url?: string;
@@ -43,11 +41,6 @@ type SVEPResult = {
   content: string;
   page: number;
   chromosome: string;
-};
-
-// { hash: row }
-type SelectedVariants = {
-  [key: string]: any;
 };
 
 @Injectable()
@@ -126,15 +119,15 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     ]),
     annotation: new FormControl('', [Validators.required]),
   });
-  protected selectedVariants: SelectedVariants = {};
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
 
   constructor(
-    private cs: ClinicService,
+    protected cs: ClinicService,
     private ss: SpinnerService,
     private sb: MatSnackBar,
+    private dg: MatDialog,
   ) {}
 
   ngAfterViewInit(): void {
@@ -159,48 +152,37 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
   search() {
     const position = this.basePositionField.value;
     if (position) {
-      this.refetch(this.requestId, this.chromosomeField.value, null, position);
+      this.refetch(
+        this.requestId,
+        this.projectName,
+        this.chromosomeField.value,
+        null,
+        position,
+      );
     }
+  }
+
+  async openAnnotateDialog() {
+    const { AddAnnotationDialogComponent } = await import(
+      '../add-annotation-dialog/add-annotation-dialog.component'
+    );
+
+    const dialogRef = this.dg.open(AddAnnotationDialogComponent, {
+      data: { projectName: this.projectName, requestId: this.requestId },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.refetch(this.requestId, this.projectName);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['requestId']) {
-      const requestId: string = changes['requestId'].currentValue;
-      this.refetch(requestId, this.projectName);
-    }
-    if (changes['projectName']) {
-      const projectName: string = changes['projectName'].currentValue;
-      this.refetch(this.requestId, projectName);
-    }
-  }
-
-  saveAnnotations() {
-    const variants = Object.keys(this.selectedVariants).map(
-      (key) => this.selectedVariants[key],
+    this.refetch(
+      changes['requestId'] ? changes['requestId'].currentValue : this.requestId,
+      changes['projectName']
+        ? changes['projectName'].currentValue
+        : this.projectName,
     );
-
-    this.ss.start();
-    this.cs
-      .saveAnnotations(
-        this.projectName,
-        this.requestId,
-        this.annotationForm.get('name')?.value,
-        this.annotationForm.get('annotation')?.value,
-        variants,
-      )
-      .pipe(catchError(() => of(null)))
-      .subscribe((data) => {
-        if (!data) {
-          this.sb.open('Failed to save annotations', 'Okay', {
-            duration: 5000,
-          });
-        } else {
-          this.sb.open('Annotations saved', 'Okay', {
-            duration: 5000,
-          });
-        }
-        this.ss.end();
-      });
   }
 
   refetch(
@@ -247,22 +229,5 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
     this.pageIndex = result.page - 1;
     this.data.sort = this.sort;
-  }
-
-  selection(row: any, checked: boolean): void {
-    if (checked) {
-      this.selectedVariants[this.hashRow(row)] = row;
-    } else {
-      delete this.selectedVariants[this.hashRow(row)];
-    }
-  }
-
-  hashRow(row: { [key: string]: string }): string {
-    let hash = '';
-    // TODO compress more
-    for (let key of Object.keys(row)) {
-      hash += `${key}:${row[key]}`;
-    }
-    return hash;
   }
 }

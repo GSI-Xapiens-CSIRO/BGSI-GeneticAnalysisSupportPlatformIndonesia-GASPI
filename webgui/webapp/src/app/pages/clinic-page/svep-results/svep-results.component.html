@@ -24,20 +24,27 @@
           >Temporary - to be replaced with selection from table</mat-hint
         >
       </mat-form-field>
-      <a
-        [disabled]="
-          requestIdFormControl.invalid || projectNameFormControl.invalid
-        "
-        class="w-[110px] mr-1"
-        mat-raised-button
-        color="primary"
-        [routerLink]="[]"
-        [queryParams]="{
-          jobId: requestIdFormControl.value,
-          projectName: projectNameFormControl.value
-        }"
-        >Load</a
-      >
+      <div class="flex flex-row space-x-1">
+        <button
+          class="w-[110px]"
+          mat-raised-button
+          color="primary"
+          (click)="reset()"
+        >
+          Reset
+        </button>
+        <button
+          [disabled]="
+            requestIdFormControl.invalid || projectNameFormControl.invalid
+          "
+          class="w-[110px]"
+          mat-raised-button
+          color="primary"
+          (click)="load()"
+        >
+          Load
+        </button>
+      </div>
       @if (requestId && projectName) {
         <app-results-viewer
           [requestId]="requestId"

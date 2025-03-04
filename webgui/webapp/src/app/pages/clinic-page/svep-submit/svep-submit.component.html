@@ -42,7 +42,10 @@
           mat-raised-button
           color="primary"
           [routerLink]="['/clinic', 'svep-results']"
-          [queryParams]="{ jobId: results.RequestId, projectName: results.ProjectName}"
+          [queryParams]="{
+            jobId: results.RequestId,
+            projectName: results.ProjectName
+          }"
           >View Results</a
         >
         <p>
@@ -50,10 +53,12 @@
           the Job Id for future results retrieval.
         </p>
         <a
-          class="text-cyan-950 decoration-transparent"
-          class="break-all"
+          class="text-cyan-950 decoration-transparent break-all"
           [routerLink]="['/clinic', 'svep-results']"
-          [queryParams]="{ jobId: results.RequestId, projectName: results.ProjectName }"
+          [queryParams]="{
+            jobId: results.RequestId,
+            projectName: results.ProjectName
+          }"
           >{{ results.RequestId }}</a
         >
       }

@@ -2,14 +2,42 @@ import { query } from '@angular/animations';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { API, Auth } from 'aws-amplify';
-import { from, map, Observable, of, switchMap } from 'rxjs';
+import { from, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { environment } from 'src/environments/environment';
+
+export type SelectedVariants = {
+  [key: string]: any;
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class ClinicService {
+  public selectedVariants: SelectedVariants = {};
+  public annotionsChanged: Subject<void> = new Subject<void>();
+
   constructor(private http: HttpClient) {}
+
+  hashRow(row: { [key: string]: string }): string {
+    let hash = '';
+    // TODO compress more
+    for (let key of Object.keys(row)) {
+      hash += `${key}:${row[key]}`;
+    }
+    return hash;
+  }
+
+  selection(row: any, checked: boolean): void {
+    if (checked) {
+      this.selectedVariants[this.hashRow(row)] = row;
+    } else {
+      delete this.selectedVariants[this.hashRow(row)];
+    }
+  }
+
+  selected(row: any): boolean {
+    return this.selectedVariants[this.hashRow(row)] !== undefined;
+  }
 
   submitSvepJob(location: string, projectName: string) {
     return from(Auth.currentCredentials()).pipe(
@@ -62,7 +90,6 @@ export class ClinicService {
   saveAnnotations(
     project: string,
     jobId: string,
-    annotationName: string,
     annotation: string,
     variants: any[],
   ) {
@@ -71,7 +98,7 @@ export class ClinicService {
         environment.api_endpoint_sbeacon.name,
         `dportal/projects/${project}/clinical-workflows/${jobId}/annotations`,
         {
-          body: { name: annotationName, annotation, variants },
+          body: { annotation, variants },
         },
       ),
     );
