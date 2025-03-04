@@ -15,6 +15,7 @@ export class ClinicService {
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
+        console.log('ENV API NAME SVEP', environment.api_endpoint_svep.name);
         return from(
           API.post(environment.api_endpoint_svep.name, 'submit', {
             body: { location, projectName, userId },
