@@ -9,8 +9,7 @@ import boto3
 lambda_client = boto3.client("lambda")
 s3_client = boto3.client("s3")
 
-INPUT_DIR = "/tmp/input"
-OUTPUT_DIR = "/tmp/output"
+LOCAL_DIR = "/tmp"
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 # PGXFLOW_PHARMCAT_LAMBDA = os.environ["PGXFLOW_PHARMCAT_LAMBDA"]
@@ -20,11 +19,11 @@ def run_preprocessor(input_path, vcf):
     """Run the PharmCAT VCF preprocessor."""
     cmd = [
         "python3",
-        "/var/task/preprocessor/pharmcat_vcf_preprocessor.py",
+        "/opt/preprocessor/pharmcat_vcf_preprocessor.py",
         "--vcf",
         input_path,
         "--output-dir",
-        OUTPUT_DIR,
+        LOCAL_DIR,
         "--base-filename",
         vcf,
     ]
@@ -32,32 +31,32 @@ def run_preprocessor(input_path, vcf):
 
 
 def lambda_handler(event, context):
+    print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
     location = event["location"]
-    project = event["project"]
+    project = event["projectName"]
 
-    filename = Path(urlparse(location).path).name
-    ext = "".join(Path(filename).suffixes)
-    vcf = f"{request_id}{ext}"
-    local_input_path = os.path.join(INPUT_DIR, vcf)
-    local_output_path = os.path.join(OUTPUT_DIR, vcf)
+    s3_path = urlparse(location).path
+    vcf = f"{request_id}.vcf.gz"
 
-    s3_client.download(
+    local_input_path = os.path.join(LOCAL_DIR, vcf)
+    s3_client.download_file(
         Bucket=DPORTAL_BUCKET,
-        Key=location,
+        Key=s3_path.lstrip("/"),
         Filename=local_input_path,
     )
 
-    run_preprocessor(local_input_path, vcf)
+    run_preprocessor(local_input_path, request_id)
+    preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
 
-    preprocessed_vcf_key = f"preprocessed/{vcf}"
-
-    s3_client.upload(
+    local_output_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
+    s3_client.upload_file(
         Bucket=PGXFLOW_BUCKET,
-        Key=preprocessed_vcf_key,
+        Key=f"preprocessed_{request_id}.vcf.gz",
         Filename=local_output_path,
     )
 
+    output_location = f"s3://{PGXFLOW_BUCKET}/{preprocessed_vcf}"
     # lambda_client.invoke(
     #    FunctionName=PGXFLOW_PHARMCAT_LAMBDA,
     #    InvocationType="Event",
@@ -65,7 +64,7 @@ def lambda_handler(event, context):
     #        {
     #            "requestId": request_id,
     #            "projectName": project,
-    #            "location": preprocessed_vcf_key,
+    #            "location": output_location,
     #        }
     #    ),
     # )

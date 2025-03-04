@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "lambda-initFlow" {
       "s3:GetObject",
     ]
     resources = [
-      var.data-portal-bucket-arn,
+      "${var.data-portal-bucket-arn}/projects/*/project-files/*",
     ]
   }
   statement {
@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
       test     = "StringLike"
       variable = "s3:prefix"
       values = [
-        "preprocessed/*",
+        "projects/*/project-files/*",
       ]
     }
   }
@@ -61,7 +61,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
       "s3:PutObject",
     ]
     resources = [
-      "${aws_s3_bucket.pgxflow-bucket.arn}/preprocessed/*",
+      "${aws_s3_bucket.pgxflow-bucket.arn}/*",
     ]
   }
 }

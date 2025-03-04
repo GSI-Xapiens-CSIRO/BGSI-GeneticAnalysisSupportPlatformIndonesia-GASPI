@@ -1,28 +1,39 @@
 FROM public.ecr.aws/lambda/python:3.12-x86_64
 
-RUN dnf install -y \
-    bzip2 \
-    gzip \
-    tar \
-    wget \
+RUN dnf update -y && dnf install -y \
+    git \
     gcc \
+    gcc-c++ \
     make \
+    autoconf \
+    automake \
     zlib-devel \
     bzip2-devel \
     xz-devel \
-    curl-devel 
+    libcurl-devel \
+    openssl-devel
 
 WORKDIR /src
 
-RUN wget https://github.com/samtools/bcftools/releases/download/1.18/bcftools-1.18.tar.bz2 \
-    && tar -xvjf bcftools-1.18.tar.bz2 \
-    && cd bcftools-1.18 \
+RUN git clone --recursive --depth 1 --branch develop https://github.com/samtools/htslib.git \
+    && cd htslib \
+    && autoreconf --install \
     && ./configure \
     && make \
     && make install
 
+RUN git clone --recursive --depth 1 --branch develop https://github.com/samtools/bcftools.git \
+    && cd bcftools \
+    && autoreconf --install \
+    && ./configure \
+    && make \
+    && make install
+    
 RUN mkdir -p /opt/bin
 RUN mkdir -p /opt/lib
+
+RUN cp $(command -v tabix) /opt/bin
+RUN ldd $(command -v tabix) | awk 'NF == 4 { system("cp " $3 " /opt/lib") }'
 
 RUN cp $(command -v bcftools) /opt/bin
 RUN ldd $(command -v bcftools) | awk 'NF == 4 { system("cp " $3 " /opt/lib") }'

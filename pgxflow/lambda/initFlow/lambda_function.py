@@ -4,7 +4,6 @@ import subprocess
 
 import boto3
 
-from shared.utils import chrom_matching
 from shared.apiutils import bad_request, bundle_response
 
 PGXFLOW_PREPROCESSOR_LAMBDA = os.environ["PGXFLOW_PREPROCESSOR_LAMBDA"]
@@ -19,6 +18,7 @@ def get_sample_count(location):
 
 
 def lambda_handler(event, context):
+    print(f"Event received: {json.dumps(event)}")
     event_body = event.get("body")
     if not event_body:
         return bad_request("No body sent with request.")

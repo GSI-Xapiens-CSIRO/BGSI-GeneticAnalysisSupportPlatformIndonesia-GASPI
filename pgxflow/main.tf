@@ -22,6 +22,7 @@ module "lambda-initFlow" {
   tags                   = var.common-tags
   environment_variables = {
     PGXFLOW_PREPROCESSOR_LAMBDA = module.lambda-preprocessor.lambda_function_arn
+    HTS_S3_HOST                 = "s3.${var.region}.amazonaws.com"
   }
 }
 
@@ -48,6 +49,7 @@ module "lambda-preprocessor" {
   environment_variables = {
     DPORTAL_BUCKET = var.data-portal-bucket-name
     PGXFLOW_BUCKET = aws_s3_bucket.pgxflow-bucket.bucket
+    HTS_S3_HOST    = "s3.${var.region}.amazonaws.com"
     #PGXFLOW_PHARMCAT_LAMBDA = module.lambda-pharmcat.lambda_function_arn 
   }
 }
