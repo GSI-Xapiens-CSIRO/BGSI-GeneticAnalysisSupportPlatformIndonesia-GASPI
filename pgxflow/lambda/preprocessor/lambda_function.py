@@ -12,7 +12,7 @@ s3_client = boto3.client("s3")
 LOCAL_DIR = "/tmp"
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
-# PGXFLOW_PHARMCAT_LAMBDA = os.environ["PGXFLOW_PHARMCAT_LAMBDA"]
+PGXFLOW_PHARMCAT_LAMBDA = os.environ["PGXFLOW_PHARMCAT_LAMBDA"]
 
 
 def run_preprocessor(input_path, vcf):
@@ -48,23 +48,24 @@ def lambda_handler(event, context):
 
     run_preprocessor(local_input_path, request_id)
     preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
-
     local_output_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
+
+    output_key = f"preprocessed_{request_id}.vcf.gz"
     s3_client.upload_file(
         Bucket=PGXFLOW_BUCKET,
-        Key=f"preprocessed_{request_id}.vcf.gz",
+        Key=output_key,
         Filename=local_output_path,
     )
 
-    output_location = f"s3://{PGXFLOW_BUCKET}/{preprocessed_vcf}"
-    # lambda_client.invoke(
-    #    FunctionName=PGXFLOW_PHARMCAT_LAMBDA,
-    #    InvocationType="Event",
-    #    Payload=json.dumps(
-    #        {
-    #            "requestId": request_id,
-    #            "projectName": project,
-    #            "location": output_location,
-    #        }
-    #    ),
-    # )
+    s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
+    lambda_client.invoke(
+        FunctionName=PGXFLOW_PHARMCAT_LAMBDA,
+        InvocationType="Event",
+        Payload=json.dumps(
+            {
+                "requestId": request_id,
+                "projectName": project,
+                "location": s3_output_location,
+            }
+        ),
+    )
