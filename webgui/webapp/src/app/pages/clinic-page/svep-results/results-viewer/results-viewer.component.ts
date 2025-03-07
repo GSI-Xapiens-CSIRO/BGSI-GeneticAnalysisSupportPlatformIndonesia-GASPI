@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   Component,
+  Inject,
   Injectable,
   Input,
   OnChanges,
@@ -8,17 +9,24 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import {
   MatPaginator,
   MatPaginatorIntl,
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { catchError, of, Subject } from 'rxjs';
+import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
+import {
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  map,
+  Observable,
+  of,
+  Subject,
+} from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
-import { DportalService } from 'src/app/services/dportal.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -33,10 +41,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
+import { MatCardModule } from '@angular/material/card';
+import { TableVirtualScrollStrategy } from './scroll-strategy.service';
 import {
-  MatCheckboxChange,
-  MatCheckboxModule,
-} from '@angular/material/checkbox';
+  ScrollingModule,
+  VIRTUAL_SCROLL_STRATEGY,
+} from '@angular/cdk/scrolling';
 
 type SVEPResult = {
   url?: string;
@@ -44,11 +56,6 @@ type SVEPResult = {
   content: string;
   page: number;
   chromosome: string;
-};
-
-// { hash: row }
-type SelectedVariants = {
-  [key: string]: any;
 };
 
 @Injectable()
@@ -87,8 +94,17 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
+    ScrollingModule,
+    MatCardModule,
   ],
-  providers: [{ provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl }],
+  providers: [
+    { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
+    {
+      provide: VIRTUAL_SCROLL_STRATEGY,
+      useClass: TableVirtualScrollStrategy,
+    },
+    TableVirtualScrollStrategy,
+  ],
   templateUrl: './results-viewer.component.html',
   styleUrl: './results-viewer.component.scss',
 })
@@ -116,9 +132,12 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     'Strand',
     'Transcript Support Level',
   ];
-  protected data = new MatTableDataSource<any>([]);
+  protected originalRows: any[] = [];
+  protected dataRows = new BehaviorSubject<any[]>([]);
+  protected dataView = new Observable<any[]>();
   protected chromosomeField: FormControl = new FormControl('');
   protected basePositionField: FormControl = new FormControl('');
+  protected filterField: FormControl = new FormControl('');
   protected annotationForm: FormGroup = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -127,26 +146,52 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     ]),
     annotation: new FormControl('', [Validators.required]),
   });
-  protected selectedVariants: SelectedVariants = {};
   protected Object = Object;
+  protected resultsLength = 0;
+  protected pageIndex = 0;
 
   constructor(
-    private cs: ClinicService,
+    protected cs: ClinicService,
     private ss: SpinnerService,
     private sb: MatSnackBar,
+    private dg: MatDialog,
+    @Inject(VIRTUAL_SCROLL_STRATEGY)
+    private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
 
+  resort(sort: Sort) {
+    const snapshot = [...this.originalRows];
+    const key = sort.active;
+    if (sort.direction === 'asc') {
+      snapshot.sort((a, b) => {
+        return a[key] < b[key] ? -1 : 1;
+      });
+      this.dataRows.next(snapshot);
+    } else if (sort.direction === 'desc') {
+      snapshot.sort((a, b) => {
+        return a[key] > b[key] ? -1 : 1;
+      });
+      this.dataRows.next(snapshot);
+    } else {
+      this.dataRows.next(this.originalRows);
+    }
+  }
+
   ngAfterViewInit(): void {
-    this.paginator.page.subscribe((event: PageEvent) => {
-      this.refetch(
-        this.requestId,
-        this.projectName,
-        this.chromosomeField.value,
-        event.pageIndex + 1,
-      );
-      // if chromosome or page change we clear position
-      this.basePositionField.setValue('');
-    });
+    this.scrollStrategy.setScrollHeight(52, 56);
+    this.dataView = combineLatest([
+      this.dataRows,
+      this.scrollStrategy.scrolledIndexChange,
+    ]).pipe(
+      map((value: any) => {
+        // Determine the start and end rendered range
+        const start = Math.max(0, value[1] - 10);
+        const end = Math.min(value[0].length, value[1] + 100);
+
+        // Update the datasource for the rendered range of data
+        return value[0].slice(start, end);
+      }),
+    );
     this.chromosomeField.valueChanges.subscribe((chromosome) => {
       this.refetch(this.requestId, this.projectName, chromosome);
       // if chromosome or page change we clear position
@@ -154,51 +199,66 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  pageChange(event: PageEvent) {
+    this.refetch(
+      this.requestId,
+      this.projectName,
+      this.chromosomeField.value,
+      event.pageIndex + 1,
+    );
+    // if chromosome or page change we clear position
+    this.basePositionField.setValue('');
+  }
+
   search() {
     const position = this.basePositionField.value;
     if (position) {
-      this.refetch(this.requestId, this.chromosomeField.value, null, position);
+      this.refetch(
+        this.requestId,
+        this.projectName,
+        this.chromosomeField.value,
+        null,
+        position,
+      );
     }
+  }
+
+  filter() {
+    const term = this.filterField.value;
+
+    if (term) {
+      const filtered = this.originalRows.filter((row) => {
+        return Object.values(row).some((v: any) => {
+          return v.toString().includes(term);
+        });
+      });
+      this.dataRows.next(filtered);
+    } else {
+      this.dataRows.next(this.originalRows);
+    }
+  }
+
+  async openAnnotateDialog() {
+    const { AddAnnotationDialogComponent } = await import(
+      '../add-annotation-dialog/add-annotation-dialog.component'
+    );
+
+    const dialogRef = this.dg.open(AddAnnotationDialogComponent, {
+      data: { projectName: this.projectName, requestId: this.requestId },
+    });
+
+    dialogRef.afterClosed().subscribe(() => {
+      this.refetch(this.requestId, this.projectName);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['requestId']) {
-      const requestId: string = changes['requestId'].currentValue;
-      this.refetch(requestId, this.projectName);
-    }
-    if (changes['projectName']) {
-      const projectName: string = changes['projectName'].currentValue;
-      this.refetch(this.requestId, projectName);
-    }
-  }
-
-  saveAnnotations() {
-    const variants = Object.keys(this.selectedVariants).map(
-      (key) => this.selectedVariants[key],
+    this.refetch(
+      changes['requestId'] ? changes['requestId'].currentValue : this.requestId,
+      changes['projectName']
+        ? changes['projectName'].currentValue
+        : this.projectName,
     );
-
-    this.ss.start();
-    this.cs
-      .saveAnnotations(
-        this.projectName,
-        this.requestId,
-        this.annotationForm.get('name')?.value,
-        this.annotationForm.get('annotation')?.value,
-        variants,
-      )
-      .pipe(catchError(() => of(null)))
-      .subscribe((data) => {
-        if (!data) {
-          this.sb.open('Failed to save annotations', 'Okay', {
-            duration: 5000,
-          });
-        } else {
-          this.sb.open('Annotations saved', 'Okay', {
-            duration: 5000,
-          });
-        }
-        this.ss.end();
-      });
   }
 
   refetch(
@@ -208,6 +268,8 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     page: number | null = null,
     position: number | null = null,
   ) {
+    this.originalRows = [];
+    this.dataRows.next([]);
     this.ss.start();
     this.cs
       .getSvepResults(requestId, projectName, chromosome, page, position)
@@ -227,40 +289,22 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
 
   updateTable(result: SVEPResult): void {
     this.results = result;
-    this.paginator.length = result.pages[result.chromosome];
+    this.resultsLength = result.pages[result.chromosome];
     const lines = result.content.split('\n');
-    this.data = new MatTableDataSource<any>(
-      lines
-        .filter((l) => l.length > 0)
-        .map((l) => {
-          const row: any = {};
-          l.trim()
-            .split('\t')
-            .forEach((v, i) => {
-              row[this.columns[i + 1]] = v;
-            });
-          return row;
-        }),
-    );
+    this.originalRows = lines
+      .filter((l) => l.length > 0)
+      .map((l) => {
+        const row: any = {};
+        l.trim()
+          .split('\t')
+          .forEach((v, i) => {
+            row[this.columns[i + 1]] = v;
+          });
+        return row;
+      });
+    this.dataRows.next(this.originalRows);
     this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
-    this.paginator.pageIndex = result.page - 1;
-    this.data.sort = this.sort;
-  }
-
-  selection(row: any, checked: boolean): void {
-    if (checked) {
-      this.selectedVariants[this.hashRow(row)] = row;
-    } else {
-      delete this.selectedVariants[this.hashRow(row)];
-    }
-  }
-
-  hashRow(row: { [key: string]: string }): string {
-    let hash = '';
-    // TODO compress more
-    for (let key of Object.keys(row)) {
-      hash += `${key}:${row[key]}`;
-    }
-    return hash;
+    this.pageIndex = result.page - 1;
+    this.cs.selectedVariants = [];
   }
 }

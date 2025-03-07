@@ -77,7 +77,7 @@ export class SvepSubmitComponent {
         .submitSvepJob(s3URI, this.projectName!)
         .pipe(
           catchError((e) => {
-            const errorMessage = e.response?.data?.error?.errorMessage || "An error occurred please, check your input and try again later";
+            const errorMessage = e.response?.data?.error?.errorMessage || "Something went wrong when initaiting the job. Please try again later.";
             this.sb.open(errorMessage, 'Okay', { duration: 60000 });
             this.submissionStarted = false;
             return of(null);

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -9,6 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import {
   MatPaginator,
@@ -17,13 +18,21 @@ import {
   PageEvent,
 } from '@angular/material/paginator';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatCardModule } from '@angular/material/card';
 import { catchError, of, Subject } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
+import { SpinnerService } from 'src/app/services/spinner.service';
 
 type ClinicalAnnotation = {
   name: string;
   annotation: string;
   variants: any[];
+  createdAt: string;
+  user?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
 };
 
 @Injectable()
@@ -56,11 +65,12 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatPaginatorModule,
     MatButtonModule,
     MatIconModule,
+    MatCardModule,
   ],
   templateUrl: './annotation-viewer.component.html',
   styleUrl: './annotation-viewer.component.scss',
 })
-export class AnnotationViewerComponent implements OnChanges, AfterViewInit {
+export class AnnotationViewerComponent implements OnChanges {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator')
@@ -68,27 +78,18 @@ export class AnnotationViewerComponent implements OnChanges, AfterViewInit {
   protected annotations: ClinicalAnnotation[] = [];
   protected pageSize = 5;
   private pageTokens = new Map<number, any>();
+  protected pageIndex = 0;
 
   constructor(
     private cs: ClinicService,
     private sb: MatSnackBar,
+    private dg: MatDialog,
+    private ss: SpinnerService,
   ) {}
-
-  ngAfterViewInit(): void {
-    this.paginator.page.subscribe((event: PageEvent) => {
-      if (this.pageSize != this.paginator.pageSize) {
-        this.resetPagination();
-        this.refresh();
-      } else {
-        this.list(event.pageIndex);
-      }
-    });
-  }
 
   resetPagination() {
     this.pageTokens = new Map<number, string>();
-    this.paginator.pageIndex = 0;
-    this.pageSize = this.paginator.pageSize;
+    this.pageIndex = 0;
   }
 
   refresh() {
@@ -100,14 +101,60 @@ export class AnnotationViewerComponent implements OnChanges, AfterViewInit {
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(_: SimpleChanges): void {
     this.list(0);
+  }
+
+  pageChange(event: PageEvent) {
+    if (this.pageSize != event.pageSize) {
+      this.pageSize = event.pageSize;
+      this.resetPagination();
+      this.refresh();
+    } else {
+      this.list(event.pageIndex);
+    }
+  }
+
+  async deleteAnnotation(name: string) {
+    const { ActionConfirmationDialogComponent } = await import(
+      '../../../../components/action-confirmation-dialog/action-confirmation-dialog.component'
+    );
+
+    const dialogRef = this.dg.open(ActionConfirmationDialogComponent, {
+      data: {
+        title: 'Delete Annotation',
+        message: `Are you sure you want to delete the annotation ${name}?`,
+        confirmText: 'Delete',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.ss.start();
+        this.cs
+          .deleteAnnotation(this.projectName, this.requestId, name)
+          .pipe(catchError(() => of(null)))
+          .subscribe((res) => {
+            if (res) {
+              this.sb.open('Annotation deleted', 'Okay', {
+                duration: 5000,
+              });
+              this.refresh();
+            } else {
+              this.sb.open('Failed to delete annotation', 'Dismiss', {
+                duration: 5000,
+              });
+            }
+            this.ss.end();
+          });
+      }
+    });
   }
 
   list(page: number) {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
-      this.paginator.pageIndex--;
+      this.pageIndex--;
       this.sb.open('No more items to show', 'Okay', { duration: 60000 });
       return;
     }
@@ -127,8 +174,8 @@ export class AnnotationViewerComponent implements OnChanges, AfterViewInit {
           });
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
-          if (res.annotations.length <= 0 && this.paginator.pageIndex > 0) {
-            this.paginator.pageIndex--;
+          if (res.annotations.length <= 0 && this.pageIndex > 0) {
+            this.pageIndex--;
             this.sb.open('No more items to show', 'Okay', { duration: 60000 });
             return;
           }

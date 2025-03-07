@@ -60,6 +60,11 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
       }
       next = next.parent;
     }
+
+    if (route.queryParams) {
+      path += `?${JSON.stringify(route.queryParams)}`;
+    }
+
     return path;
   }
 }
