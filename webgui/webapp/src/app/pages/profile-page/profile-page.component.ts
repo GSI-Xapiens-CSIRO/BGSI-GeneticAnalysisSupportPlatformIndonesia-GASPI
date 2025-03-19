@@ -168,6 +168,14 @@ export class ProfilePageComponent {
     this.userDetailsForm.markAsPristine();
   }
 
+  resetPasswordForm() {
+    this.userPasswordForm.patchValue({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  }
+
   async updateDetails() {
     const { ActionConfirmationDialogComponent } = await import(
       '../../components/action-confirmation-dialog/action-confirmation-dialog.component'
@@ -241,7 +249,9 @@ export class ProfilePageComponent {
               this.sb.open('Password updated successfully.', 'Okay', {
                 duration: 60000,
               });
-              this.userPasswordForm.reset();
+              this.resetPasswordForm();
+              this.userPasswordForm.markAsPristine();
+              this.userPasswordForm.markAsUntouched();
             }
             this.ss.end();
           });
