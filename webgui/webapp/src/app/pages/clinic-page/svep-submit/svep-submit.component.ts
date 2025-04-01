@@ -74,7 +74,7 @@ export class SvepSubmitComponent {
       const s3URI = `s3://${environment.storage.dataPortalBucket}/projects/${this.projectName}/project-files/${this.vcfFile}`;
 
       this.cs
-        .submitSvepJob(s3URI, this.projectName!)
+        .submitClinicJob(s3URI, this.projectName!)
         .pipe(
           catchError((e) => {
             const errorMessage =

@@ -58,15 +58,30 @@ variable "ses-source-email" {
 }
 
 variable "gaspi-admin-email" {
-  type = string
+  type        = string
   description = "Email address of the administrator to send security alerts"
 }
 
 # Will be removed when DNS records are available for use
 variable "bui-ssm-parameter-name" {
-  type        = string 
+  type        = string
   description = "Name of the SSM parameter storing the Beacon UI URL"
   default     = "bui-ssm-beacon-ui-url"
+}
+
+variable "clinic-mode" {
+  type        = string
+  description = "Specifies whether to enable sVEP or PGxFlow in the clinic"
+  default     = "svep"
+  validation {
+    condition     = contains(["svep", "pgxflow"], var.clinic-mode)
+    error_message = "Valid options for clinic_mode are 'svep' or 'pgxflow'."
+  }
+}
+
+variable "pgxflow-configuration" {
+  type        = map(list(string))
+  description = "Environment variable configuration for pgxflow"
 }
 
 variable "enable-inspector" {
@@ -97,6 +112,18 @@ variable "svep-method-max-request-rate" {
 variable "svep-method-queue-size" {
   type        = number
   description = "Number of requests allowed to be queued per method for svep API."
+  default     = 1000
+}
+
+variable "pgxflow-method-max-request-rate" {
+  type        = number
+  description = "Number of requests allowed per second per method for pgxflow API"
+  default     = 100
+}
+
+variable "pgxflow-method-queue-size" {
+  type        = number
+  description = "Number of requests allowed to be queued per method for pgxflow API"
   default     = 1000
 }
 

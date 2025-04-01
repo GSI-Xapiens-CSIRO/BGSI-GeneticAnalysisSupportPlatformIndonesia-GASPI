@@ -1,18 +1,19 @@
 data "external" "build" {
   program = ["python", "build_and_hash.py"]
   query = {
-    install_command              = var.install-command
-    build_command                = var.build-command
-    webapp_dir                   = var.webapp-dir
-    build_destiation             = var.build-destination
-    base_range                   = var.base_range
-    region                       = var.region
-    user_pool_id                 = var.user_pool_id
-    identity_pool_id             = var.identity_pool_id
-    user_pool_web_client_id      = var.user_pool_web_client_id
-    data_portal_bucket           = var.data_portal_bucket
-    api_endpoint_sbeacon         = var.api_endpoint_sbeacon
-    api_endpoint_svep            = var.api_endpoint_svep
+    install_command         = var.install-command
+    build_command           = var.build-command
+    webapp_dir              = var.webapp-dir
+    build_destiation        = var.build-destination
+    base_range              = var.base_range
+    region                  = var.region
+    user_pool_id            = var.user_pool_id
+    identity_pool_id        = var.identity_pool_id
+    user_pool_web_client_id = var.user_pool_web_client_id
+    data_portal_bucket      = var.data_portal_bucket
+    api_endpoint_sbeacon    = var.api_endpoint_sbeacon
+    api_endpoint_clinic     = var.api_endpoint_clinic
+    clinic_mode             = var.clinic_mode
   }
   working_dir = path.module
 }

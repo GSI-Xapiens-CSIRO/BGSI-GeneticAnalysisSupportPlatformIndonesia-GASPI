@@ -4,6 +4,10 @@ provider "aws" {
 
 data "aws_caller_identity" "this" {}
 
+locals {
+  clinic_api_url = var.clinic-mode == "svep" ? module.svep[0].api_url : module.pgxflow[0].api_url
+}
+
 
 module "cognito" {
   source                   = "./cognito"
@@ -18,6 +22,28 @@ module "cognito" {
 
   common-tags = merge(var.common-tags, {
     "NAME" = "cognito-infrastructure"
+  })
+}
+
+module "pgxflow" {
+  count = var.clinic-mode == "pgxflow" ? 1 : 0
+
+  source                         = "./pgxflow"
+  region                         = var.region
+  data-portal-bucket-name        = module.sbeacon.data-portal-bucket
+  data-portal-bucket-arn         = module.sbeacon.data-portal-bucket-arn
+  method-max-request-rate        = var.pgxflow-method-max-request-rate
+  method-queue-size              = var.pgxflow-method-queue-size
+  web_acl_arn                    = module.security.web_acl_arn
+  cognito-user-pool-arn          = module.cognito.cognito_user_pool_arn
+  pgxflow-configuration          = var.pgxflow-configuration
+  dynamo-project-users-table     = module.sbeacon.dynamo-project-users-table
+  dynamo-project-users-table-arn = module.sbeacon.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table       = module.sbeacon.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn   = module.sbeacon.dynamo-clinic-jobs-table
+
+  common-tags = merge(var.common-tags, {
+    "NAME" = "pgxflow-backend"
   })
 }
 
@@ -56,21 +82,23 @@ module "sbeacon" {
 }
 
 module "svep" {
-  source                                = "./svep"
-  region                                = var.region
-  data_portal_bucket_name               = module.sbeacon.data-portal-bucket
-  data_portal_bucket_arn                = module.sbeacon.data-portal-bucket-arn
-  method-max-request-rate               = var.svep-method-max-request-rate
-  method-queue-size                     = var.svep-method-queue-size
-  web_acl_arn                           = module.security.web_acl_arn
-  cognito-user-pool-arn                 = module.cognito.cognito_user_pool_arn
-  dynamo-project-users-table            = module.sbeacon.dynamo-project-users-table
-  dynamo-project-users-table-arn        = module.sbeacon.dynamo-project-users-table-arn
-  dynamo-clinic-jobs-table              = module.sbeacon.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn          = module.sbeacon.dynamo-clinic-jobs-table-arn
-  dynamo-clinic-jobs-stream-arn         = module.sbeacon.dynamo-clinic-jobs-stream-arn
-  svep-job-email-lambda-function-arn    = module.cognito.svep_job_email_lambda_function_arn
-  cognito-user-pool-id                  = module.cognito.cognito_user_pool_id
+  count = var.clinic-mode == "svep" ? 1 : 0
+
+  source                             = "./svep"
+  region                             = var.region
+  data_portal_bucket_name            = module.sbeacon.data-portal-bucket
+  data_portal_bucket_arn             = module.sbeacon.data-portal-bucket-arn
+  method-max-request-rate            = var.svep-method-max-request-rate
+  method-queue-size                  = var.svep-method-queue-size
+  web_acl_arn                        = module.security.web_acl_arn
+  cognito-user-pool-arn              = module.cognito.cognito_user_pool_arn
+  dynamo-project-users-table         = module.sbeacon.dynamo-project-users-table
+  dynamo-project-users-table-arn     = module.sbeacon.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table           = module.sbeacon.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn       = module.sbeacon.dynamo-clinic-jobs-table-arn
+  dynamo-clinic-jobs-stream-arn      = module.sbeacon.dynamo-clinic-jobs-stream-arn
+  svep-job-email-lambda-function-arn = module.cognito.svep_job_email_lambda_function_arn
+  cognito-user-pool-id               = module.cognito.cognito_user_pool_id
 
   common-tags = merge(var.common-tags, {
     "NAME" = "svep-backend"
@@ -86,7 +114,8 @@ module "webgui" {
   user_pool_web_client_id = module.cognito.cognito_client_id
   data_portal_bucket      = module.sbeacon.data-portal-bucket
   api_endpoint_sbeacon    = module.sbeacon.api_url
-  api_endpoint_svep       = module.svep.api_url
+  api_endpoint_clinic     = local.clinic_api_url
+  clinic_mode             = var.clinic-mode
   bui-ssm-parameter-name  = var.bui-ssm-parameter-name
   web_acl_arn             = module.security.web_acl_arn
 
@@ -94,4 +123,3 @@ module "webgui" {
     "NAME" = "portal-frontend"
   })
 }
-

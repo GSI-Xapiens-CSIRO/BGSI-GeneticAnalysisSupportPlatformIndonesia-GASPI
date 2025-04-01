@@ -65,12 +65,12 @@ export class ClinicService {
     );
   }
 
-  submitSvepJob(location: string, projectName: string) {
+  submitClinicJob(location: string, projectName: string) {
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
         return from(
-          API.post(environment.api_endpoint_svep.name, 'submit', {
+          API.post(environment.api_endpoint_clinic.name, 'submit', {
             body: { location, projectName, userId },
           }),
         );
@@ -78,7 +78,7 @@ export class ClinicService {
     );
   }
 
-  getSvepResults(
+  getClinicResults(
     requestId: string,
     projectName: string,
     chromosome: string | null = null,
@@ -92,7 +92,7 @@ export class ClinicService {
     };
 
     return from(
-      API.get(environment.api_endpoint_svep.name, 'results', {
+      API.get(environment.api_endpoint_clinic.name, 'results', {
         queryStringParameters: {
           request_id: requestId,
           project_name: projectName,

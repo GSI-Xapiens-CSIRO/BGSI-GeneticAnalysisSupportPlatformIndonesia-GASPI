@@ -278,7 +278,7 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     this.dataRows.next([]);
     this.ss.start();
     this.cs
-      .getSvepResults(requestId, projectName, chromosome, page, position)
+      .getClinicResults(requestId, projectName, chromosome, page, position)
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {

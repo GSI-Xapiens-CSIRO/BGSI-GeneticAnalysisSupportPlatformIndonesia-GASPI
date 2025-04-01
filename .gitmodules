@@ -5,3 +5,7 @@
 [submodule "svep"]
 	path = svep
 	url = https://github.com/GSI-Xapiens-CSIRO/sVEP-BGSi.git
+
+[submodule "pgxflow"]
+	path = pgxflow
+	url = https://github.com/GSI-Xapiens.CSIRO/pgxflow-BGSi.git
