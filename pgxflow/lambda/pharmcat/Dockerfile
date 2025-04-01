@@ -4,6 +4,11 @@ RUN dnf update -y && dnf install -y \
     wget \
     java-17-amazon-corretto-headless
 
+WORKDIR /opt
+
+# Copy logging configuration for pharmcat jar so that logs are written to console
+COPY logback.xml /opt/logback.xml
+
 WORKDIR ${LAMBDA_TASK_ROOT}/
 
 RUN wget https://github.com/PharmGKB/PharmCAT/releases/download/v2.15.5/pharmcat-2.15.5-all.jar -O pharmcat.jar

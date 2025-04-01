@@ -1,1 +1,9 @@
-lambda/initFlow/shared
+# build files
+*.zip
+
+# python lambda layers
+layers/python_libraries/python
+layers/binaries/bin/*
+layers/binaries/lib/*
+
+.terraform

@@ -10,13 +10,16 @@ s3_client = boto3.client("s3")
 
 LOCAL_DIR = "/tmp"
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
-# PGXFLOW_POSTPROCESSER_LAMBDA = os.environ["PGXFLOW_POSTPROCESSOR_LAMBDA"]
+PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA = os.environ[
+    "PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA"
+]
 
 
 def run_pharmcat(input_path, vcf):
     "Run PharmCAT on the preprocessed VCF"
     cmd = [
         "java",
+        "-Dlogback.configurationFile=/opt/logback.xml",
         "-jar",
         "pharmcat.jar",
         "--reporter-extended",
@@ -37,6 +40,7 @@ def lambda_handler(event, context):
     request_id = event["requestId"]
     location = event["location"]
     project = event["projectName"]
+    source_vcf_location = event["sourceVcfLocation"]
 
     s3_path = urlparse(location).path
     preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
@@ -49,8 +53,8 @@ def lambda_handler(event, context):
     )
 
     run_pharmcat(local_input_path, request_id)
-    pharmcat_output_json = f"{request_id}.report.json"
-    local_output_path = os.path.join(LOCAL_DIR, pharmcat_output_json)
+    processed_json = f"{request_id}.report.json"
+    local_output_path = os.path.join(LOCAL_DIR, processed_json)
 
     output_key = f"pharmcat_{request_id}.json"
     s3_client.upload_file(
@@ -59,15 +63,21 @@ def lambda_handler(event, context):
         Filename=local_output_path,
     )
 
+    s3_client.delete_object(
+        Bucket=PGXFLOW_BUCKET,
+        Key=s3_path.lstrip("/"),
+    )
+
     s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
-    # lambda_client.invoke(
-    #    FunctionName=PGXFLOW_POSTPROCESSOR_LAMBDA,
-    #    InvocationType="Event",
-    #    Payload=json.dumps(
-    #        {
-    #            "requestId": request_id,
-    #            "projectName": project,
-    #            "location": s3_output_location,
-    #        }
-    #    ),
-    # )
+    lambda_client.invoke(
+        FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
+        InvocationType="Event",
+        Payload=json.dumps(
+            {
+                "requestId": request_id,
+                "projectName": project,
+                "location": s3_output_location,
+                "sourceVcfLocation": source_vcf_location,
+            }
+        ),
+    )

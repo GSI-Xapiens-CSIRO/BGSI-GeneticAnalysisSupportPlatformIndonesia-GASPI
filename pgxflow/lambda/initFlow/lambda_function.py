@@ -6,7 +6,9 @@ import boto3
 
 from shared.apiutils import bad_request, bundle_response
 
-PGXFLOW_PREPROCESSOR_LAMBDA = os.environ["PGXFLOW_PREPROCESSOR_LAMBDA"]
+PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
+    "PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA"
+]
 
 lambda_client = boto3.client("lambda")
 
@@ -39,16 +41,19 @@ def lambda_handler(event, context):
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
 
+    payload = json.dumps(
+        {
+            "requestId": request_id,
+            "projectName": project,
+            "location": location,
+        }
+    )
+
+    print(f"Invoking preprocessor lambda with payload:\n{payload}")
     lambda_client.invoke(
-        FunctionName=PGXFLOW_PREPROCESSOR_LAMBDA,
+        FunctionName=PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA,
         InvocationType="Event",
-        Payload=json.dumps(
-            {
-                "requestId": request_id,
-                "projectName": project,
-                "location": location,
-            }
-        ),
+        Payload=payload,
     )
 
     return bundle_response(

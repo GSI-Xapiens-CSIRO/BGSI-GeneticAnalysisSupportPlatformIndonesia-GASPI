@@ -66,6 +66,7 @@ def lambda_handler(event, context):
                 "requestId": request_id,
                 "projectName": project,
                 "location": s3_output_location,
+                "sourceVcfLocation": location,
             }
         ),
     )

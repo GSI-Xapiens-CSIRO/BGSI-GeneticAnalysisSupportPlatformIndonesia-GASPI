@@ -2,7 +2,7 @@
 # API Gateway
 #
 resource "aws_api_gateway_rest_api" "PgxApi" {
-  name        = "svep-backend-api"
+  name        = "pgxflow-backend-api"
   description = "API That implements the Pharmacogenomics workflow"
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -175,6 +175,126 @@ resource "aws_lambda_permission" "APIInitFlow" {
   source_arn    = "${aws_api_gateway_rest_api.PgxApi.execution_arn}/*/*/${aws_api_gateway_resource.submit.path_part}"
 }
 
+#
+# /results
+#
+resource "aws_api_gateway_resource" "results" {
+  rest_api_id = aws_api_gateway_rest_api.PgxApi.id
+  parent_id   = aws_api_gateway_rest_api.PgxApi.root_resource_id
+  path_part   = "results"
+}
+
+resource "aws_api_gateway_method" "results-options" {
+  rest_api_id   = aws_api_gateway_rest_api.PgxApi.id
+  resource_id   = aws_api_gateway_resource.results.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_response" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = <<TEMPLATE
+      {
+        "statusCode": 200
+      }
+    TEMPLATE
+  }
+}
+
+resource "aws_api_gateway_integration_response" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
+  status_code = aws_api_gateway_method_response.results-options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,GET'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+
+  depends_on = [aws_api_gateway_integration.results-options]
+}
+
+resource "aws_api_gateway_method" "results-get" {
+  rest_api_id   = aws_api_gateway_rest_api.PgxApi.id
+  resource_id   = aws_api_gateway_resource.results.id
+  http_method   = "GET"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.pgxflow_user_pool_authorizer.id
+}
+
+resource "aws_api_gateway_method_response" "results-get" {
+  rest_api_id = aws_api_gateway_method.results-get.rest_api_id
+  resource_id = aws_api_gateway_method.results-get.resource_id
+  http_method = aws_api_gateway_method.results-get.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "results-get" {
+  rest_api_id             = aws_api_gateway_method.results-get.rest_api_id
+  resource_id             = aws_api_gateway_method.results-get.resource_id
+  http_method             = aws_api_gateway_method.results-get.http_method
+  type                    = "AWS_PROXY"
+  uri                     = module.lambda-getResultsURL.lambda_function_invoke_arn
+  integration_http_method = "POST"
+}
+
+resource "aws_api_gateway_integration_response" "results-get" {
+  rest_api_id = aws_api_gateway_method.results-get.rest_api_id
+  resource_id = aws_api_gateway_method.results-get.resource_id
+  http_method = aws_api_gateway_method.results-get.http_method
+  status_code = aws_api_gateway_method_response.results-get.status_code
+
+  response_templates = {
+    "application/json" = ""
+  }
+
+  depends_on = [aws_api_gateway_integration.results-get]
+}
+
+# permit lambda invocation
+resource "aws_lambda_permission" "APIGetResultsURL" {
+  statement_id  = "AllowAPIGetResultsURLInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-getResultsURL.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.PgxApi.execution_arn}/*/*/${aws_api_gateway_resource.results.path_part}"
+}
 
 
 #
@@ -204,6 +324,15 @@ resource "aws_api_gateway_deployment" "PgxApi" {
       aws_api_gateway_integration.submit-post,
       aws_api_gateway_integration_response.submit-post,
       aws_api_gateway_method_response.submit-post,
+      # /results
+      aws_api_gateway_method.results-options,
+      aws_api_gateway_integration.results-options,
+      aws_api_gateway_integration_response.results-options,
+      aws_api_gateway_method_response.results-options,
+      aws_api_gateway_method.results-get,
+      aws_api_gateway_integration.results-get,
+      aws_api_gateway_integration_response.results-get,
+      aws_api_gateway_method_response.results-get,
     ]))
   }
 }
@@ -224,4 +353,3 @@ resource "aws_api_gateway_method_settings" "PgxApi" {
     throttling_rate_limit  = var.method-max-request-rate
   }
 }
-
