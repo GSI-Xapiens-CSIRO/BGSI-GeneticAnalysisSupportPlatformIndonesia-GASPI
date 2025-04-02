@@ -14,6 +14,7 @@ data "external" "build" {
     api_endpoint_sbeacon    = var.api_endpoint_sbeacon
     api_endpoint_clinic     = var.api_endpoint_clinic
     clinic_mode             = var.clinic_mode
+    hub_name                = var.hub_name
   }
   working_dir = path.module
 }
