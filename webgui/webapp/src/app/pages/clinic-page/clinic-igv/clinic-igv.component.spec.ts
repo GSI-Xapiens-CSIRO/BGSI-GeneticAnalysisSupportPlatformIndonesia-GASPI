@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ListJobComponent } from './list-project-id.component';
+import { ClinicIGVComponent } from './clinic-igv.component';
 
-describe('SvepIGVComponent', () => {
-  let component: ListJobComponent;
-  let fixture: ComponentFixture<ListJobComponent>;
+describe('ClinicIGVComponent', () => {
+  let component: ClinicIGVComponent;
+  let fixture: ComponentFixture<ClinicIGVComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListJobComponent],
+      imports: [ClinicIGVComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ListJobComponent);
+    fixture = TestBed.createComponent(ClinicIGVComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

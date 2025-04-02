@@ -49,10 +49,10 @@ interface Project {
     SavedForReportingViewerComponent,
   ],
   providers: [],
-  templateUrl: './svep-results.component.html',
-  styleUrl: './svep-results.component.scss',
+  templateUrl: './clinic-results.component.html',
+  styleUrl: './clinic-results.component.scss',
 })
-export class SvepResultsComponent implements OnInit, OnDestroy {
+export class ClinicResultsComponent implements OnInit, OnDestroy {
   protected requestIdFormControl: FormControl<string>;
   protected projectNameFormControl: FormControl<string>;
   protected requestId: string | null = null;
@@ -61,7 +61,7 @@ export class SvepResultsComponent implements OnInit, OnDestroy {
   protected myProjects: Project[] = [];
   private paramSubscription: Subscription | null = null;
   filteredOptions: Observable<Project[]> | undefined;
-  @ViewChild(ListJobComponent) svepIGVComponent!: ListJobComponent;
+  @ViewChild(ListJobComponent) clinicIGVComponent!: ListJobComponent;
 
   constructor(
     private fb: FormBuilder,
@@ -88,7 +88,7 @@ export class SvepResultsComponent implements OnInit, OnDestroy {
 
   loadListData() {
     if (this.projectName === this.projectNameFormControl.value) {
-      this.svepIGVComponent.refresh();
+      this.clinicIGVComponent.refresh();
     } else {
       this.router.navigate([], {
         relativeTo: this.route,

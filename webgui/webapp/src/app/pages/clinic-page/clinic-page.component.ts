@@ -16,10 +16,9 @@ export class ClinicPageComponent implements OnInit {
   protected selectedIndex = 0;
   private paramCache: Map<string, any> = new Map();
   private readonly ROUTES = {
-    SUBMIT: 'svep-submit',
-    IGV: 'svep-igv',
-    RESULTS:
-      environment.clinic_mode === 'svep' ? 'svep-results' : 'pgxflow-results',
+    SUBMIT: 'clinic-submit',
+    IGV: 'clinic-igv',
+    RESULTS: 'clinic-results',
   };
   private readonly TAB_ROUTES = [
     this.ROUTES.SUBMIT,

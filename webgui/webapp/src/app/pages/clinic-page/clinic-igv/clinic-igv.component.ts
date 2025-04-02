@@ -76,10 +76,10 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatCardModule,
     IgvViewerComponent,
   ],
-  templateUrl: './svep-igv.component.html',
-  styleUrl: './svep-igv.component.scss',
+  templateUrl: './clinic-igv.component.html',
+  styleUrl: './clinic-igv.component.scss',
 })
-export class SvepIGVComponent {
+export class ClinicIGVComponent {
   loading = true;
   dataSource = new MatTableDataSource<Project>();
   displayedColumns: string[] = ['name', 'description', 'files'];

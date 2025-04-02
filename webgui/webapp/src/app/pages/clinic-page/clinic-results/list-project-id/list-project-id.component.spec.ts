@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SvepIGVComponent } from './svep-igv.component';
+import { ListJobComponent } from './list-project-id.component';
 
-describe('SvepIGVComponent', () => {
-  let component: SvepIGVComponent;
-  let fixture: ComponentFixture<SvepIGVComponent>;
+describe('ListJobComponent', () => {
+  let component: ListJobComponent;
+  let fixture: ComponentFixture<ListJobComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SvepIGVComponent],
+      imports: [ListJobComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SvepIGVComponent);
+    fixture = TestBed.createComponent(ListJobComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
