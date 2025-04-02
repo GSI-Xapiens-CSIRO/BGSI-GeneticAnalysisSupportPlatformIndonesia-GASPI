@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, of, Subject, Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -25,6 +24,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ClinicService } from 'src/app/services/clinic.service';
+import { ToastrService } from 'ngx-toastr';
 
 interface Project {
   job_id: string;
@@ -92,7 +92,7 @@ export class ListJobComponent implements OnChanges, OnInit {
 
   constructor(
     private cs: ClinicService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
@@ -139,7 +139,7 @@ export class ListJobComponent implements OnChanges, OnInit {
 
     if (this.isEmptyLastPage && this.paginator.pageIndex > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       this.loading = false;
       return;
     }
@@ -154,7 +154,7 @@ export class ListJobComponent implements OnChanges, OnInit {
       )
       .subscribe((response: any) => {
         if (!response.success) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           this.dataSource.data = [];
         } else {
           this.dataSource.data = response.jobs;

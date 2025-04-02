@@ -9,15 +9,15 @@ import _ from 'lodash';
 export class AuthService {
   public user = new BehaviorSubject<any | null>(null);
   public userGroups = new BehaviorSubject<Set<string>>(new Set([]));
+  public promptReloadAndLogin = new BehaviorSubject<boolean>(false);
   private tempUser: any = null;
 
   constructor() {
     this.refresh();
     Hub.listen('auth', async ({ payload: { event, data } }) => {
       switch (event) {
-        case 'signOut':
-          this.refresh();
-          window.location.href = '/login';
+        case 'tokenRefresh_failure':
+          this.promptReloadAndLogin.next(true);
           break;
       }
     });
@@ -74,7 +74,7 @@ export class AuthService {
 
   async signOut() {
     await Auth.signOut();
-    this.refresh();
+    await this.refresh();
     window.location.href = '/login';
   }
 

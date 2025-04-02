@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, of, Subject } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
@@ -21,6 +20,7 @@ import {
   PageEvent,
 } from '@angular/material/paginator';
 import { isEmpty } from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 
 interface ProjectFile {
   filename: string;
@@ -97,7 +97,7 @@ export class ProjectsListComponent {
 
   constructor(
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private cd: ChangeDetectorRef,
   ) {}
 
@@ -120,7 +120,7 @@ export class ProjectsListComponent {
 
     if (this.isEmptyLastPage && this.paginator.pageIndex > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       this.loading = false;
       return;
     }
@@ -135,7 +135,7 @@ export class ProjectsListComponent {
       )
       .subscribe((response: any) => {
         if (!response.data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           this.dataSource.data = [];
         } else {
           this.dataSource.data = response.data.map((project: any) => {

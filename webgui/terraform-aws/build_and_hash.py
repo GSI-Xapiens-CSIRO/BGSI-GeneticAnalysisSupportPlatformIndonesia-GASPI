@@ -29,6 +29,7 @@ ENVIRONMENT = """export const environment = {{
     endpoint: '{api_endpoint_clinic}',
     region: '{region}',
   }},
+  hub_name: '{hub_name}',
 }};"""
 
 
@@ -87,6 +88,7 @@ def setup_env(
     api_endpoint_clinic: str,
     clinic_mode: str,
     dir: str,
+    hub_name: str,
 ):
     with open(
         os.path.join(dir, "src/environments/environment.development.ts"), "w"
@@ -103,6 +105,7 @@ def setup_env(
                 api_endpoint_sbeacon=api_endpoint_sbeacon,
                 api_endpoint_clinic=api_endpoint_clinic,
                 clinic_mode=clinic_mode,
+                hub_name=hub_name,
             )
         )
     with open(os.path.join(dir, "src/environments/environment.ts"), "w") as f:
@@ -118,6 +121,7 @@ def setup_env(
                 api_endpoint_sbeacon=api_endpoint_sbeacon,
                 api_endpoint_clinic=api_endpoint_clinic,
                 clinic_mode=clinic_mode,
+                hub_name=hub_name,
             )
         )
 
@@ -137,6 +141,7 @@ if __name__ == "__main__":
     api_endpoint_clinic = args["api_endpoint_clinic"]
     clinic_mode = args["clinic_mode"]
     data_portal_bucket = args["data_portal_bucket"]
+    hub_name = args["hub_name"]
 
     setup_env(
         base_range,
@@ -149,6 +154,7 @@ if __name__ == "__main__":
         api_endpoint_clinic,
         clinic_mode,
         webapp_dir,
+        hub_name,
     )
     npm_install(install_cmd, webapp_dir)
     build(build_cmd, webapp_dir)

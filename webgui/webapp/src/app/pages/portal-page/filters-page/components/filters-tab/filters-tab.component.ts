@@ -7,14 +7,12 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, of } from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
 import { DportalService } from 'src/app/services/dportal.service';
 import { ScopeTypes } from 'src/app/utils/interfaces';
 import { environment } from 'src/environments/environment';
 import * as _ from 'lodash';
-import { GlobalSpinnerComponent } from '../../../../../components/global-spinner/global-spinner.component';
 import { FiltersResultViewerComponent } from '../filters-result-viewer/filters-result-viewer.component';
 import { TermFreqViewerComponent } from '../term-freq-viewer/term-freq-viewer.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,7 +24,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { format } from 'echarts';
+import { ToastrService } from 'ngx-toastr';
 // import { result, testTerms } from './test_responses/filters';
 
 interface Project {
@@ -72,7 +70,7 @@ export class FiltersTabComponent {
     private fs: FilterService,
     private dps: DportalService,
     private dg: MatDialog,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
   ) {
     this.form = fb.group({
@@ -112,7 +110,7 @@ export class FiltersTabComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((projects: any) => {
         if (!projects.data || !Array.isArray(projects.data)) {
-          this.sb.open('Unable to get projects.', 'Close', { duration: 60000 });
+          this.tstr.error('Unable to get projects.', 'Error');
         } else {
           this.myProjects = projects.data
             .filter((p: Project) => p.ingested_datasets.length > 0)
@@ -160,7 +158,7 @@ export class FiltersTabComponent {
         this.projects = form.projects;
       } else {
         if (!data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           return;
         }
       }

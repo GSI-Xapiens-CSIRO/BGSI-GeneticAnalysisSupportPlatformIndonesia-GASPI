@@ -1,10 +1,4 @@
-import {
-  Component,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-  ViewChildren,
-} from '@angular/core';
+import { Component, OnInit, ViewChildren } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,7 +8,6 @@ import { instanceGroups, volumeSizes } from './data';
 import {
   FormBuilder,
   FormGroup,
-  FormGroupDirective,
   FormsModule,
   ReactiveFormsModule,
   Validators,
@@ -23,13 +16,13 @@ import { MatInputModule } from '@angular/material/input';
 import { DportalService } from 'src/app/services/dportal.service';
 import { catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { NotebookItemComponent } from './notebook-item/notebook-item.component';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   MatExpansionModule,
   MatExpansionPanel,
 } from '@angular/material/expansion';
 import { MatDialog } from '@angular/material/dialog';
 import { AwsService } from 'src/app/services/aws.service';
+import { ToastrService } from 'ngx-toastr';
 
 export type InstanceName = string;
 
@@ -52,7 +45,6 @@ export interface InstanceStartInfo {
     ReactiveFormsModule,
     MatInputModule,
     NotebookItemComponent,
-    MatSnackBarModule,
     MatExpansionModule,
   ],
   templateUrl: './user-notebook-list.component.html',
@@ -70,7 +62,7 @@ export class UserNotebookListComponent implements OnInit {
   constructor(
     fb: FormBuilder,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     private aws: AwsService,
   ) {
@@ -131,9 +123,7 @@ export class UserNotebookListComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         if (!res) {
-          this.sb.open('Failed to create notebook', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error('Failed to create notebook', 'Error');
         }
         this.list();
         this.resetForm();

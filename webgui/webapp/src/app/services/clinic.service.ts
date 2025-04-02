@@ -11,6 +11,8 @@ import {
   switchMap,
 } from 'rxjs';
 import { environment } from 'src/environments/environment';
+// TODO import from ENV
+const LAB = 'RSCM';
 
 export type SelectedVariants = Map<string, string[]>;
 
@@ -18,7 +20,7 @@ export type SelectedVariants = Map<string, string[]>;
   providedIn: 'root',
 })
 export class ClinicService {
-  public selectedVariants: BehaviorSubject<Map<string, any[]>> =
+  public selectedVariants: BehaviorSubject<Map<string, any>> =
     new BehaviorSubject(new Map());
   public annotionsChanged: Subject<void> = new Subject<void>();
   public savedVariantsChanged: Subject<void> = new Subject<void>();
@@ -206,6 +208,20 @@ export class ClinicService {
         environment.api_endpoint_sbeacon.name,
         `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${savedVariantCollectionName}`,
         {},
+      ),
+    );
+  }
+
+  generateReport(project: string, jobId: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/report`,
+        {
+          body: {
+            lab: LAB,
+          },
+        },
       ),
     );
   }

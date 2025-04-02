@@ -56,13 +56,39 @@
         <div class="text-center">No variants available</div>
       }
     </div>
-
-    <mat-paginator
-      #paginator
-      [pageSizeOptions]="[5, 10, 50]"
-      [pageSize]="pageSize"
-      length="9999"
-      (page)="pageChange($event)"
-    ></mat-paginator>
+    <div class="flex flex-row justify-between items-center">
+      @if (hub) {
+        <button mat-raised-button color="primary" (click)="generateReport()">
+          Generate Report
+        </button>
+      } @else {
+        <p>Lab configuration is not set. Please contact the administrator.</p>
+      }
+      <mat-paginator
+        class="block"
+        #paginator
+        [pageSizeOptions]="[5, 10, 50]"
+        [pageSize]="pageSize"
+        length="9999"
+        (page)="pageChange($event)"
+      ></mat-paginator>
+    </div>
   </mat-card-content>
 </mat-card>
+<mat-card class="mt-4" [class.hide]="variants.length !== 0">
+  <mat-card-content>
+    <h2>No variants selected for reporting</h2>
+    <p>
+      Generating report will create the negative findings report for the
+      individual.
+    </p>
+    @if (hub) {
+      <button mat-raised-button color="primary" (click)="generateReport()">
+        Generate Report
+      </button>
+    } @else {
+      <p>Lab configuration is not set. Please contact the administrator.</p>
+    }
+  </mat-card-content>
+</mat-card>
+<a #downloadLink class="invisible" download="report.pdf"></a>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  ElementRef,
   Injectable,
   Input,
   OnChanges,
@@ -18,11 +19,13 @@ import {
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
+import { environment } from 'src/environments/environment';
+import { CONFIGS } from '../hub_configs';
+import { ToastrService } from 'ngx-toastr';
 
 type SavedVariants = {
   name: string;
@@ -62,7 +65,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   standalone: true,
   imports: [
     CommonModule,
-    MatSnackBarModule,
     MatPaginatorModule,
     MatButtonModule,
     MatIconModule,
@@ -78,16 +80,18 @@ export class SavedForReportingViewerComponent
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
   protected variants: SavedVariants[] = [];
   protected pageSize = 5;
+  protected hub = environment.hub_name in CONFIGS ? environment.hub_name : null;
   private pageTokens = new Map<number, any>();
   private savedVariantsChangedSubscription: Subscription | null = null;
 
   constructor(
     private cs: ClinicService,
-    private sb: MatSnackBar,
     private dg: MatDialog,
     private ss: SpinnerService,
+    private tstr: ToastrService,
   ) {}
 
   ngOnInit(): void {
@@ -151,14 +155,10 @@ export class SavedForReportingViewerComponent
           .pipe(catchError(() => of(null)))
           .subscribe((res) => {
             if (res) {
-              this.sb.open('Annotation deleted', 'Okay', {
-                duration: 5000,
-              });
+              this.tstr.success('Annotation deleted', 'Success');
               this.cs.savedVariantsChanged.next();
             } else {
-              this.sb.open('Failed to delete annotation', 'Dismiss', {
-                duration: 5000,
-              });
+              this.tstr.error('Failed to delete annotation', 'Error');
             }
             this.ss.end();
           });
@@ -166,11 +166,34 @@ export class SavedForReportingViewerComponent
     });
   }
 
+  generateReport() {
+    this.ss.start();
+    this.cs
+      .generateReport(this.projectName, this.requestId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((res: any) => {
+        if (res && res.success) {
+          console.log(res);
+          const dataUrl = `data:application/pdf;base64,${res.content}`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${
+            this.requestId
+          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.href = dataUrl;
+          this.downloadLink.nativeElement.click();
+        } else if (res && !res.success) {
+          this.tstr.error(res.message, 'Error');
+        } else {
+          this.tstr.error('Failed to generate report', 'Error');
+        }
+        this.ss.end();
+      });
+  }
+
   list(page: number) {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       return;
     }
 
@@ -184,14 +207,12 @@ export class SavedForReportingViewerComponent
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         if (!res) {
-          this.sb.open('Failed to load annotations', 'Dismiss', {
-            duration: 5000,
-          });
+          this.tstr.error('Failed to load annotations', 'Error');
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (res.variants.length <= 0 && this.paginator.pageIndex > 0) {
             this.paginator.pageIndex--;
-            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.tstr.warning('No more items to show', 'Warning');
             return;
           }
           this.variants = res.variants;

@@ -14,7 +14,10 @@
             (click)="cs.selection(selectedItem.value, false)"
             >[ <span class="text-red-500">X</span> ]</strong
           >
-          @for (item of selectedItem.value | keyvalue; track $index) {
+          @for (
+            item of filterCols(selectedItem.value) | keyvalue;
+            track $index
+          ) {
             {{ item.key }}: {{ item.value }}
             @if (!$last) {
               |

@@ -45,8 +45,8 @@ importers:
         specifier: 17.0.1
         version: 17.0.1(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))
       aws-amplify:
-        specifier: ^5.3.25
-        version: 5.3.25(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+        specifier: 5.3.27
+        version: 5.3.27(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       aws-sdk:
         specifier: ^2.1692.0
         version: 2.1692.0
@@ -65,6 +65,9 @@ importers:
       ngx-json-viewer:
         specifier: ^3.2.1
         version: 3.2.1
+      ngx-toastr:
+        specifier: ^19.0.0
+        version: 19.0.0(@angular/common@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1))(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(@angular/platform-browser@17.3.11(@angular/animations@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7)))(@angular/common@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1))(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7)))
       plotly.js-dist-min:
         specifier: ^2.33.0
         version: 2.33.0
@@ -333,50 +336,50 @@ packages:
       '@angular/platform-browser': 17.3.11
       rxjs: ^6.5.3 || ^7.4.0
 
-  '@aws-amplify/analytics@6.5.13':
-    resolution: {integrity: sha512-tqWbVFIo7KASweFVeJzWkmtzfpblyh+XQzJWO1ZAkrNjs+KxCEKvFuK3wteUcbAwRsFQEfkF3Kgx90eq4XKrfA==}
+  '@aws-amplify/analytics@6.5.14':
+    resolution: {integrity: sha512-sAv7X8t3WL+t+0z+zAahIXhx/f5rrstCy1RlMEykxP5FWEwKKTpDBO9LdWZLGNnR1nYeTUeKwSl2zzn2FdYS0w==}
 
-  '@aws-amplify/api-graphql@3.4.21':
-    resolution: {integrity: sha512-10UQ3pCS9RyucaJJRAw+ZbEDUSibDyZ3VsEojQlT4hEwvdj2RBVWdcJvqXCVwggyXr5D3FzlGsDFc1jKo+gBEQ==}
+  '@aws-amplify/api-graphql@3.4.22':
+    resolution: {integrity: sha512-6Y8G+RfAZWy4tjTf8iC/c8YEDT15GvpLNep7NGhKAsemQ35CDg/AtktlFKbk5MrRP9+gd/qlU0hWBgTa1pQOGw==}
 
-  '@aws-amplify/api-rest@3.5.13':
-    resolution: {integrity: sha512-9N+mTivn/98l7Dl3VoVzBx72xh//mJX/ew9rFgH0nR8vW9Lbsk/GwGus9m7vIR18qymdWe/dfdXAb76whGzhzA==}
+  '@aws-amplify/api-rest@3.5.14':
+    resolution: {integrity: sha512-+vqdckBs4+T/J1+uTbg8Lxd8toH1n0ttV8K89LQ7t9aaGntomLEQJlfBLtZyII8lM3oJyKB26J0Eh9z15IaH7Q==}
 
-  '@aws-amplify/api@5.4.15':
-    resolution: {integrity: sha512-pOgKEB++/WNuzks1DFoaUegMNYYWBlNL+Os6gAb1iHiJn8F1j+gPuzv4s48vrQAJkGo9/NiADmF8875i4k1R8A==}
+  '@aws-amplify/api@5.4.16':
+    resolution: {integrity: sha512-j4yTG0cOK0YvBNItamY2Nhugn5mP3WJEDyhUZSGY16k1h4GWzG0k247GMqAJpDwDp6e5KvQZKt92i+c1+ZW+dg==}
 
-  '@aws-amplify/auth@5.6.14':
-    resolution: {integrity: sha512-MBPaSLJf0Vrq1j1/KEb0en9rsIG3DvrT0N+WggWtvsG3aUIpSnIIFb8g8cNxjfmPJYLUJMiB/gw486RyfANbiw==}
+  '@aws-amplify/auth@5.6.15':
+    resolution: {integrity: sha512-bMaP09rd/tIZvDAbhhVEEBdpoEgnt1ua5S6efQzfY6zpwdDLEgP+ZJ8hJLCjgPx5SpZ9G0+ltg0Ig5tBWAo2vA==}
 
-  '@aws-amplify/cache@5.1.19':
-    resolution: {integrity: sha512-XX+wiD9ft0fJ32nO/rJ2Fw4oSlP6lli47yMwXYEbNAuIkw6som+2Cij12du4epOTbSXckaRGEbYTAkn30+rSAg==}
+  '@aws-amplify/cache@5.1.20':
+    resolution: {integrity: sha512-3mnfVm/u2ndio3j/0yywbKT3HpAuS2RJeuTlwqXpMOhZBdJJmzNMBTo5ZIkl5MlnppozQ3LD62sdT372hOwZiQ==}
 
-  '@aws-amplify/core@5.8.13':
-    resolution: {integrity: sha512-Ok6oFHQj0Bv3C6yXiQLayBKJiXXrsoQji59WRZ7kCxvymybl8ONym7PfJLoDLK9BNMrgzD97NIEACe/Av5PJmg==}
+  '@aws-amplify/core@5.8.14':
+    resolution: {integrity: sha512-QU+3zQspE9f2CrZOtGDuHBZU9WqZ6PDQUEslVV+VCu2CduBDTtfnl1hCfVJ6vnUIxhwB24onpBwKz/IGZgh86g==}
 
-  '@aws-amplify/datastore@4.7.15':
-    resolution: {integrity: sha512-xxBqm4HtpB1t7j91QQXQcmbqUBUkhCRvXqQVQ2qFdK5LYh0gtzIPUUqFINS0sga+ZkRxucoCw2YIVtLGtsHlKQ==}
+  '@aws-amplify/datastore@4.7.16':
+    resolution: {integrity: sha512-o+YAzARAlvtv4+iHERkyeClT84uP11HKPZ8s084TwwE03o/L1ym5dDBbhYq4vaB7meDurCNiuQLHVHosPYPlLQ==}
 
-  '@aws-amplify/geo@2.3.13':
-    resolution: {integrity: sha512-ZVbIfafw2dlsdY+4/cxuZNDuQcP2wFqZiwdg0rkohmC48GLxNTsfrlCNsFRa8XCFfwuNUlsZrSJ/ItVoFQq6iA==}
+  '@aws-amplify/geo@2.3.14':
+    resolution: {integrity: sha512-HKJlxu1e+yd5P7kD8tCwbMRaNJdusVPifargT7E8i0AY6FXiylYz2U8PedhcIRlgJykCIhuNoTMMA8nOVYgKHg==}
 
-  '@aws-amplify/interactions@5.2.20':
-    resolution: {integrity: sha512-B/L2PwKmRzx42E9DRS0gdsmAX+ejz9vlOOFD6W3Ea9nNLDoN8RSRn0TrCp+5IlFJLXgJ9dNS6ipSs14mCyQ9UA==}
+  '@aws-amplify/interactions@5.2.21':
+    resolution: {integrity: sha512-RduNt/0zZOgsQa1sC/1Ro3q6m4rQ4JStdqEXWEujtkzmiRB6I1BzdxuM0bjOLvDAXqdVGy2dWRMgpmhRzg7JOg==}
 
-  '@aws-amplify/notifications@1.6.14':
-    resolution: {integrity: sha512-ftRHVlP6gxp2E4KroMJwPULxd+EyjO84zjKp2v5BZ8EDYtJGCyG/6HvC/MIR0da2IyPXzwDXMPnKnEL7fRk95A==}
+  '@aws-amplify/notifications@1.6.16':
+    resolution: {integrity: sha512-gLz26cdn0H1J4rbOJg4K6pnUARAUgfUb9OtlfoTYaHjPR8rWBphrACNEJBOWZKuRuJi3bSIVQy0EZT8sbYr4tA==}
 
-  '@aws-amplify/predictions@5.5.16':
-    resolution: {integrity: sha512-ki0r+KNQbWivY7kF+LfuZBhobvrFXOfsw8pID1C/qOIXT1SZOHIAHhk5YbXH6fM1Rs8+4/1hdR5Qa6rzTcbA0w==}
+  '@aws-amplify/predictions@5.5.17':
+    resolution: {integrity: sha512-8Zu/BQjK8PAD3KI44OMSadz/o9WGujipQAW2qH6LgVpOS4e7l1g2cPEw5xwSBrodJOiXJ6REyWbzujXlp1ZTDw==}
 
-  '@aws-amplify/pubsub@5.6.1':
-    resolution: {integrity: sha512-8dSDNw2RIa9a5I9JcvDmotqThXwQOdoF+MkXe4Vo9llO0+bKt8ptWtKS0J0ZcGJc3n5rVjjFrGUbh6kvKDBuVw==}
+  '@aws-amplify/pubsub@5.6.2':
+    resolution: {integrity: sha512-aOrBMcEO9ulsPlTy0p91OS8PU9SiFNcFoT3NKmlTYok9XR/1Yf0dgAaXCttuOYCjjlt9T+QKyJ96m3z3cIJr1Q==}
 
-  '@aws-amplify/rtn-push-notification@1.1.14':
-    resolution: {integrity: sha512-C3y+iL8/9800wWOyIAVYAKzrHZkFeI3y2ZoJlj0xot+dCbQZkMr/XjO2ZwfC58XRKUiDKFfzCJW/XoyZlvthfw==}
+  '@aws-amplify/rtn-push-notification@1.1.15':
+    resolution: {integrity: sha512-nqn+xZkO4pX107rQmVieBRLGC9Qj65PDJqutmY5BX85DIt8vsPfWqLnuZlx4Y6uvaddosgmyt441U/Rd7Kc8ig==}
 
-  '@aws-amplify/storage@5.9.15':
-    resolution: {integrity: sha512-U88da+7HFYzzn+orF1G9AE/xFpT5cGOmZGaBlhoGFAu6xs7b5CQkCyZubUXpi5EPFJEz2624uKiCmldZJxFfKA==}
+  '@aws-amplify/storage@5.9.16':
+    resolution: {integrity: sha512-Ck2h2D14Hw1HdBaJ4e/QWtknvE+Whnn8iHLndSo9Z9rCU0QK8arIYs2KogvggihRi0drT+3ykfsZfpZYco/WCg==}
 
   '@aws-crypto/crc32@1.2.2':
     resolution: {integrity: sha512-8K0b1672qbv05chSoKpwGZ3fhvVp28Fg3AVHVkEHFl2lTLChO7wD/hTyyo8ING7uc31uZRt7bNra/hA74Td7Tw==}
@@ -2442,11 +2445,11 @@ packages:
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
 
-  '@types/cookie@0.3.3':
-    resolution: {integrity: sha512-LKVP3cgXBT9RYj+t+9FDKwS5tdI+rPBXaNSkma7hvqy35lc7mAokC2zsqWJH0LaqIt3B962nuYI77hsJoT1gow==}
-
   '@types/cookie@0.4.1':
     resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
+
+  '@types/cookie@0.6.0':
+    resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
 
   '@types/cors@2.8.17':
     resolution: {integrity: sha512-8CGDvrBj1zgo2qE+oS3pOCyYNqCPryMWY2bGfwA0dcfopWGgxs+78df0Rs3rc9THP4JkOhLsAa+15VdpAqkcUA==}
@@ -2792,8 +2795,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  aws-amplify@5.3.25:
-    resolution: {integrity: sha512-m6Y8PMaY5jRpID28n2xvDTjnIoU+zM/Hvj9IDJObk5SU/bTS7iPdf8h3id0ozbwyhYTbuESRCLlny3k6JKeF8Q==}
+  aws-amplify@5.3.27:
+    resolution: {integrity: sha512-L4impLEBZKwNWRuM8jyfV4IUkGlh0ayLM1yRabd/Gm50leY8VSUbq5eXYhHzZpE2xcuqqIhuySo6Ui/y0gZ/iQ==}
 
   aws-sdk@2.1692.0:
     resolution: {integrity: sha512-x511uiJ/57FIsbgUe5csJ13k3uzu25uWQE+XqfBis/sB0SFoiElJWXRkgEAUh0U6n40eT3ay5Ue4oPkRMu1LYw==}
@@ -3127,6 +3130,10 @@ packages:
 
   cookie@0.6.0:
     resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+    engines: {node: '>= 0.6'}
+
+  cookie@0.7.2:
+    resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
 
   copy-anything@2.0.6:
@@ -3505,10 +3512,6 @@ packages:
 
   fast-uri@3.0.1:
     resolution: {integrity: sha512-MWipKbbYiYI0UC7cl8m/i/IWTqfC8YXsqjzybjddLsFjStroQzsHXkc73JutMvBiXmOvapk+axIl79ig5t55Bw==}
-
-  fast-xml-parser@4.4.0:
-    resolution: {integrity: sha512-kLY3jFlwIYwBNDojclKsNAC12sfD6NwW74QB2CoNGPvtVxjliYehVunB3HYyNi+n4Tt1dAcgwYvmKF/Z18flqg==}
-    hasBin: true
 
   fast-xml-parser@4.4.1:
     resolution: {integrity: sha512-xkjOecfnKGkSsOwtZ5Pz7Us/T6mrbPQrq0nh+aCO5V9nk5NLWmasAHumTKjiPJPWANe+kAZ84Jc8ooJkzZ88Sw==}
@@ -4576,6 +4579,13 @@ packages:
 
   ngx-json-viewer@3.2.1:
     resolution: {integrity: sha512-TTHtXsrBX+IXPqqAIsxklHPqSNmyGeQaziFZbCDJq1PnPOQmTrEHfwNrzN3LnWGhf7UxeM1cK0njegVPChwEcg==}
+
+  ngx-toastr@19.0.0:
+    resolution: {integrity: sha512-6pTnktwwWD+kx342wuMOWB4+bkyX9221pAgGz3SHOJH0/MI9erLucS8PeeJDFwbUYyh75nQ6AzVtolgHxi52dQ==}
+    peerDependencies:
+      '@angular/common': '>=16.0.0-0'
+      '@angular/core': '>=16.0.0-0'
+      '@angular/platform-browser': '>=16.0.0-0'
 
   nice-napi@1.0.2:
     resolution: {integrity: sha512-px/KnJAJZf5RuBGcfD+Sp2pAKq0ytz8j+1NehvgIGFkvtvFrDM3T8E4x/JJODXK9WZow8RRGrbA9QQ3hs+pDhA==}
@@ -5774,8 +5784,8 @@ packages:
     resolution: {integrity: sha512-WrcA6AyEfqDX5bWige/4NQfPZMtASNVxdmWR76WESYQVAACSgWcR6e9i0mofqqBxYFtL4oAxPIptY73/0YE1DQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  universal-cookie@4.0.4:
-    resolution: {integrity: sha512-lbRVHoOMtItjWbM7TwDLdl8wug7izB0tq3/YVKhT/ahB4VDvWMyvnADfnJI8y6fSvsjh51Ix7lTGC6Tn4rMPhw==}
+  universal-cookie@7.2.2:
+    resolution: {integrity: sha512-fMiOcS3TmzP2x5QV26pIH3mvhexLIT0HmPa3V7Q7knRfT9HG6kTwq02HZGLPw0sAOXrAmotElGRvTLCMbJsvxQ==}
 
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
@@ -6471,10 +6481,10 @@ snapshots:
       rxjs: 7.8.1
       tslib: 2.6.3
 
-  '@aws-amplify/analytics@6.5.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/analytics@6.5.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/cache': 5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/cache': 5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-firehose': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-kinesis': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-personalize-events': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
@@ -6486,13 +6496,13 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/api-graphql@3.4.21(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/api-graphql@3.4.22(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/api-rest': 3.5.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/auth': 5.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/cache': 5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/pubsub': 5.6.1(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/api-rest': 3.5.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/auth': 5.6.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/cache': 5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/pubsub': 5.6.2(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       graphql: 15.8.0
       tslib: 1.14.1
       uuid: 3.4.0
@@ -6502,9 +6512,9 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/api-rest@3.5.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/api-rest@3.5.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       axios: 1.7.2
       tslib: 1.14.1
       url: 0.11.0
@@ -6513,19 +6523,19 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/api@5.4.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/api@5.4.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/api-graphql': 3.4.21(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/api-rest': 3.5.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/api-graphql': 3.4.22(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/api-rest': 3.5.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       tslib: 1.14.1
     transitivePeerDependencies:
       - debug
       - encoding
       - react-native
 
-  '@aws-amplify/auth@5.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/auth@5.6.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       amazon-cognito-identity-js: 6.3.14(encoding@0.1.13)
       buffer: 4.9.2
       tslib: 1.14.1
@@ -6534,15 +6544,15 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/cache@5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/cache@5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       tslib: 1.14.1
     transitivePeerDependencies:
       - encoding
       - react-native
 
-  '@aws-amplify/core@5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/core@5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
       '@aws-crypto/sha256-js': 1.2.2
       '@aws-sdk/client-cloudwatch-logs': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
@@ -6552,18 +6562,18 @@ snapshots:
       isomorphic-unfetch: 3.1.0(encoding@0.1.13)
       react-native-url-polyfill: 1.3.0(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       tslib: 1.14.1
-      universal-cookie: 4.0.4
+      universal-cookie: 7.2.2
       zen-observable-ts: 0.8.19
     transitivePeerDependencies:
       - encoding
       - react-native
 
-  '@aws-amplify/datastore@4.7.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/datastore@4.7.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/api': 5.4.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/auth': 5.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/pubsub': 5.6.1(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/api': 5.4.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/auth': 5.6.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/pubsub': 5.6.2(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       amazon-cognito-identity-js: 6.3.14(encoding@0.1.13)
       buffer: 4.9.2
       idb: 5.0.6
@@ -6577,9 +6587,9 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/geo@2.3.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/geo@2.3.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-location': 3.186.4
       '@turf/boolean-clockwise': 6.5.0
       camelcase-keys: 6.2.2
@@ -6589,9 +6599,9 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/interactions@5.2.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/interactions@5.2.21(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-lex-runtime-service': 3.186.4
       '@aws-sdk/client-lex-runtime-v2': 3.186.4
       base-64: 1.0.0
@@ -6603,21 +6613,21 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/notifications@1.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/notifications@1.6.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/cache': 5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/rtn-push-notification': 1.1.14
+      '@aws-amplify/cache': 5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/rtn-push-notification': 1.1.15
       lodash: 4.17.21
       uuid: 3.4.0
     transitivePeerDependencies:
       - encoding
       - react-native
 
-  '@aws-amplify/predictions@5.5.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/predictions@5.5.17(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/storage': 5.9.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/storage': 5.9.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-comprehend': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-polly': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/client-rekognition': 3.6.1(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
@@ -6632,11 +6642,11 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/pubsub@5.6.1(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/pubsub@5.6.2(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/auth': 5.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/cache': 5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/auth': 5.6.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/cache': 5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       buffer: 4.9.2
       graphql: 15.8.0
       tslib: 1.14.1
@@ -6647,16 +6657,16 @@ snapshots:
       - encoding
       - react-native
 
-  '@aws-amplify/rtn-push-notification@1.1.14': {}
+  '@aws-amplify/rtn-push-notification@1.1.15': {}
 
-  '@aws-amplify/storage@5.9.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
+  '@aws-amplify/storage@5.9.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))':
     dependencies:
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       '@aws-sdk/md5-js': 3.6.1
       '@aws-sdk/types': 3.6.1
       buffer: 4.9.2
       events: 3.3.0
-      fast-xml-parser: 4.4.0
+      fast-xml-parser: 4.4.1
       tslib: 1.14.1
     transitivePeerDependencies:
       - encoding
@@ -10772,9 +10782,9 @@ snapshots:
     dependencies:
       '@types/node': 20.14.11
 
-  '@types/cookie@0.3.3': {}
-
   '@types/cookie@0.4.1': {}
+
+  '@types/cookie@0.6.0': {}
 
   '@types/cors@2.8.17':
     dependencies:
@@ -11166,20 +11176,20 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  aws-amplify@5.3.25(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0)):
+  aws-amplify@5.3.27(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0)):
     dependencies:
-      '@aws-amplify/analytics': 6.5.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/api': 5.4.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/auth': 5.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/cache': 5.1.19(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/core': 5.8.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/datastore': 4.7.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/geo': 2.3.13(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/interactions': 5.2.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/notifications': 1.6.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/predictions': 5.5.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/pubsub': 5.6.1(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
-      '@aws-amplify/storage': 5.9.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/analytics': 6.5.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/api': 5.4.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/auth': 5.6.15(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/cache': 5.1.20(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/core': 5.8.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/datastore': 4.7.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/geo': 2.3.14(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/interactions': 5.2.21(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/notifications': 1.6.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/predictions': 5.5.17(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/pubsub': 5.6.2(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
+      '@aws-amplify/storage': 5.9.16(encoding@0.1.13)(react-native@0.72.7(@babel/core@7.24.9)(@babel/preset-env@7.24.0(@babel/core@7.24.9))(encoding@0.1.13)(react@18.2.0))
       tslib: 2.6.3
     transitivePeerDependencies:
       - aws-crt
@@ -11619,6 +11629,8 @@ snapshots:
 
   cookie@0.6.0: {}
 
+  cookie@0.7.2: {}
+
   copy-anything@2.0.6:
     dependencies:
       is-what: 3.14.1
@@ -12049,10 +12061,6 @@ snapshots:
   fast-json-stable-stringify@2.1.0: {}
 
   fast-uri@3.0.1: {}
-
-  fast-xml-parser@4.4.0:
-    dependencies:
-      strnum: 1.0.5
 
   fast-xml-parser@4.4.1:
     dependencies:
@@ -13351,6 +13359,13 @@ snapshots:
     dependencies:
       tslib: 2.6.3
 
+  ngx-toastr@19.0.0(@angular/common@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1))(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(@angular/platform-browser@17.3.11(@angular/animations@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7)))(@angular/common@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1))(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))):
+    dependencies:
+      '@angular/common': 17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1)
+      '@angular/core': 17.3.11(rxjs@7.8.1)(zone.js@0.14.7)
+      '@angular/platform-browser': 17.3.11(@angular/animations@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7)))(@angular/common@17.3.11(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))(rxjs@7.8.1))(@angular/core@17.3.11(rxjs@7.8.1)(zone.js@0.14.7))
+      tslib: 2.6.3
+
   nice-napi@1.0.2:
     dependencies:
       node-addon-api: 3.2.1
@@ -14626,10 +14641,10 @@ snapshots:
     dependencies:
       imurmurhash: 0.1.4
 
-  universal-cookie@4.0.4:
+  universal-cookie@7.2.2:
     dependencies:
-      '@types/cookie': 0.3.3
-      cookie: 0.4.2
+      '@types/cookie': 0.6.0
+      cookie: 0.7.2
 
   universalify@0.1.2: {}
 

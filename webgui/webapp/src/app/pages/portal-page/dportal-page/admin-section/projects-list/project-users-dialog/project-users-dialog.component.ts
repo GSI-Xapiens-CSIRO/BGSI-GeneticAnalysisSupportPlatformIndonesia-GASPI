@@ -1,13 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Inject,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -16,8 +7,8 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
 
@@ -34,7 +25,6 @@ interface User {
     MatIconModule,
     MatButtonModule,
     MatTableModule,
-    MatSnackBarModule,
     MatDialogModule,
     MatDialogModule,
   ],
@@ -48,7 +38,7 @@ export class ProjectUsersDialogComponent {
 
   constructor(
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     public dialogRef: MatDialogRef<ProjectUsersDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: string },
@@ -63,9 +53,7 @@ export class ProjectUsersDialogComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((users: User[] | null) => {
         if (!users) {
-          this.sb.open('Unable to add user. Please check email.', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error('Unable to add user. Please check email.', 'error');
         } else {
           this.dataSource.data = users;
         }
@@ -90,9 +78,7 @@ export class ProjectUsersDialogComponent {
           .pipe(catchError(() => of(null)))
           .subscribe((res: any) => {
             if (!res) {
-              this.sb.open('Unable to remove user.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to remove user.', 'Error');
             }
             this.list();
           });

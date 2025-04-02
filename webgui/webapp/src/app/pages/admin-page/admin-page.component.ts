@@ -21,8 +21,6 @@ import {
   MatPaginatorModule,
 } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { GlobalSpinnerComponent } from '../../components/global-spinner/global-spinner.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
@@ -108,8 +106,6 @@ export class AdminPageComponent implements OnInit {
     private fb: FormBuilder,
     private cd: ChangeDetectorRef,
     private dg: MatDialog,
-    private sb: MatSnackBar,
-    private ss: SpinnerService,
   ) {
     this.newUserForm = this.fb.group({
       firstName: ['', Validators.required],

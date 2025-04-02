@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
 import * as _ from 'lodash';
 import { EntityCountsByTermPlotComponent } from '../entity-counts-by-term-plot/entity-counts-by-term-plot.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-term-freq-viewer',
@@ -32,7 +32,7 @@ export class TermFreqViewerComponent implements OnChanges, OnDestroy {
 
   constructor(
     private fs: FilterService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {}
 
   ngOnChanges(): void {
@@ -72,7 +72,7 @@ export class TermFreqViewerComponent implements OnChanges, OnDestroy {
       )
       .subscribe((counts) => {
         if (!counts) {
-          this.sb.open('Unable to fetch details', 'Okay', { duration: 60000 });
+          this.tstr.error('Unable to fetch details', 'Error');
         } else if (counts.length == this.terms.length) {
           this.counts = _.reverse(_.sortBy(counts, (item) => item.count));
           this.loading = false;

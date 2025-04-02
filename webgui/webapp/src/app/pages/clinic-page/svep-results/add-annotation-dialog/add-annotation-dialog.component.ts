@@ -15,7 +15,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
@@ -42,7 +42,7 @@ export class AddAnnotationDialogComponent {
 
   constructor(
     protected cs: ClinicService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
     public dialogRef: MatDialogRef<AddAnnotationDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
@@ -62,13 +62,9 @@ export class AddAnnotationDialogComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {
-          this.sb.open('Failed to save annotations', 'Okay', {
-            duration: 5000,
-          });
+          this.tstr.error('Failed to save annotations', 'Error');
         } else {
-          this.sb.open('Annotations saved', 'Okay', {
-            duration: 5000,
-          });
+          this.tstr.success('Annotations saved', 'Success');
           this.cs.selectedVariants.next(new Map());
           this.cs.annotionsChanged.next();
           this.dialogRef.close();

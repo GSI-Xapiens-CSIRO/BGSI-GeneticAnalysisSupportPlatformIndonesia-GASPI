@@ -14,12 +14,12 @@ import {
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
 import * as _ from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 
 interface Project {
   name: string;
@@ -55,7 +55,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule,
     MatTooltipModule,
     ClipboardModule,
     MatTableModule,
@@ -76,7 +75,7 @@ export class UserProjectsListComponent implements OnInit {
 
   constructor(
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private cb: Clipboard,
     private cd: ChangeDetectorRef,
   ) {
@@ -102,7 +101,7 @@ export class UserProjectsListComponent implements OnInit {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       return;
     }
     this.dps
@@ -110,13 +109,13 @@ export class UserProjectsListComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((data: any) => {
         if (!data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           this.dataSource.data = [];
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (data && data.data.length <= 0 && this.paginator.pageIndex > 0) {
             this.paginator.pageIndex--;
-            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.tstr.warning('No more items to show', 'Warning');
             return;
           }
 
@@ -145,9 +144,7 @@ export class UserProjectsListComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((url: string | null) => {
         if (!url) {
-          this.sb.open('Unable to sign file.', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error('Unable to sign file.', 'Error');
         } else {
           const pending = this.cb.beginCopy(url);
           let remainingAttempts = 3;

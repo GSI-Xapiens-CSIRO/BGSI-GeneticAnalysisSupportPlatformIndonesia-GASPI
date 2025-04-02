@@ -4,7 +4,7 @@
   (dragenter)="highlight($event)"
   (dragover)="highlight($event)"
   (dragleave)="unhighlight($event)"
-  (drop)="handleDrop($event)"
+  (drop)="unhighlight($event); handleDrop($event)"
   (click)="!disabled && input.click()"
   [class]="disabled ? 'bg-gray-500' : ''"
 >

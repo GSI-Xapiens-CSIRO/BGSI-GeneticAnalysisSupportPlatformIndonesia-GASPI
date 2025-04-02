@@ -28,7 +28,6 @@ import {
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   FormControl,
   FormGroup,
@@ -49,6 +48,7 @@ import {
   ScrollingModule,
   VIRTUAL_SCROLL_STRATEGY,
 } from '@angular/cdk/scrolling';
+import { ToastrService } from 'ngx-toastr';
 
 type SVEPResult = {
   url?: string;
@@ -153,7 +153,7 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
   constructor(
     protected cs: ClinicService,
     private ss: SpinnerService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
@@ -282,9 +282,7 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {
-          this.sb.open('Failed to load data', 'Dismiss', {
-            duration: 5000,
-          });
+          this.tstr.error('Failed to load data', 'Error');
         } else {
           this.results = data;
           this.updateTable(data);

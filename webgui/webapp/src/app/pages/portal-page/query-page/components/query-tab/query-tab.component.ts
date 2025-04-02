@@ -26,7 +26,6 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { FilterTypes, ScopeTypes } from 'src/app/utils/interfaces';
 import { catchError, of, Subscription } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import _ from 'lodash';
 import { QueryResultViewerContainerComponent } from '../query-result-viewer-container/query-result-viewer-container.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -51,6 +50,7 @@ import {
 import { customQueries } from './custom-queries';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { ToastrService } from 'ngx-toastr';
 // import { result, query, endpoint } from './test_responses/individuals';
 // import { result, query } from './test_responses/biosamples';
 
@@ -152,7 +152,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     private qs: QueryService,
     private dps: DportalService,
     public dg: MatDialog,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
     private sanitizer: DomSanitizer,
   ) {
@@ -256,9 +256,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe((queries: any) => {
         if (queries === null) {
-          this.sb.open('Unable to get saved queries.', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error('Unable to get saved queries.', 'Error');
         } else {
           this.savedQueries = queries;
         }
@@ -285,7 +283,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe((projects: any) => {
         if (!projects.data || !Array.isArray(projects.data)) {
-          this.sb.open('Unable to get projects.', 'Close', { duration: 60000 });
+          this.tstr.error('Unable to get projects.', 'Error');
         } else {
           this.myProjects = projects.data
             .filter((p: Project) => p.ingested_datasets.length > 0)
@@ -360,18 +358,14 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
             err.response.status === 403 &&
             err.response.data.code === 'QUOTA_EXCEEDED'
           ) {
-            this.sb.open(
+            this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Error',
             );
           } else {
-            this.sb.open(
+            this.tstr.error(
               'API request failed. Please check your parameters.',
-              'Okay',
-              { duration: 60000 },
+              'Error',
             );
           }
           return of(null);
@@ -534,9 +528,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
           .pipe(catchError(() => of(null)))
           .subscribe((res) => {
             if (!res) {
-              this.sb.open('Unable to save query.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to save query.', 'Error');
             } else {
               this.savedQueries.push({
                 name: details.name,
@@ -570,9 +562,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
                 (_, index) => index !== index,
               );
             } else {
-              this.sb.open('Unable to delete query.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to delete query.', 'Error');
             }
           });
       }

@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   FormGroup,
   FormControl,
@@ -9,7 +9,6 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,6 +20,7 @@ import {
   isStrongPassword,
   PasswordStrengthBarComponent,
 } from 'src/app/components/password-strength-bar/password-strength-bar.component';
+import { ToastrService } from 'ngx-toastr';
 
 const passwordsValidator = (): ValidatorFn => {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -94,7 +94,7 @@ export class LoginPageComponent {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
   ) {}
 
@@ -120,9 +120,10 @@ export class LoginPageComponent {
         if (success) {
           this.router.navigate(['/']);
         } else {
-          this.sb.open('Something went wrong, please contact admin!', 'Okay', {
-            duration: 60000,
-          });
+          this.tstr.error(
+            'Something went wrong, please contact admin!',
+            'Error',
+          );
         }
         break;
       }
@@ -135,12 +136,9 @@ export class LoginPageComponent {
           );
 
           if (response === 'SUCCESS') {
-            this.sb.open(
+            this.tstr.success(
               'Password reset successful! You can now log in with your new password.',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Success',
             );
 
             this.state = StateTypes.ORDINARY_LOGIN;
@@ -148,18 +146,13 @@ export class LoginPageComponent {
             // reset form resetCode and newPassword
             this.resetFormForgotPassword();
           } else {
-            this.sb.open(
+            this.tstr.error(
               'Something went wrong, please contact admin!',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Error',
             );
           }
         } catch (error: any) {
-          this.sb.open(error.message, 'Okay', {
-            duration: 60000,
-          });
+          this.tstr.error(error.message, 'OkaErrory');
         }
 
         break;
@@ -174,9 +167,7 @@ export class LoginPageComponent {
             this.router.navigate(['/']);
             break;
           case false:
-            this.sb.open('Please recheck username and password!', 'Okay', {
-              duration: 60000,
-            });
+            this.tstr.error('Please recheck username and password!', 'Error');
             break;
           case 'NEW_PASSWORD_REQUIRED':
             this.state = StateTypes.FIRST_LOGIN;
@@ -195,9 +186,7 @@ export class LoginPageComponent {
         if (success) {
           this.router.navigate(['/']);
         } else {
-          this.sb.open('Please recheck TOTP!', 'Okay', {
-            duration: 60000,
-          });
+          this.tstr.error('Please recheck TOTP!', 'Error');
         }
         this.state = StateTypes.ORDINARY_LOGIN;
         break;
@@ -225,9 +214,7 @@ export class LoginPageComponent {
 
         this.loading = false;
       } catch (error: any) {
-        this.sb.open(error.message, 'Okay', {
-          duration: 60000,
-        });
+        this.tstr.error(error.message, 'Error');
       }
     } else {
       this.loginForm.controls.email.markAsTouched();

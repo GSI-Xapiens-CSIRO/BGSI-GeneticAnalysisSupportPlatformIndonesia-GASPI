@@ -8,7 +8,6 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { QueryService } from 'src/app/services/query.service';
 import { FilterTypes, ScopeTypes } from 'src/app/utils/interfaces';
@@ -18,7 +17,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { RouterLink } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
@@ -26,6 +24,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { FilterEditorComponent } from 'src/app/components/filter-editor/filter-editor.component';
 import _ from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-advanced-query-results-viewer',
@@ -75,7 +74,7 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
     private fb: FormBuilder,
     private dg: MatDialog,
     private qs: QueryService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {
     this.filtersForm = this.fb.array(
       [],
@@ -197,18 +196,14 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
             err.response.status === 403 &&
             err.response.data.code === 'QUOTA_EXCEEDED'
           ) {
-            this.sb.open(
+            this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Error',
             );
           } else {
-            this.sb.open(
+            this.tstr.error(
               'API request failed. Please check your parameters.',
-              'Okay',
-              { duration: 60000 },
+              'Error',
             );
           }
           return of(null);

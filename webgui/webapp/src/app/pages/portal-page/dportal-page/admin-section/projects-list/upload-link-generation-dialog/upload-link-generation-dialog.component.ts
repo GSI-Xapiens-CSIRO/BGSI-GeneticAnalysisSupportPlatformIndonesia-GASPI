@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Inject, Input, Output } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -15,12 +15,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Storage } from 'aws-amplify';
 import AWS from 'aws-sdk';
-import { catchError, of } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
-import { DportalService } from 'src/app/services/dportal.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -33,7 +29,6 @@ import { environment } from 'src/environments/environment';
     FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule,
     MatDialogModule,
   ],
   templateUrl: './upload-link-generation-dialog.component.html',

@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, Observable, of, startWith, Subscription } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import {
   FormBuilder,
@@ -23,6 +22,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { ListJobComponent } from './list-project-id/list-project-id.component';
 import { MatIconModule } from '@angular/material/icon';
 import { SavedForReportingViewerComponent } from './saved-for-reporting-viewer/saved-for-reporting-viewer.component';
+import { ToastrService } from 'ngx-toastr';
 
 interface Project {
   name: string;
@@ -68,7 +68,7 @@ export class SvepResultsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {
     this.requestIdFormControl = this.fb.control('', {
       validators: [Validators.required],
@@ -134,7 +134,7 @@ export class SvepResultsComponent implements OnInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe((projects: any) => {
         if (!projects?.data || !Array.isArray(projects.data)) {
-          this.sb.open('Unable to get projects.', 'Close', { duration: 60000 });
+          this.tstr.error('Unable to get projects.', 'Error');
         } else {
           this.myProjects = projects.data.map((p: Project) => ({
             ...p,

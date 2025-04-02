@@ -1,10 +1,4 @@
-import {
-  Component,
-  Inject,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-} from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -29,10 +23,10 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { AwsService } from 'src/app/services/aws.service';
 import { gigabytesToBytes } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -64,7 +58,7 @@ export class AdminCreateUserComponent implements OnInit {
     private dg: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private ss: SpinnerService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private aws: AwsService,
     private uq: UserQuotaService,
   ) {
@@ -117,16 +111,11 @@ export class AdminCreateUserComponent implements OnInit {
           if (
             _.get(e, 'response.data.error', '') === 'UsernameExistsException'
           ) {
-            this.sb.open('This user already exists!', 'Okay', {
-              duration: 60000,
-            });
+            this.tstr.warning('This user already exists!', 'Warning');
           } else {
-            this.sb.open(
+            this.tstr.error(
               e.response?.data?.message ?? 'Please Try Again Later',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Error',
             );
           }
           return of(null);
@@ -134,13 +123,12 @@ export class AdminCreateUserComponent implements OnInit {
       )
       .subscribe((response) => {
         this.ss.end();
-        this.addUserQuota(response?.uid ?? form.email);
-
-        this.newUserForm.reset();
-        this.dialogRef.close({ reload: true });
-        this.sb.open('User created successfully!', 'Okay', {
-          duration: 60000,
-        });
+        if (response) {
+          this.addUserQuota(response?.uid ?? form.email);
+          this.newUserForm.reset();
+          this.dialogRef.close({ reload: true });
+          this.tstr.success('User created successfully!', 'Success');
+        }
       });
   }
 

@@ -8,11 +8,11 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { catchError, of } from 'rxjs';
 import { OntologyService } from 'src/app/services/ontology.service';
 import { ComponentSpinnerComponent } from '../component-spinner/component-spinner.component';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-word-click-dialog',
@@ -26,7 +26,6 @@ import { ComponentSpinnerComponent } from '../component-spinner/component-spinne
     MatDialogModule,
     MatButtonModule,
     CommonModule,
-    MatSnackBarModule,
     ComponentSpinnerComponent,
   ],
 })
@@ -38,7 +37,7 @@ export class WordClickDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<WordClickDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private os: OntologyService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {}
   ngOnInit(): void {
     this.os
@@ -48,7 +47,7 @@ export class WordClickDialogComponent implements OnInit {
         if (data) {
           this.results = data;
         } else {
-          this.sb.open('Unable to fetch details', 'Okay', { duration: 60000 });
+          this.tstr.error('Unable to fetch details', 'Error');
         }
         this.loading = false;
       });

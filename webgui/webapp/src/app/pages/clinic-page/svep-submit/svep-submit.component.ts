@@ -1,6 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatInputModule } from '@angular/material/input';
@@ -11,18 +10,17 @@ import {
 } from './projects-list/projects-list.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { catchError, of } from 'rxjs';
-import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { environment } from 'src/environments/environment';
 import { MatCardModule } from '@angular/material/card';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-submit-page',
   standalone: true,
   imports: [
     CommonModule,
-    MatSnackBarModule,
     MatButtonModule,
     MatProgressBarModule,
     MatFormFieldModule,
@@ -30,7 +28,6 @@ import { MatCardModule } from '@angular/material/card';
     FormsModule,
     ReactiveFormsModule,
     ProjectsListComponent,
-    RouterLink,
     MatProgressSpinnerModule,
     MatCardModule,
   ],
@@ -51,7 +48,7 @@ export class SvepSubmitComponent {
 
   constructor(
     private cs: ClinicService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {}
 
   filesSelected(event: FileSelectEvent) {
@@ -80,17 +77,16 @@ export class SvepSubmitComponent {
             const errorMessage =
               e.response?.data?.error?.errorMessage ||
               'Something went wrong when initaiting the job. Please try again later.';
-            this.sb.open(errorMessage, 'Okay', { duration: 60000 });
+            this.tstr.error(errorMessage, 'Error');
             this.submissionStarted = false;
             return of(null);
           }),
         )
         .subscribe((response: any) => {
           if (response) {
-            this.sb.open(
+            this.tstr.success(
               'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
-              'Okay',
-              { duration: 30000 },
+              'Success',
             );
             this.reset();
             // im not delete cuz maybe used soon
@@ -100,7 +96,7 @@ export class SvepSubmitComponent {
           }
         });
     } else {
-      this.sb.open('No file selected', 'Okay', { duration: 5000 });
+      this.tstr.warning('No file selected', 'Warning');
       this.submissionStarted = false;
     }
   }

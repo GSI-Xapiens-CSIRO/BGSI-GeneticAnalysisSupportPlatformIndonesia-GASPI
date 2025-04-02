@@ -1,10 +1,4 @@
-import {
-  Component,
-  Inject,
-  OnChanges,
-  SimpleChanges,
-  ViewChild,
-} from '@angular/core';
+import { Component, Inject, ViewChild } from '@angular/core';
 import { Project } from '../projects-list.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +11,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { DportalService } from 'src/app/services/dportal.service';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { DecimalPipe } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { catchError, defaultIfEmpty, forkJoin, map, of, switchMap } from 'rxjs';
@@ -30,6 +23,8 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
+import { MatPaginatorModule } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-project-updates',
@@ -38,7 +33,6 @@ import {
     MatButtonModule,
     MatIconModule,
     FileDropperComponent,
-    MatSnackBarModule,
     DecimalPipe,
     MatFormFieldModule,
     FormsModule,
@@ -46,6 +40,7 @@ import {
     ReactiveFormsModule,
     MatProgressSpinnerModule,
     MatDialogModule,
+    MatPaginatorModule,
   ],
   templateUrl: './project-update-dialog.component.html',
   styleUrl: './project-update-dialog.component.scss',
@@ -63,18 +58,20 @@ export class ProjectUpdateDialogComponent {
   constructor(
     private fb: FormBuilder,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     public dialogRef: MatDialogRef<ProjectUpdateDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: Project },
   ) {
     this.project = data.project;
     this.dataSubmissionForm = this.fb.group({
-      projectDescription: this.fb.control(
-        this.project.description,
+      projectDescription: this.fb.control(this.project.description, [
         Validators.required,
-      ),
+        Validators.maxLength(5000),
+      ]),
     });
+
+    console.log(this.project.files);
   }
 
   removeFile(file: string) {
@@ -101,20 +98,15 @@ export class ProjectUpdateDialogComponent {
           .pipe(catchError(() => of(null)))
           .subscribe((res: any) => {
             if (!res) {
-              this.sb.open('Unable to delete project.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to delete project.', 'Error');
             } else {
               this.project.ingestedDatasets =
                 this.project.ingestedDatasets.filter(
                   (dataset) => dataset !== datasetId,
                 );
-              this.sb.open(
+              this.tstr.success(
                 'Dataset un-ingested. Please re-index when you have un-ingested all desired datasets.',
-                'Okay',
-                {
-                  duration: 60000,
-                },
+                'Success',
               );
             }
           });
@@ -147,13 +139,34 @@ export class ProjectUpdateDialogComponent {
   }
 
   patchFiles(files: FileList) {
-    if (files.length + this.addedFiles.length > 20) {
-      this.sb.open('No more than 20 files per project is allowed!', 'Okay', {
-        duration: 60000,
-      });
+    if (files.length + this.addedFiles.length > 50) {
+      this.tstr.error('No more than 50 files allowed per upload!', 'Error');
       return;
     }
-    this.addedFiles = [...this.addedFiles, ...Array.from(files)];
+
+    const newFiles = Array.from(files).filter((file) => {
+      if (
+        this.addedFiles.some((addedFile) => addedFile.name === file.name) ||
+        this.project.files.some((existingFile) => existingFile === file.name)
+      ) {
+        this.tstr.error(`File with name ${file.name} already exists!`, 'Error');
+        return false;
+      }
+      return true;
+    });
+
+    const totalFutureFiles =
+      this.addedFiles.length +
+      newFiles.length +
+      this.project.files.length -
+      this.removedFiles.length;
+
+    if (totalFutureFiles > 5000) {
+      this.tstr.error('No more than 5000 files allowed per project!', 'Error');
+      return;
+    }
+
+    this.addedFiles = [...this.addedFiles, ...newFiles];
   }
 
   reset() {
@@ -172,16 +185,20 @@ export class ProjectUpdateDialogComponent {
   async uploadFile(path: string, file: File): Promise<string> {
     this.fileProgress.set(file.name, 0);
     try {
-      await Storage.put(`staging/projects/${path}/project-files/${file.name}`, file, {
-        customPrefix: { public: '' },
-        progressCallback: (progress: { loaded: number; total: number }) => {
-          this.fileProgress.set(file.name, progress.loaded);
-          this.progress = Array.from(this.fileProgress.values()).reduce(
-            (acc, val) => acc + val,
-            0,
-          );
+      await Storage.put(
+        `staging/projects/${path}/project-files/${file.name}`,
+        file,
+        {
+          customPrefix: { public: '' },
+          progressCallback: (progress: { loaded: number; total: number }) => {
+            this.fileProgress.set(file.name, progress.loaded);
+            this.progress = Array.from(this.fileProgress.values()).reduce(
+              (acc, val) => acc + val,
+              0,
+            );
+          },
         },
-      });
+      );
     } catch (error) {
       console.error('Error uploading file', error);
       throw error;
@@ -218,9 +235,9 @@ export class ProjectUpdateDialogComponent {
       )
       .subscribe((res: any) => {
         if (!res) {
-          this.sb.open('Project update failed', 'Okay', { duration: 60000 });
+          this.tstr.error('Project update failed', 'Error');
         } else {
-          this.sb.open('Project updated', 'Okay', { duration: 60000 });
+          this.tstr.success('Project updated', 'Success');
           this.project.description = entry.projectDescription;
           this.project.files = files;
         }

@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -7,6 +6,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-file-dropper',
@@ -21,6 +21,8 @@ export class FileDropperComponent {
   @Input() disabled: boolean = false;
   @Input() files: string[] = [];
   @Output() dropped = new EventEmitter<FileList>();
+
+  constructor(private toastr: ToastrService) {}
 
   highlight(e: Event) {
     this.preventDefaults(e);
@@ -57,7 +59,20 @@ export class FileDropperComponent {
   }
 
   handleFiles(files: FileList) {
-    this.dropped.emit(files);
+    const validFiles: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].name.length <= 32) {
+        validFiles.push(files[i]);
+      } else {
+        this.toastr.warning(
+          `File name ${files[i].name} is too long. Max length is 32 characters. This file has not been added to uploads.`,
+          'Warning',
+        );
+      }
+    }
+    const validFileList = new DataTransfer();
+    validFiles.forEach((file) => validFileList.items.add(file));
+    this.dropped.emit(validFileList.files);
     this.input.nativeElement.value = '';
   }
 

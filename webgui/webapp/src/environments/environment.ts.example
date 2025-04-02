@@ -12,4 +12,5 @@ export const environment = {
     endpoint: 'XXXX',
     region: 'XXXX',
   },
+  hub_name: 'NAME'
 };

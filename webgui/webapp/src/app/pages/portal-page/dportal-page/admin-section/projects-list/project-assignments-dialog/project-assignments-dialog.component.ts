@@ -1,19 +1,5 @@
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  Inject,
-  Input,
-  Output,
-  ViewChild,
-} from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, ElementRef, Inject, ViewChild } from '@angular/core';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -23,18 +9,14 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { catchError, filter, of, switchMap } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import {
-  MatChipEditedEvent,
-  MatChipInputEvent,
-  MatChipsModule,
-} from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
+import { ToastrService } from 'ngx-toastr';
 
 type User = {
   firstName: string;
@@ -55,7 +37,6 @@ const EMAIL_REGEXP =
     FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule,
     MatDialogModule,
     MatAutocompleteModule,
     MatChipsModule,
@@ -73,7 +54,7 @@ export class ProjectAssignmentsDialogComponent {
 
   constructor(
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     public dialogRef: MatDialogRef<ProjectAssignmentsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: string },
   ) {
@@ -112,12 +93,9 @@ export class ProjectAssignmentsDialogComponent {
   async csv(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file || file.type !== 'text/plain') {
-      this.sb.open(
+      this.tstr.error(
         'Invalid file format. Only .txt files are allowed.',
-        'Close',
-        {
-          duration: 30000,
-        },
+        'Error',
       );
       return;
     }
@@ -161,22 +139,15 @@ export class ProjectAssignmentsDialogComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((res: any) => {
         if (!res) {
-          this.sb.open(
+          this.tstr.error(
             'Unable to add user(s). Please check email(s).',
-            'Close',
-            {
-              duration: 60000,
-            },
+            'Error',
           );
         } else if (res.success) {
-          this.sb.open('User(s) added successfully.', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.success('User(s) added successfully.', 'Success');
           this.dialogRef.close();
         } else {
-          this.sb.open(`Failed. ${res.message}`, 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error(`Failed. ${res.message}`, 'Error');
         }
       });
   }

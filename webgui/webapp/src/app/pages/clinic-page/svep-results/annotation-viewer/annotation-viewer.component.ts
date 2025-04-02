@@ -18,11 +18,11 @@ import {
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
+import { ToastrService } from 'ngx-toastr';
 
 type ClinicalAnnotation = {
   name: string;
@@ -62,7 +62,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   standalone: true,
   imports: [
     CommonModule,
-    MatSnackBarModule,
     MatPaginatorModule,
     MatButtonModule,
     MatIconModule,
@@ -83,7 +82,7 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
 
   constructor(
     private cs: ClinicService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     private ss: SpinnerService,
   ) {}
@@ -150,14 +149,10 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
           .pipe(catchError(() => of(null)))
           .subscribe((res) => {
             if (res) {
-              this.sb.open('Annotation deleted', 'Okay', {
-                duration: 5000,
-              });
+              this.tstr.success('Annotation deleted', 'Success');
               this.cs.annotionsChanged.next();
             } else {
-              this.sb.open('Failed to delete annotation', 'Dismiss', {
-                duration: 5000,
-              });
+              this.tstr.error('Failed to delete annotation', 'Error');
             }
             this.ss.end();
           });
@@ -169,7 +164,7 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       return;
     }
 
@@ -183,14 +178,12 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         if (!res) {
-          this.sb.open('Failed to load annotations', 'Dismiss', {
-            duration: 5000,
-          });
+          this.tstr.error('Failed to load annotations', 'Error');
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (res.annotations.length <= 0 && this.paginator.pageIndex > 0) {
             this.paginator.pageIndex--;
-            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.tstr.warning('No more items to show', 'Warning');
             return;
           }
           this.annotations = res.annotations;

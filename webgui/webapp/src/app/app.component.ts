@@ -1,4 +1,10 @@
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { AuthService } from './services/auth.service';
 import {
   animate,
@@ -25,6 +31,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { GlobalSpinnerComponent } from './components/global-spinner/global-spinner.component';
 import { SpinnerService } from './services/spinner.service';
 import { ProfileMenuComponent } from './components/profile-menu/profile-menu.component';
+import { MatDialog } from '@angular/material/dialog';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -66,14 +74,16 @@ import { ProfileMenuComponent } from './components/profile-menu/profile-menu.com
   ],
   providers: [SpinnerService],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   protected isCollapsed = false;
+  private realodSubscription: Subscription | null = null;
 
   constructor(
     protected auth: AuthService,
     private router: Router,
     private el: ElementRef,
     private ss: SpinnerService,
+    private dg: MatDialog,
   ) {
     this.router.events.subscribe((event: Event) => {
       switch (true) {
@@ -89,6 +99,24 @@ export class AppComponent implements OnInit {
         }
       }
     });
+
+    this.realodSubscription = this.auth.promptReloadAndLogin.subscribe(
+      async (prompt) => {
+        if (prompt) {
+          const { ReloadAndLoginDialogComponent } = await import(
+            './components/reload-and-login-dialog/reload-and-login-dialog.component'
+          );
+
+          this.dg.open(ReloadAndLoginDialogComponent);
+        }
+      },
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this.realodSubscription) {
+      this.realodSubscription.unsubscribe();
+    }
   }
 
   ngOnInit(): void {

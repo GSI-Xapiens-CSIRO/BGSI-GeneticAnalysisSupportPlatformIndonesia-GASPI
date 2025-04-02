@@ -85,3 +85,8 @@ variable "web_acl_arn" {
   description = "arn of the WAF Web ACL to associate with the website's cloudfront distribution"
   default     = null
 }
+
+variable "hub_name" {
+  type        = string
+  description = "Hub name"
+}

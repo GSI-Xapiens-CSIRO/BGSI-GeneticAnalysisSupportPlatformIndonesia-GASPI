@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -14,8 +14,6 @@ import * as _ from 'lodash';
 import { catchError, filter, of } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from './services/user.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { GlobalSpinnerComponent } from '../../components/global-spinner/global-spinner.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,6 +24,7 @@ import {
   isStrongPassword,
   PasswordStrengthBarComponent,
 } from 'src/app/components/password-strength-bar/password-strength-bar.component';
+import { ToastrService } from 'ngx-toastr';
 
 /**
  * A validator function that checks if the 'confirmPassword' and 'newPassword' fields of a form match.
@@ -101,7 +100,7 @@ export class ProfilePageComponent {
     private fb: FormBuilder,
     private dg: MatDialog,
     private us: UserService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
   ) {
     this.userDetailsForm = this.fb.group({
@@ -152,9 +151,7 @@ export class ProfilePageComponent {
           this.mfaActivated = true;
         } catch (error) {
           console.error(error);
-          this.sb.open('Invalid code. Try again.', 'Okay', {
-            duration: 60000,
-          });
+          this.tstr.error('Invalid code. Try again.', 'Error');
         }
       }
     });
@@ -189,17 +186,13 @@ export class ProfilePageComponent {
           )
           .pipe(
             catchError(() => {
-              this.sb.open('Operation failed. Try again later.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.error('Operation failed. Try again later.', 'Error');
               return of(null);
             }),
           )
           .subscribe((result) => {
             if (result === 'SUCCESS') {
-              this.sb.open('Details updated successfully.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.success('Details updated successfully.', 'Success');
               this.resetDetails();
               this.auth.refresh();
             }
@@ -230,17 +223,13 @@ export class ProfilePageComponent {
           )
           .pipe(
             catchError(() => {
-              this.sb.open('Operation failed. Try again later.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.error('Operation failed. Try again later.', 'Error');
               return of(null);
             }),
           )
           .subscribe((result) => {
             if (result === 'SUCCESS') {
-              this.sb.open('Password updated successfully.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.success('Password updated successfully.', 'Success');
               this.userPasswordForm.reset();
             }
             this.ss.end();

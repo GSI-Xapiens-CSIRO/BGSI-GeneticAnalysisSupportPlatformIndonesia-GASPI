@@ -6,7 +6,6 @@ import {
 } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, lastValueFrom, of, Subject } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -23,6 +22,7 @@ import { IgvViewerComponent } from './igv-viewer/igv-viewer.component';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 
 import { DportalService } from 'src/app/services/dportal.service';
+import { ToastrService } from 'ngx-toastr';
 
 interface ProjectFile {
   filename: string;
@@ -93,7 +93,7 @@ export class SvepIGVComponent {
 
   constructor(
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private cd: ChangeDetectorRef,
   ) {}
 
@@ -133,7 +133,7 @@ export class SvepIGVComponent {
       );
 
       if (!url) {
-        this.sb.open('Unable to sign file.', 'Close', { duration: 60000 });
+        this.tstr.error('Unable to sign file.', 'Error');
         return null;
       }
 
@@ -148,7 +148,7 @@ export class SvepIGVComponent {
       return null;
     } catch (error) {
       console.error('Error fetching URL:', error);
-      this.sb.open('Error while signing file.', 'Close', { duration: 60000 });
+      this.tstr.error('Error while signing file.', 'Error');
       return null;
     }
   }
@@ -158,7 +158,7 @@ export class SvepIGVComponent {
 
     if (this.isEmptyLastPage && this.paginator.pageIndex > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       this.loading = false;
       return;
     }
@@ -173,7 +173,7 @@ export class SvepIGVComponent {
       )
       .subscribe((response: any) => {
         if (!response.data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           this.dataSource.data = [];
         } else {
           this.dataSource.data = response.data.map((project: any) => {

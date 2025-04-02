@@ -6,7 +6,6 @@ import {
   FormBuilder,
   FormGroup,
   FormsModule,
-  NgControlStatus,
   ReactiveFormsModule,
   ValidationErrors,
   Validators,
@@ -23,13 +22,12 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatOptionModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { catchError, of } from 'rxjs';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { DportalService } from 'src/app/services/dportal.service';
-import { SpinnerService } from 'src/app/services/spinner.service';
 import { environment } from 'src/environments/environment';
 import { MatSelectModule } from '@angular/material/select';
+import { ToastrService } from 'ngx-toastr';
 
 function atLeastOneCheckboxChecked(
   formArray: AbstractControl,
@@ -87,7 +85,6 @@ function metadataValidation(
     MatAutocompleteModule,
     MatCheckboxModule,
     MatRadioModule,
-    MatSnackBarModule,
     ComponentSpinnerComponent,
   ],
   templateUrl: './beacon-ingest-dialog.component.html',
@@ -106,7 +103,7 @@ export class BeaconIngestDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: any,
     fb: FormBuilder,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {
     const vcfs = data.project.files.filter(
       (f: string) =>
@@ -213,18 +210,16 @@ export class BeaconIngestDialogComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((res: null | { success: boolean; message: string }) => {
         if (!res) {
-          this.sb.open(
+          this.tstr.error(
             'Operation failed, please check files and try again',
-            'Okay',
-            { duration: 60000 },
+            'Error',
           );
         } else if (!res.success) {
-          this.sb.open(res.message, 'Okay', { duration: 60000 });
+          this.tstr.error(res.message, 'Error');
         } else {
-          this.sb.open(
+          this.tstr.success(
             'Ingested successfully. Perform indexing when you have ingested all your datasets.',
-            'Okay',
-            { duration: 60000 },
+            'Success',
           );
         }
         this.loading = false;

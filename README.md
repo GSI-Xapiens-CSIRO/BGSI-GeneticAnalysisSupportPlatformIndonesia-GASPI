@@ -6,9 +6,17 @@
 al2023-ami-2023.6.20241212.0-kernel-6.1-x86_64
 ```
 
-## Setting up environment in EC2 (Amazon Linux 2023)
+## Setting up environment 
 
-Install necessary tools
+### In EC2 (Amazon Linux 2023)
+
+Install necessary tools, for this you can run `env.sh` script. Please note that you must restart your EC2 instance for some changes (user group related) to take effect.
+
+The script will install all necessary dependencies.
+
+### In Docker (EC2 or Devcontainers usage)
+
+Note that this approach requires docker in docker, which might not work correctly if you have permission mismatches.
 
 ```bash
 RUN dnf update -y

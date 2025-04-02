@@ -132,3 +132,10 @@ variable "max-request-rate-per-5mins" {
   description = "Maximum number of requests allowed per IP address per 5 minutes"
   default     = 10000
 }
+
+# Hub configurations
+variable "hub_name" {
+  type        = string
+  description = "Configuration for the hub"
+  default     = "NONE"
+}

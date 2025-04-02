@@ -16,7 +16,9 @@
         formControlName="projectDescription"
         placeholder="Enter project description"
       ></textarea>
-      <mat-error> A description is required. </mat-error>
+      <mat-error>
+        A description of upto 5000 characters is required.
+      </mat-error>
     </mat-form-field>
     <app-file-dropper
       (dropped)="patchFiles($event)"

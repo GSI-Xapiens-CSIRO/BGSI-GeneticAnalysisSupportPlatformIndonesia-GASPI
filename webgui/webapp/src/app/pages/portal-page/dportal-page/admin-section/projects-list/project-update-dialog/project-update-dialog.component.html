@@ -1,7 +1,13 @@
 <h1 mat-dialog-title>View and update: {{ data.project.name }}</h1>
 <div mat-dialog-content>
   <div class="flex flex-col space-y-1">
-    @for (file of project.files; track file) {
+    @for (
+      file of project.files.slice(
+        paginator.pageIndex * paginator.pageSize,
+        paginator.pageIndex * paginator.pageSize + paginator.pageSize
+      );
+      track file
+    ) {
       <div class="flex flex-row items-center space-x-2">
         <button mat-mini-fab color="warn" (click)="removeFile(file)">
           <mat-icon>delete</mat-icon>
@@ -11,6 +17,14 @@
     } @empty {
       <h4>No files added to the project yet</h4>
     }
+    <mat-paginator
+      [class.hide]="project.files.length <= 5"
+      #paginator
+      [length]="project.files.length"
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 50]"
+    >
+    </mat-paginator>
   </div>
   <br />
   <hr />
@@ -44,7 +58,9 @@
           formControlName="projectDescription"
           placeholder="Enter project description"
         ></textarea>
-        <mat-error> A description is required. </mat-error>
+        <mat-error>
+          A description of upto 5000 characters is required.</mat-error
+        >
       </mat-form-field>
       <app-file-dropper
         (dropped)="patchFiles($event)"

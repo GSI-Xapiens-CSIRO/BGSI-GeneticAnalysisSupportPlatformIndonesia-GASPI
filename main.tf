@@ -75,6 +75,7 @@ module "sbeacon" {
   method-max-request-rate                = var.sbeacon-method-max-request-rate
   method-queue-size                      = var.sbeacon-method-queue-size
   web_acl_arn                            = module.security.web_acl_arn
+  hub_name                               = var.hub_name
 
   common-tags = merge(var.common-tags, {
     "NAME" = "sbeacon-backend"
@@ -118,6 +119,7 @@ module "webgui" {
   clinic_mode             = var.clinic-mode
   bui-ssm-parameter-name  = var.bui-ssm-parameter-name
   web_acl_arn             = module.security.web_acl_arn
+  hub_name                = var.hub_name
 
   common-tags = merge(var.common-tags, {
     "NAME" = "portal-frontend"

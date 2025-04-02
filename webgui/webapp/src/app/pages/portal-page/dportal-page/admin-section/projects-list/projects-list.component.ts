@@ -9,7 +9,6 @@ import { DportalService } from 'src/app/services/dportal.service';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   BehaviorSubject,
   Subject,
@@ -23,7 +22,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-
 import {
   MatPaginator,
   MatPaginatorIntl,
@@ -32,6 +30,7 @@ import {
 } from '@angular/material/paginator';
 import * as _ from 'lodash';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { ToastrService } from 'ngx-toastr';
 
 export interface Project {
   name: string;
@@ -102,7 +101,7 @@ export class ProjectsListComponent {
   constructor(
     private dps: DportalService,
     private ss: SpinnerService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     private cd: ChangeDetectorRef,
   ) {}
@@ -144,7 +143,7 @@ export class ProjectsListComponent {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
-      this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+      this.tstr.warning('No more items to show', 'Warning');
       return;
     }
     this.loading = true;
@@ -153,13 +152,13 @@ export class ProjectsListComponent {
       .pipe(catchError(() => of(null)))
       .subscribe((data: any) => {
         if (!data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           this.dataSource.data = [];
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (data && data.data.length <= 0 && this.paginator.pageIndex > 0) {
             this.paginator.pageIndex--;
-            this.sb.open('No more items to show', 'Okay', { duration: 60000 });
+            this.tstr.warning('No more items to show', 'Warning');
             this.loading = false;
             return;
           }
@@ -225,12 +224,11 @@ export class ProjectsListComponent {
           .pipe(catchError(() => of(null)))
           .subscribe((res: any) => {
             if (!res) {
-              this.sb.open('API request failed', 'Okay', { duration: 60000 });
+              this.tstr.error('API request failed', 'Error');
             } else {
-              this.sb.open(
+              this.tstr.success(
                 'Indexing is happening in the background. It might take a few minutes.',
-                'Okay',
-                { duration: 60000 },
+                'Success',
               );
             }
             this.ss.end();
@@ -257,11 +255,9 @@ export class ProjectsListComponent {
           .pipe(catchError(() => of(null)))
           .subscribe((res: any) => {
             if (!res) {
-              this.sb.open('Unable to clear errors.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to clear errors.', 'Error');
             } else {
-              this.sb.open('Errors cleared.', 'Okay', { duration: 60000 });
+              this.tstr.success('Errors cleared.', 'Success');
             }
             this.list(this.paginator.pageIndex, '');
           });
@@ -287,11 +283,9 @@ export class ProjectsListComponent {
           .pipe(catchError(() => of(null)))
           .subscribe((res: any) => {
             if (!res) {
-              this.sb.open('Unable to delete project.', 'Close', {
-                duration: 60000,
-              });
+              this.tstr.error('Unable to delete project.', 'Error');
             } else {
-              this.sb.open('Project deleted.', 'Okay', { duration: 60000 });
+              this.tstr.success('Project deleted.', 'Success');
             }
             this.refresh();
           });
