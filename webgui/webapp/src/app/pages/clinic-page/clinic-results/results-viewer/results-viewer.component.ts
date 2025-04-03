@@ -49,14 +49,25 @@ import {
   VIRTUAL_SCROLL_STRATEGY,
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from 'src/environments/environment';
 
-type SVEPResult = {
+type BaseResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
+};
+
+type PGXFlowResult = BaseResult & {
+  type: 'pgxflow';
+};
+
+type SVEPResult = BaseResult & {
+  type: 'svep';
   chromosome: string;
 };
+
+type Result = SVEPResult | PGXFlowResult;
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -113,25 +124,36 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  protected results: SVEPResult | null = null;
-  protected columns: string[] = [
-    'selected',
-    'Rank',
-    '.',
-    'Region',
-    'Alt Allele',
-    'Consequence',
-    'Gene Name',
-    'Gene ID',
-    'Feature',
-    'Transcript ID & Version',
-    'Transcript Biotype',
-    'Exon Number',
-    'Amino Acid Change',
-    'Codon Change',
-    'Strand',
-    'Transcript Support Level',
-  ];
+  protected clinicMode: string = environment.clinic_mode;
+  protected results: Result | null = null;
+  protected columns: string[] =
+    this.clinicMode === 'svep'
+      ? [
+          'selected',
+          'Rank',
+          '.',
+          'Region',
+          'Alt Allele',
+          'Consequence',
+          'Gene Name',
+          'Gene ID',
+          'Feature',
+          'Transcript ID & Version',
+          'Transcript Biotype',
+          'Exon Number',
+          'Amino Acid Change',
+          'Codon Change',
+          'Strand',
+          'Transcript Support Level',
+        ]
+      : [
+          'selected',
+          'Organisation',
+          'Gene Name',
+          'Alleles',
+          'Phenotypes',
+          'Variants',
+        ];
   protected originalRows: any[] = [];
   protected dataRows = new BehaviorSubject<any[]>([]);
   protected dataView = new Observable<any[]>();
@@ -291,7 +313,36 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
       });
   }
 
-  updateTable(result: SVEPResult): void {
+  hasChromosome(result: Result): result is SVEPResult {
+    return result && (result as SVEPResult).chromosome !== undefined;
+  }
+
+  updateTable(result: Result): void {
+    if (this.clinicMode === 'svep') {
+      this.handleSVEPResult(result as SVEPResult);
+    } else if (this.clinicMode === 'pgxflow') {
+      this.handlePGXFlowResult(result as PGXFlowResult);
+    }
+  }
+
+  handlePGXFlowResult(result: PGXFlowResult) {
+    this.results = result;
+    this.resultsLength = result.pages[result.page];
+    const lines = result.content.split('\n');
+    this.originalRows = lines
+      .filter((l) => l.length > 0)
+      .map((l) => {
+        const row: any = {};
+        const parsedRow = JSON.parse(l);
+        parsedRow.foreach((v: any, i: number) => {
+          row[this.columns[i + 1]] = v;
+        });
+        return row;
+      });
+    this.dataRows.next(this.originalRows);
+  }
+
+  handleSVEPResult(result: SVEPResult) {
     this.results = result;
     this.resultsLength = result.pages[result.chromosome];
     const lines = result.content.split('\n');

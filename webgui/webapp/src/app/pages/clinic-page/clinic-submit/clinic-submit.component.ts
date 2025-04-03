@@ -45,6 +45,8 @@ export class ClinicSubmitComponent {
     RequestId: null,
     ProjectName: null,
   };
+  protected clinicName: string =
+    environment.clinic_mode === 'svep' ? 'sVEP' : 'PGxFlow';
 
   constructor(
     private cs: ClinicService,
