@@ -15,16 +15,16 @@ RUN dnf install -y \
 
 WORKDIR /src
 
-RUN wget https://github.com/samtools/bcftools/releases/download/1.18/bcftools-1.18.tar.bz2 \
-    && tar -xvjf bcftools-1.18.tar.bz2 \
-    && cd bcftools-1.18 \
+RUN wget https://github.com/samtools/bcftools/releases/download/1.21/bcftools-1.21.tar.bz2 \
+    && tar -xvjf bcftools-1.21.tar.bz2 \
+    && cd bcftools-1.21 \
     && ./configure \
     && make \
     && make install
 
-RUN wget https://github.com/samtools/htslib/releases/download/1.18/htslib-1.18.tar.bz2 \
-    && tar -xvjf htslib-1.18.tar.bz2 \
-    && cd htslib-1.18 \
+RUN wget https://github.com/samtools/htslib/releases/download/1.21/htslib-1.21.tar.bz2 \
+    && tar -xvjf htslib-1.21.tar.bz2 \
+    && cd htslib-1.21 \
     && ./configure \
     && make \
     && make install
