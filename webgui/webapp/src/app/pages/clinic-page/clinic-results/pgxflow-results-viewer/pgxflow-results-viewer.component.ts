@@ -139,11 +139,13 @@ export class PGXFlowResultsViewerComponent {
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
   protected diplotypeDataView = new Observable<any[]>();
   protected diplotypeFilterField: FormControl = new FormControl('');
+  protected diplotypeScopeReduced: boolean = false;
   protected variantOriginalRows: any[] = [];
   protected variantDataRows = new BehaviorSubject<any[]>([]);
   protected variantToDiplotypeMap: Map<string, string[]> = new Map();
   protected variantDataView = new Observable<any[]>();
   protected variantFilterField: FormControl = new FormControl('');
+  protected variantScopeReduced: boolean = false;
   protected annotationForm: FormGroup = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -221,9 +223,21 @@ export class PGXFlowResultsViewerComponent {
   }
 
   filterRelatedDiplotype(mappingId: string) {
+    this.diplotypeScopeReduced = true;
     this.diplotypeFilterField.setValue(mappingId);
     this.filterDiplotypes();
     this.cdr.detectChanges();
+  }
+
+  resetDiplotypes() {
+    this.diplotypeFilterField.setValue('');
+    this.filterDiplotypes();
+    this.cdr.detectChanges();
+  }
+
+  resetRelatedDiplotype() {
+    this.diplotypeScopeReduced = false;
+    this.resetDiplotypes();
   }
 
   filterVariants() {
@@ -233,10 +247,22 @@ export class PGXFlowResultsViewerComponent {
     });
   }
 
+  resetVariants() {
+    this.variantFilterField.setValue('');
+    this.filterVariants();
+    this.cdr.detectChanges();
+  }
+
   filterRelatedVariants(mappingId: string) {
+    this.variantScopeReduced = true;
     this.variantFilterField.setValue(mappingId);
     this.filterVariants();
     this.cdr.detectChanges();
+  }
+
+  resetRelatedVariants() {
+    this.variantScopeReduced = false;
+    this.resetVariants();
   }
 
   async openAnnotateDialog() {
