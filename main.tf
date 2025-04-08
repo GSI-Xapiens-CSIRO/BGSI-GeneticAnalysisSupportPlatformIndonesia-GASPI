@@ -40,7 +40,7 @@ module "pgxflow" {
   dynamo-project-users-table     = module.sbeacon.dynamo-project-users-table
   dynamo-project-users-table-arn = module.sbeacon.dynamo-project-users-table-arn
   dynamo-clinic-jobs-table       = module.sbeacon.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn   = module.sbeacon.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn   = module.sbeacon.dynamo-clinic-jobs-table-arn
 
   common-tags = merge(var.common-tags, {
     "NAME" = "pgxflow-backend"
