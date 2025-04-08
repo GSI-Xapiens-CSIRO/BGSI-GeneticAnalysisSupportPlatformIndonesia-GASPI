@@ -6,7 +6,7 @@ import boto3
 import botocore
 
 from shared.apiutils import bad_request, bundle_response
-from dynamodb import check_user_in_project
+from shared.dynamodb import check_user_in_project
 from search import get_page
 
 RESULT_BUCKET = os.environ["RESULT_BUCKET"]

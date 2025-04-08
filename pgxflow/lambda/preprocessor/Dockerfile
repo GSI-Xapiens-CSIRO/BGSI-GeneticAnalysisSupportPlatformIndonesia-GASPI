@@ -55,4 +55,6 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
 
+ADD shared ${LAMBDA_TASK_ROOT}/shared
+
 CMD ["lambda_function.lambda_handler"]

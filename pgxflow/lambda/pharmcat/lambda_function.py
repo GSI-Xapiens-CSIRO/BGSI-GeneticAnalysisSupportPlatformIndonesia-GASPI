@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 
 import boto3
 
+from shared.utils import handle_failed_execution
+
 lambda_client = boto3.client("lambda")
 s3_client = boto3.client("s3")
 
@@ -42,42 +44,45 @@ def lambda_handler(event, context):
     project = event["projectName"]
     source_vcf_location = event["sourceVcfLocation"]
 
-    s3_path = urlparse(location).path
-    preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
+    try:
+        s3_path = urlparse(location).path
+        preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
 
-    local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
-    s3_client.download_file(
-        Bucket=PGXFLOW_BUCKET,
-        Key=s3_path.lstrip("/"),
-        Filename=local_input_path,
-    )
+        local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
+        s3_client.download_file(
+            Bucket=PGXFLOW_BUCKET,
+            Key=s3_path.lstrip("/"),
+            Filename=local_input_path,
+        )
 
-    run_pharmcat(local_input_path, request_id)
-    processed_json = f"{request_id}.report.json"
-    local_output_path = os.path.join(LOCAL_DIR, processed_json)
+        run_pharmcat(local_input_path, request_id)
+        processed_json = f"{request_id}.report.json"
+        local_output_path = os.path.join(LOCAL_DIR, processed_json)
 
-    output_key = f"pharmcat_{request_id}.json"
-    s3_client.upload_file(
-        Bucket=PGXFLOW_BUCKET,
-        Key=output_key,
-        Filename=local_output_path,
-    )
+        output_key = f"pharmcat_{request_id}.json"
+        s3_client.upload_file(
+            Bucket=PGXFLOW_BUCKET,
+            Key=output_key,
+            Filename=local_output_path,
+        )
 
-    s3_client.delete_object(
-        Bucket=PGXFLOW_BUCKET,
-        Key=s3_path.lstrip("/"),
-    )
+        s3_client.delete_object(
+            Bucket=PGXFLOW_BUCKET,
+            Key=s3_path.lstrip("/"),
+        )
 
-    s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
-    lambda_client.invoke(
-        FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
-        InvocationType="Event",
-        Payload=json.dumps(
-            {
-                "requestId": request_id,
-                "projectName": project,
-                "location": s3_output_location,
-                "sourceVcfLocation": source_vcf_location,
-            }
-        ),
-    )
+        s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
+        lambda_client.invoke(
+            FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
+            InvocationType="Event",
+            Payload=json.dumps(
+                {
+                    "requestId": request_id,
+                    "projectName": project,
+                    "location": s3_output_location,
+                    "sourceVcfLocation": source_vcf_location,
+                }
+            ),
+        )
+    except Exception as e:
+        handle_failed_execution(request_id, e)

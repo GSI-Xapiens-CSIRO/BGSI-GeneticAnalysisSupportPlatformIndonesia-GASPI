@@ -1,10 +1,13 @@
 import json
+from pathlib import Path
 import os
 import subprocess
+from urllib.parse import urlparse
 
 import boto3
 
 from shared.apiutils import bad_request, bundle_response
+from shared.dynamodb import check_user_in_project, update_clinic_job
 
 PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
     "PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA"
@@ -21,6 +24,8 @@ def get_sample_count(location):
 
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
+    sub = event["requestContext"]["authorizer"]["claims"]["sub"]
+
     event_body = event.get("body")
     if not event_body:
         return bad_request("No body sent with request.")
@@ -28,8 +33,9 @@ def lambda_handler(event, context):
         body_dict = json.loads(event_body)
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
-        user_id = body_dict["userId"]
         location = body_dict["location"]
+        
+        check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
 
@@ -54,6 +60,16 @@ def lambda_handler(event, context):
         FunctionName=PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA,
         InvocationType="Event",
         Payload=payload,
+    )
+
+    parsed_location = urlparse(location)
+    input_vcf = Path(parsed_location.path.lstrip("/")).name
+    update_clinic_job(
+        job_id=request_id,
+        job_status="pending",
+        project_name=project,
+        input_vcf=input_vcf,
+        user_id=sub,
     )
 
     return bundle_response(

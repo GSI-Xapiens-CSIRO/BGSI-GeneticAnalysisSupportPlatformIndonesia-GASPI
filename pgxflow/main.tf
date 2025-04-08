@@ -31,6 +31,8 @@ module "lambda-initFlow" {
   environment_variables = {
     PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = module.lambda-preprocessor.lambda_function_arn
     HTS_S3_HOST                          = "s3.${var.region}.amazonaws.com"
+    DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
   }
 
   layers = [
@@ -46,14 +48,15 @@ module "lambda-initFlow" {
 module "lambda-preprocessor" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "pgxflow-backend-preprocessor"
-  description         = "Preprocesses VCFs for Pharmcat"
-  create_package      = false
-  image_uri           = module.docker_image_preprocessor_lambda.image_uri
-  package_type        = "Image"
-  memory_size         = 2048
-  timeout             = 60
-  attach_policy_jsons = true
+  function_name          = "pgxflow-backend-preprocessor"
+  description            = "Preprocesses VCFs for Pharmcat"
+  create_package         = false
+  image_uri              = module.docker_image_preprocessor_lambda.image_uri
+  package_type           = "Image"
+  memory_size            = 2048
+  ephemeral_storage_size = 8192
+  timeout                = 60
+  attach_policy_jsons    = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-preprocessor.json
   ]
@@ -61,10 +64,11 @@ module "lambda-preprocessor" {
   source_path            = "${path.module}/lambda/preprocessor"
   tags                   = var.common-tags
   environment_variables = {
-    DPORTAL_BUCKET          = var.data-portal-bucket-name
-    PGXFLOW_BUCKET          = aws_s3_bucket.pgxflow-bucket.bucket
-    HTS_S3_HOST             = "s3.${var.region}.amazonaws.com"
-    PGXFLOW_PHARMCAT_LAMBDA = module.lambda-pharmcat.lambda_function_arn
+    DPORTAL_BUCKET           = var.data-portal-bucket-name
+    PGXFLOW_BUCKET           = aws_s3_bucket.pgxflow-bucket.bucket
+    PGXFLOW_PHARMCAT_LAMBDA  = module.lambda-pharmcat.lambda_function_arn
+    DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
 }
 
@@ -90,6 +94,7 @@ module "lambda-pharmcat" {
   environment_variables = {
     PGXFLOW_BUCKET                        = aws_s3_bucket.pgxflow-bucket.bucket
     PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA = module.lambda-postprocessor.lambda_function_arn
+    DYNAMO_CLINIC_JOBS_TABLE              = var.dynamo-clinic-jobs-table
   }
 }
 
@@ -115,15 +120,17 @@ module "lambda-postprocessor" {
   tags = var.common-tags
 
   environment_variables = {
-    RESULT_SUFFIX      = local.result_suffix
-    PGXFLOW_BUCKET     = aws_s3_bucket.pgxflow-bucket.bucket
-    DPORTAL_BUCKET     = var.data-portal-bucket-name
-    GENE_ORGANISATIONS = join(",", var.pgxflow-configuration["gene_organisations"])
-    GENES              = join(",", var.pgxflow-configuration["genes"])
-    HTS_S3_HOST        = "s3.${var.region}.amazonaws.com"
+    RESULT_SUFFIX            = local.result_suffix
+    PGXFLOW_BUCKET           = aws_s3_bucket.pgxflow-bucket.bucket
+    DPORTAL_BUCKET           = var.data-portal-bucket-name
+    GENE_ORGANISATIONS       = join(",", var.pgxflow-configuration["gene_organisations"])
+    GENES                    = join(",", var.pgxflow-configuration["genes"])
+    DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
 
   layers = [
+    local.python_modules_layer,
     local.python_libraries_layer,
     local.binaries_layer,
   ]

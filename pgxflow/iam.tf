@@ -24,6 +24,24 @@ data "aws_iam_policy_document" "lambda-initFlow" {
   }
   statement {
     actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
       "lambda:InvokeFunction"
     ]
     resources = [
@@ -66,6 +84,15 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
   }
   statement {
     actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
       "lambda:InvokeFunction",
     ]
     resources = [
@@ -83,7 +110,6 @@ data "aws_iam_policy_document" "lambda-pharmcat" {
       aws_s3_bucket.pgxflow-bucket.arn,
     ]
   }
-
   statement {
     actions = [
       "s3:GetObject",
@@ -94,7 +120,15 @@ data "aws_iam_policy_document" "lambda-pharmcat" {
       "${aws_s3_bucket.pgxflow-bucket.arn}/*"
     ]
   }
-
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
   statement {
     actions = [
       "lambda:InvokeFunction",
@@ -114,7 +148,6 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       aws_s3_bucket.pgxflow-bucket.arn
     ]
   }
-
   statement {
     actions = [
       "s3:GetObject",
@@ -124,7 +157,6 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       "${aws_s3_bucket.pgxflow-bucket.arn}/*"
     ]
   }
-
   statement {
     actions = [
       "s3:GetObject",
@@ -133,13 +165,21 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       "${var.data-portal-bucket-arn}/projects/*/project-files/*"
     ]
   }
-
   statement {
     actions = [
       "s3:PutObject",
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -153,7 +193,6 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
     ]
   }
-
   statement {
     actions = [
       "s3:ListBucket",
@@ -162,7 +201,6 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       var.data-portal-bucket-arn
     ]
   }
-
   statement {
     actions = [
       "dynamodb:GetItem",

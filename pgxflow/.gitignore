@@ -8,3 +8,6 @@ layers/binaries/bin/*
 layers/binaries/lib/*
 
 .terraform
+
+lambda/pharmcat/shared
+lambda/preprocessor/shared

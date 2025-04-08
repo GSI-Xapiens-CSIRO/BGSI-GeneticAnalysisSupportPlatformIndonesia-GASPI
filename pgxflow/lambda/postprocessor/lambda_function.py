@@ -8,6 +8,9 @@ from collections import defaultdict
 import boto3
 import ijson
 
+from shared.utils import handle_failed_execution
+from shared.dynamodb import update_clinic_job
+
 s3_client = boto3.client("s3")
 
 LOCAL_DIR = "/tmp"
@@ -190,74 +193,79 @@ def lambda_handler(event, context):
     project = event["projectName"]
     source_vcf_location = event["sourceVcfLocation"]
 
-    s3_path = urlparse(location).path
-    processed_json = f"{request_id}.pharmcat.json"
+    try:
+        s3_path = urlparse(location).path
+        processed_json = f"{request_id}.pharmcat.json"
 
-    local_input_path = os.path.join(LOCAL_DIR, processed_json)
-    s3_client.download_file(
-        Bucket=PGXFLOW_BUCKET,
-        Key=s3_path.lstrip("/"),
-        Filename=local_input_path,
-    )
+        local_input_path = os.path.join(LOCAL_DIR, processed_json)
+        s3_client.download_file(
+            Bucket=PGXFLOW_BUCKET,
+            Key=s3_path.lstrip("/"),
+            Filename=local_input_path,
+        )
 
-    index = defaultdict(lambda: defaultdict(list))
-    max_lines_per_page = 10_000
-    max_size_per_page = 10 * 10**6
+        index = defaultdict(lambda: defaultdict(list))
+        max_lines_per_page = 10_000
+        max_size_per_page = 10 * 10**6
 
-    postprocessed_jsonl = f"{request_id}.postprocessed.jsonl"
-    local_output_path = f"{LOCAL_DIR}/{postprocessed_jsonl}"
+        postprocessed_jsonl = f"{request_id}.postprocessed.jsonl"
+        local_output_path = f"{LOCAL_DIR}/{postprocessed_jsonl}"
 
-    with open(local_output_path, "w") as f:
-        lines_read = 0
-        size_read = 0
-        page_start_offset = 0
-        page_num = 1
+        with open(local_output_path, "w") as f:
+            lines_read = 0
+            size_read = 0
+            page_start_offset = 0
+            page_num = 1
 
-        for diplotype_chunk, condensed_diplotype_chunk in yield_genes(
-            local_input_path, source_vcf_location
-        ):
-            for i in range(len(diplotype_chunk)):
-                offset = f.tell()
-                diplotype = diplotype_chunk[i]
+            for diplotype_chunk, condensed_diplotype_chunk in yield_genes(
+                local_input_path, source_vcf_location
+            ):
+                for i in range(len(diplotype_chunk)):
+                    offset = f.tell()
+                    diplotype = diplotype_chunk[i]
 
-                json_string = json.dumps(diplotype)
-                f.write(json_string + "\n")
+                    json_string = json.dumps(diplotype)
+                    f.write(json_string + "\n")
 
-                record_size = len(json_string) + 1
+                    record_size = len(json_string) + 1
 
-                if lines_read >= max_lines_per_page or size_read >= max_size_per_page:
-                    index[page_num]["page_start_f"].append(page_start_offset)
-                    index[page_num]["page_end_f"].append(offset + record_size)
-                    page_num += 1
-                    page_start_offset = offset + record_size
-                    lines_read = 0
-                    size_read = 0
+                    if lines_read >= max_lines_per_page or size_read >= max_size_per_page:
+                        index[page_num]["page_start_f"].append(page_start_offset)
+                        index[page_num]["page_end_f"].append(offset + record_size)
+                        page_num += 1
+                        page_start_offset = offset + record_size
+                        lines_read = 0
+                        size_read = 0
 
-                lines_read += 1
-                size_read += record_size
+                    lines_read += 1
+                    size_read += record_size
 
-        final_offset = f.tell()
-        if not index.get(page_num, {}).get("page_start_f", None):
-            index[page_num]["page_start_f"].append(page_start_offset)
-            index[page_num]["page_end_f"].append(final_offset + record_size)
+            final_offset = f.tell()
+            if not index.get(page_num, {}).get("page_start_f", None):
+                index[page_num]["page_start_f"].append(page_start_offset)
+                index[page_num]["page_end_f"].append(final_offset + record_size)
 
-    output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
-    s3_client.upload_file(
-        Filename=local_output_path,
-        Bucket=DPORTAL_BUCKET,
-        Key=output_key,
-    )
+        output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
+        s3_client.upload_file(
+            Filename=local_output_path,
+            Bucket=DPORTAL_BUCKET,
+            Key=output_key,
+        )
 
-    index = json.dumps(index).encode()
-    index = gzip.compress(index)
-    index_key = f"{output_key}.index.json.gz"
-    s3_client.put_object(
-        Bucket=DPORTAL_BUCKET,
-        Key=index_key,
-        Body=index,
-    )
+        index = json.dumps(index).encode()
+        index = gzip.compress(index)
+        index_key = f"{output_key}.index.json.gz"
+        s3_client.put_object(
+            Bucket=DPORTAL_BUCKET,
+            Key=index_key,
+            Body=index,
+        )
 
-    s3_client.delete_object(
-        Bucket=PGXFLOW_BUCKET,
-        Key=s3_path.lstrip("/"),
-    )
+        s3_client.delete_object(
+            Bucket=PGXFLOW_BUCKET,
+            Key=s3_path.lstrip("/"),
+        )
+
+        update_clinic_job(request_id, job_status="completed")
+    except Exception as e:
+        handle_failed_execution(request_id, e)
