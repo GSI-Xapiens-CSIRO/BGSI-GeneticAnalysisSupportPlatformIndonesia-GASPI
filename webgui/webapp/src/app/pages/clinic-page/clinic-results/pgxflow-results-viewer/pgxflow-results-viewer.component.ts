@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   Inject,
   Injectable,
@@ -26,6 +27,7 @@ import {
   of,
   Subject,
 } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
@@ -35,6 +37,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { HelpTextComponent } from '../help-text/help-text.component';
@@ -49,25 +52,14 @@ import {
   VIRTUAL_SCROLL_STRATEGY,
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
-import { environment } from 'src/environments/environment';
+import { TermFreqPlotComponent } from 'src/app/pages/portal-page/query-page/components/term-freq-plot/term-freq-plot.component';
 
-type BaseResult = {
+type PGXFlowResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
 };
-
-type PGXFlowResult = BaseResult & {
-  type: 'pgxflow';
-};
-
-type SVEPResult = BaseResult & {
-  type: 'svep';
-  chromosome: string;
-};
-
-type Result = SVEPResult | PGXFlowResult;
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -90,7 +82,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
 }
 
 @Component({
-  selector: 'app-results-viewer',
+  selector: 'app-pgxflow-results-viewer',
   standalone: true,
   imports: [
     CommonModule,
@@ -116,50 +108,42 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     },
     TableVirtualScrollStrategy,
   ],
-  templateUrl: './results-viewer.component.html',
-  styleUrl: './results-viewer.component.scss',
+  templateUrl: './pgxflow-results-viewer.component.html',
+  styleUrl: './pgxflow-results-viewer.component.scss',
 })
-export class ResultsViewerComponent implements OnChanges, AfterViewInit {
+export class PGXFlowResultsViewerComponent {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-  protected clinicMode: string = environment.clinic_mode;
-  protected results: Result | null = null;
-  protected columns: string[] =
-    this.clinicMode === 'svep'
-      ? [
-          'selected',
-          'Rank',
-          '.',
-          'Region',
-          'Alt Allele',
-          'Consequence',
-          'Gene Name',
-          'Gene ID',
-          'Feature',
-          'Transcript ID & Version',
-          'Transcript Biotype',
-          'Exon Number',
-          'Amino Acid Change',
-          'Codon Change',
-          'Strand',
-          'Transcript Support Level',
-        ]
-      : [
-          'selected',
-          'Organisation',
-          'Gene Name',
-          'Alleles',
-          'Phenotypes',
-          'Variants',
-        ];
-  protected originalRows: any[] = [];
-  protected dataRows = new BehaviorSubject<any[]>([]);
-  protected dataView = new Observable<any[]>();
-  protected chromosomeField: FormControl = new FormControl('');
-  protected basePositionField: FormControl = new FormControl('');
-  protected filterField: FormControl = new FormControl('');
+  protected results: PGXFlowResult | null = null;
+  protected diplotypeColumns: string[] = [
+    'selected',
+    'Organisation',
+    'Gene Name',
+    'Alleles',
+    'Phenotypes',
+    'Variants',
+    'mappingId',
+  ];
+  protected variantColumns: string[] = [
+    'RSID',
+    'Chromosome',
+    'Position',
+    'Call',
+    'Alleles',
+    'Zygosity',
+    'mappingId',
+  ];
+  protected diplotypeOriginalRows: any[] = [];
+  protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
+  protected diplotypeToVariantMap: Map<string, string[]> = new Map();
+  protected diplotypeDataView = new Observable<any[]>();
+  protected diplotypeFilterField: FormControl = new FormControl('');
+  protected variantOriginalRows: any[] = [];
+  protected variantDataRows = new BehaviorSubject<any[]>([]);
+  protected variantToDiplotypeMap: Map<string, string[]> = new Map();
+  protected variantDataView = new Observable<any[]>();
+  protected variantFilterField: FormControl = new FormControl('');
   protected annotationForm: FormGroup = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -177,32 +161,28 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     private ss: SpinnerService,
     private tstr: ToastrService,
     private dg: MatDialog,
+    private cdr: ChangeDetectorRef,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
 
-  resort(sort: Sort) {
-    const snapshot = [...this.originalRows];
-    const key = sort.active;
-    if (sort.direction === 'asc') {
-      snapshot.sort((a, b) => {
-        return a[key] < b[key] ? -1 : 1;
-      });
-      this.dataRows.next(snapshot);
-    } else if (sort.direction === 'desc') {
-      snapshot.sort((a, b) => {
-        return a[key] > b[key] ? -1 : 1;
-      });
-      this.dataRows.next(snapshot);
-    } else {
-      this.dataRows.next(this.originalRows);
-    }
+  resortDiplotypes(sort: Sort) {
+    clinicResort(this.diplotypeOriginalRows, sort, (sorted) =>
+      this.diplotypeDataRows.next(sorted),
+    );
+  }
+
+  resortVariants(sort: Sort) {
+    clinicResort(this.variantOriginalRows, sort, (sorted) =>
+      this.variantDataRows.next(sorted),
+    );
   }
 
   ngAfterViewInit(): void {
     this.scrollStrategy.setScrollHeight(52, 56);
-    this.dataView = combineLatest([
-      this.dataRows,
+
+    this.diplotypeDataView = combineLatest([
+      this.diplotypeDataRows,
       this.scrollStrategy.scrolledIndexChange,
     ]).pipe(
       map((value: any) => {
@@ -214,50 +194,49 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
         return value[0].slice(start, end);
       }),
     );
-    this.chromosomeField.valueChanges.subscribe((chromosome) => {
-      this.refetch(this.requestId, this.projectName, chromosome);
-      // if chromosome or page change we clear position
-      this.basePositionField.setValue('');
-    });
+    this.variantDataView = combineLatest([
+      this.variantDataRows,
+      this.scrollStrategy.scrolledIndexChange,
+    ]).pipe(
+      map((value: any) => {
+        // Determine the start and end rendered range
+        const start = Math.max(0, value[1] - 10);
+        const end = Math.min(value[0].length, value[1] + 100);
+
+        // Update the datasource for the rendered range of data
+        return value[0].slice(start, end);
+      }),
+    );
   }
 
   pageChange(event: PageEvent) {
-    this.refetch(
-      this.requestId,
-      this.projectName,
-      this.chromosomeField.value,
-      event.pageIndex + 1,
+    this.refetch(this.requestId, this.projectName, event.pageIndex + 1);
+  }
+
+  filterDiplotypes() {
+    const term: string = this.diplotypeFilterField.value;
+    clinicFilter(this.diplotypeOriginalRows, term, (filtered) =>
+      this.diplotypeDataRows.next(filtered),
     );
-    // if chromosome or page change we clear position
-    this.basePositionField.setValue('');
   }
 
-  search() {
-    const position = this.basePositionField.value;
-    if (position) {
-      this.refetch(
-        this.requestId,
-        this.projectName,
-        this.chromosomeField.value,
-        null,
-        position,
-      );
-    }
+  filterRelatedDiplotype(mappingId: string) {
+    this.diplotypeFilterField.setValue(mappingId);
+    this.filterDiplotypes();
+    this.cdr.detectChanges();
   }
 
-  filter() {
-    const term = this.filterField.value;
+  filterVariants() {
+    const term: string = this.variantFilterField.value;
+    clinicFilter(this.variantOriginalRows, term, (filtered) => {
+      this.variantDataRows.next(filtered);
+    });
+  }
 
-    if (term) {
-      const filtered = this.originalRows.filter((row) => {
-        return Object.values(row).some((v: any) => {
-          return v.toString().includes(term);
-        });
-      });
-      this.dataRows.next(filtered);
-    } else {
-      this.dataRows.next(this.originalRows);
-    }
+  filterRelatedVariants(mappingId: string) {
+    this.variantFilterField.setValue(mappingId);
+    this.filterVariants();
+    this.cdr.detectChanges();
   }
 
   async openAnnotateDialog() {
@@ -289,18 +268,14 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
     );
   }
 
-  refetch(
-    requestId: string,
-    projectName: string,
-    chromosome: string | null = null,
-    page: number | null = null,
-    position: number | null = null,
-  ) {
-    this.originalRows = [];
-    this.dataRows.next([]);
+  refetch(requestId: string, projectName: string, page: number | null = null) {
+    this.diplotypeOriginalRows = [];
+    this.variantOriginalRows = [];
+    this.diplotypeDataRows.next([]);
+    this.variantDataRows.next([]);
     this.ss.start();
     this.cs
-      .getClinicResults(requestId, projectName, chromosome, page, position)
+      .getClinicResults(requestId, projectName, null, page, null)
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {
@@ -313,53 +288,46 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
       });
   }
 
-  hasChromosome(result: Result): result is SVEPResult {
-    return result && (result as SVEPResult).chromosome !== undefined;
-  }
-
-  updateTable(result: Result): void {
-    if (this.clinicMode === 'svep') {
-      this.handleSVEPResult(result as SVEPResult);
-    } else if (this.clinicMode === 'pgxflow') {
-      this.handlePGXFlowResult(result as PGXFlowResult);
-    }
-  }
-
-  handlePGXFlowResult(result: PGXFlowResult) {
+  updateTable(result: PGXFlowResult): void {
     this.results = result;
     this.resultsLength = result.pages[result.page];
-    const lines = result.content.split('\n');
-    this.originalRows = lines
-      .filter((l) => l.length > 0)
-      .map((l) => {
-        const row: any = {};
-        const parsedRow = JSON.parse(l);
-        parsedRow.foreach((v: any, i: number) => {
-          row[this.columns[i + 1]] = v;
-        });
-        return row;
-      });
-    this.dataRows.next(this.originalRows);
-  }
 
-  handleSVEPResult(result: SVEPResult) {
-    this.results = result;
-    this.resultsLength = result.pages[result.chromosome];
     const lines = result.content.split('\n');
-    this.originalRows = lines
+    this.diplotypeOriginalRows = lines
       .filter((l) => l.length > 0)
       .map((l) => {
-        const row: any = {};
-        l.trim()
-          .split('\t')
-          .forEach((v, i) => {
-            row[this.columns[i + 1]] = v;
-          });
-        return row;
+        const parsedRow = JSON.parse(l);
+        const diplotypeRow: any = {};
+
+        Object.values(parsedRow).forEach((diplotypeVal, diplotypeIdx) => {
+          if (this.diplotypeColumns[diplotypeIdx + 1] === 'Variants') {
+            const variants = diplotypeVal as Record<string, any>;
+            const variantRsids: string[] = [];
+            const mappingId: string = uuid();
+            Object.entries(variants).forEach(([rsid, variant]) => {
+              const variantRow: any = {};
+              variantRsids.push(rsid);
+              variantRow[this.variantColumns[0]] = rsid;
+              Object.values(variant).forEach((variantVal, variantIdx) => {
+                variantRow[this.variantColumns[variantIdx + 1]] = variantVal;
+              });
+              variantRow[this.variantColumns[this.variantColumns.length - 1]] =
+                mappingId;
+              this.variantOriginalRows.push(variantRow);
+            });
+
+            diplotypeRow[this.diplotypeColumns[diplotypeIdx + 1]] =
+              variantRsids;
+
+            diplotypeRow[this.diplotypeColumns[diplotypeIdx + 2]] = mappingId;
+          } else {
+            diplotypeRow[this.diplotypeColumns[diplotypeIdx + 1]] =
+              diplotypeVal;
+          }
+        });
+        return diplotypeRow;
       });
-    this.dataRows.next(this.originalRows);
-    this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
-    this.pageIndex = result.page - 1;
-    this.cs.selectedVariants.next(new Map());
+    this.diplotypeDataRows.next(this.diplotypeOriginalRows);
+    this.variantDataRows.next(this.variantOriginalRows);
   }
 }

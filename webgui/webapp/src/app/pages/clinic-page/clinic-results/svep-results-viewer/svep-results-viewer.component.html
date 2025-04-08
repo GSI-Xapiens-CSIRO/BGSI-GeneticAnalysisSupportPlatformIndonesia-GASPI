@@ -13,7 +13,6 @@
         @if (
           results &&
           Object.keys(results.pages).length == 1 &&
-          hasChromosome(results) && 
           results.pages[results.chromosome] == 1
         ) {
           <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">

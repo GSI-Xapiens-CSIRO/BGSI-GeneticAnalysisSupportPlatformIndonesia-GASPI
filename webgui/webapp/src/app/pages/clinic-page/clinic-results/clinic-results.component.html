@@ -58,7 +58,11 @@
       </div>
     </mat-card-content>
   </mat-card>
-  <app-results-viewer [requestId]="requestId" [projectName]="projectName" />
+  @if (clinicMode === 'svep') {
+    <app-svep-results-viewer [requestId]="requestId" [projectName]="projectName" />
+  } @else {
+    <app-pgxflow-results-viewer [requestId]="requestId" [projectName]="projectName" />
+  }
   <app-annotation-viewer [requestId]="requestId" [projectName]="projectName" />
   <app-saved-for-reporting-viewer
     [requestId]="requestId"

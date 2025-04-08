@@ -34,6 +34,7 @@
     "plotly.js-dist-min": "^2.33.0",
     "rxjs": "~7.8.1",
     "tslib": "^2.6.3",
+    "uuid": "^11.1.0",
     "wordcloud": "^1.2.2",
     "zone.js": "~0.14.7"
   },
