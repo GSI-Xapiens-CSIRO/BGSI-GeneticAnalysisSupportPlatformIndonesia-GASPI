@@ -77,88 +77,152 @@
         </button>
       }
     </div>
-    @if (dataRows.value.length > 0) {
-      <div class="mb-2">
-        <strong>Click on table headers to sort</strong>
-      </div>
-      <div
-        class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
-      >
-        <cdk-virtual-scroll-viewport [style.height.px]="700">
-          <table
-            mat-table
-            [dataSource]="dataView"
-            matSort
-            (matSortChange)="resort($event)"
-          >
-            <ng-container matColumnDef="selected">
-              <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
-              <td mat-cell *matCellDef="let row">
-                <mat-checkbox
-                  (change)="cs.selection(row, $event.checked)"
-                  [checked]="
-                    (cs.selectedVariants | async)!.has(cs.hashRow(row))
-                  "
-                >
-                </mat-checkbox>
-              </td>
-            </ng-container>
-            @for (column of columns; track $index) {
-              @if (column !== "selected") {
-                <ng-container [matColumnDef]="column">
-                  <th
-                    mat-header-cell
-                    *matHeaderCellDef
-                    class="whitespace-nowrap"
-                    mat-sort-header
-                  >
-                    {{ column }}
-                  </th>
-                  <td
-                    mat-cell
-                    *matCellDef="let element"
-                    class="whitespace-nowrap"
-                  >
-                    @if (column === "Region") {
-                      <a
-                        class="no-underline text-blue-500"
-                        href="https://asia.ensembl.org/Homo_sapiens/Location/View?r={{
-                          element[column]
-                        }}"
-                        target="_blank"
-                        >{{ element[column] }}</a
-                      >
-                    } @else {
-                      {{ element[column] }}
-                    }
-                  </td>
-                </ng-container>
-              }
-            }
 
-            <tr mat-header-row *matHeaderRowDef="columns"></tr>
-            <ng-template
-              let-row
-              matRowDef
-              cdkVirtualFor
-              [matRowDefColumns]="columns"
-              [cdkVirtualForOf]="dataRows"
-            >
-              <tr mat-row></tr>
-            </ng-template>
-          </table>
-        </cdk-virtual-scroll-viewport>
-      </div>
-      <mat-paginator
-        showFirstLastButtons
-        #paginator
-        hidePageSize
-        pageSize="1"
-        [length]="resultsLength"
-        [pageIndex]="pageIndex"
-        (page)="pageChange($event)"
-      >
-      </mat-paginator>
-    }
+    <!-- advanced filter  -->
+    <div class="mb-2">
+      <mat-accordion>
+        <mat-expansion-panel
+          (opened)="panelOpenState.set(true)"
+          (closed)="panelOpenState.set(false)"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="text-lg text-primary-50 font-semibold"
+                >Advanced Filter Term</span
+              >
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="flex flex-col">
+            <div class="flex flex-row space-x-1 items-center gap-2">
+              <mat-form-field class="w-[200px] self-center">
+                <mat-label>Search Filter</mat-label>
+                <mat-select [formControl]="advancedFilter">
+                  @for (column of columns; track $index) {
+                    @if (column !== "selected") {
+                      <mat-option [value]="column">
+                        {{ column }}
+                      </mat-option>
+                    }
+                  }
+                </mat-select>
+              </mat-form-field>
+              <div class="mb-5">
+                <button mat-raised-button color="primary" (click)="addFilter()">
+                  addFilter
+                </button>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              @for (
+                item of filterValues | keyvalue: compareFn;
+                track item.key
+              ) {
+                <auto-complete-component
+                  [label]="item.key"
+                  [options]="filterMasterData[item.key]"
+                  (optionSelected)="onSelectChange($event, item.key)"
+                  (deleteFilter)="removeFilter(item.key)"
+                />
+              }
+            </div>
+
+            <div class="gap-2 flex flex-row">
+              <button
+                mat-raised-button
+                style="background: #ffa705"
+                (click)="resetFilter()"
+              >
+                Reset Filter
+              </button>
+              <button mat-raised-button color="primary" (click)="setFilter()">
+                Filter
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+    <!-- @if (dataRows.value.length > 0) { -->
+    <div class="mb-2">
+      <strong>Click on table headers to sort</strong>
+    </div>
+    <div
+      class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
+    >
+      <cdk-virtual-scroll-viewport [style.height.px]="700">
+        <table
+          mat-table
+          [dataSource]="dataView"
+          matSort
+          (matSortChange)="resort($event)"
+        >
+          <ng-container matColumnDef="selected">
+            <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-checkbox
+                (change)="cs.selection(row, $event.checked)"
+                [checked]="(cs.selectedVariants | async)!.has(cs.hashRow(row))"
+              >
+              </mat-checkbox>
+            </td>
+          </ng-container>
+          @for (column of columns; track $index) {
+            @if (column !== "selected") {
+              <ng-container [matColumnDef]="column">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  class="whitespace-nowrap"
+                  mat-sort-header
+                >
+                  {{ column }}
+                </th>
+                <td
+                  mat-cell
+                  *matCellDef="let element"
+                  class="whitespace-nowrap"
+                >
+                  @if (column === "Region") {
+                    <a
+                      class="no-underline text-blue-500"
+                      href="https://asia.ensembl.org/Homo_sapiens/Location/View?r={{
+                        element[column]
+                      }}"
+                      target="_blank"
+                      >{{ element[column] }}</a
+                    >
+                  } @else {
+                    {{ element[column] }}
+                  }
+                </td>
+              </ng-container>
+            }
+          }
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <ng-template
+            let-row
+            matRowDef
+            cdkVirtualFor
+            [matRowDefColumns]="columns"
+            [cdkVirtualForOf]="dataRows"
+          >
+            <tr mat-row></tr>
+          </ng-template>
+        </table>
+      </cdk-virtual-scroll-viewport>
+    </div>
+    <mat-paginator
+      showFirstLastButtons
+      #paginator
+      hidePageSize
+      pageSize="1"
+      [length]="resultsLength"
+      [pageIndex]="pageIndex"
+      (page)="pageChange($event)"
+    >
+    </mat-paginator>
+    <!-- } -->
   </mat-card-content>
 </mat-card>

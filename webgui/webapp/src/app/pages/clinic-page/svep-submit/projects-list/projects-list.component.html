@@ -24,15 +24,38 @@
     <th mat-header-cell *matHeaderCellDef>Files</th>
     <td mat-cell *matCellDef="let element">
       @for (file of element.files; track $index) {
-        <div class="file-row">
-          <mat-radio-button
-            [checked]="isFileSelected(file.filename, element.name)"
-            (change)="onFileSelect(file.filename, element.name)"
-            [value]="file.filename"
-            [disabled]="file.disabled"
+        <div class="file-row my-4">
+          {{ file.filename }}
+        </div>
+      }
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef>Description</th>
+    <td mat-cell *matCellDef="let element">
+      @for (file of element.files; track $index) {
+        <div class="flex flex-row gap-2 mb-2 mt-2">
+          <div
+            (click)="submit(file.filename, element.name)"
+            class="bg-primary-50 flex justify-center items-center rounded-full w-8 h-8 shadow-xl overflow-hidden cursor-pointer"
+            matTooltip="Run Clinical Workflow"
+            aria-label="Run Clinical Workflow"
+            [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
+            [style.background]="file.disabled ? 'gray' : '#16B3AC'"
           >
-            {{ file.filename }}
-          </mat-radio-button>
+            <img width="25rem" src="../../../../../assets/images/dna.png" />
+          </div>
+          <div
+            (click)="showQC()"
+            class="bg-primary-50 flex justify-center items-center rounded-full w-8 h-8 shadow-xl overflow-hidden cursor-pointer"
+            matTooltip="See QC Report"
+            aria-label="See QC Report"
+            [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
+            [style.background]="file.disabled ? 'gray' : '#16B3AC'"
+          >
+            <img height="21rem" src="../../../../../assets/images/cart.png" />
+          </div>
         </div>
       }
     </td>

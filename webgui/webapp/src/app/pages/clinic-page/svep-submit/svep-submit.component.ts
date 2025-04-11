@@ -58,46 +58,46 @@ export class SvepSubmitComponent {
     this.valid = true;
   }
 
-  reset() {
-    this.projects.list(0);
-    this.submissionStarted = false;
-    this.valid = false;
-  }
+  // reset() {
+  //   this.projects.list(0);
+  //   this.submissionStarted = false;
+  //   this.valid = false;
+  // }
 
-  submit() {
-    this.submissionStarted = true;
+  // submit() {
+  //   this.submissionStarted = true;
 
-    if (this.vcfFile) {
-      const s3URI = `s3://${environment.storage.dataPortalBucket}/projects/${this.projectName}/project-files/${this.vcfFile}`;
+  //   if (this.vcfFile) {
+  //     const s3URI = `s3://${environment.storage.dataPortalBucket}/projects/${this.projectName}/project-files/${this.vcfFile}`;
 
-      this.cs
-        .submitSvepJob(s3URI, this.projectName!)
-        .pipe(
-          catchError((e) => {
-            const errorMessage =
-              e.response?.data?.error?.errorMessage ||
-              'Something went wrong when initaiting the job. Please try again later.';
-            this.tstr.error(errorMessage, 'Error');
-            this.submissionStarted = false;
-            return of(null);
-          }),
-        )
-        .subscribe((response: any) => {
-          if (response) {
-            this.tstr.success(
-              'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
-              'Success',
-            );
-            this.reset();
-            // im not delete cuz maybe used soon
-            // this.results.RequestId = response.RequestId ?? null;
-            // this.results.ProjectName = response.ProjectName ?? null;
-            // this.reset();
-          }
-        });
-    } else {
-      this.tstr.warning('No file selected', 'Warning');
-      this.submissionStarted = false;
-    }
-  }
+  //     this.cs
+  //       .submitSvepJob(s3URI, this.projectName!)
+  //       .pipe(
+  //         catchError((e) => {
+  //           const errorMessage =
+  //             e.response?.data?.error?.errorMessage ||
+  //             'Something went wrong when initaiting the job. Please try again later.';
+  //           this.tstr.error(errorMessage, 'Error');
+  //           this.submissionStarted = false;
+  //           return of(null);
+  //         }),
+  //       )
+  //       .subscribe((response: any) => {
+  //         if (response) {
+  //           this.tstr.success(
+  //             'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
+  //             'Success',
+  //           );
+  //           this.reset();
+  //           // im not delete cuz maybe used soon
+  //           // this.results.RequestId = response.RequestId ?? null;
+  //           // this.results.ProjectName = response.ProjectName ?? null;
+  //           // this.reset();
+  //         }
+  //       });
+  //   } else {
+  //     this.tstr.warning('No file selected', 'Warning');
+  //     this.submissionStarted = false;
+  //   }
+  // }
 }
