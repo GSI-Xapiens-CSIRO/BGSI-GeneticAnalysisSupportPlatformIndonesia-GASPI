@@ -33,25 +33,29 @@ def lambda_handler(event, context):
         body_dict = json.loads(event_body)
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
-        location = body_dict["location"]
+        source_vcf_key = body_dict["location"]
         
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
 
     try:
-        sample_count = get_sample_count(location)
+        sample_count = get_sample_count(source_vcf_key)
     except subprocess.CalledProcessError as e:
         return bad_request(str(e))
 
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
 
+    parsed_location = urlparse(source_vcf_key)
+    input_vcf_key = parsed_location.path.lstrip("/")
+    input_vcf = Path(input_vcf_key).name
+
     payload = json.dumps(
         {
             "requestId": request_id,
             "projectName": project,
-            "location": location,
+            "sourceVcfKey": input_vcf_key 
         }
     )
 
@@ -62,8 +66,6 @@ def lambda_handler(event, context):
         Payload=payload,
     )
 
-    parsed_location = urlparse(location)
-    input_vcf = Path(parsed_location.path.lstrip("/")).name
     update_clinic_job(
         job_id=request_id,
         job_status="pending",

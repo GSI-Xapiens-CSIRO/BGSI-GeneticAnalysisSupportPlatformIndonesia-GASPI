@@ -40,18 +40,18 @@ def run_pharmcat(input_path, vcf):
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
-    location = event["location"]
+    s3_input_key = event["s3Key"]
     project = event["projectName"]
-    source_vcf_location = event["sourceVcfLocation"]
+    source_vcf_key = event["sourceVcfKey"]
 
     try:
-        s3_path = urlparse(location).path
         preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
 
         local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
+        print(f"Downloading s3://{PGXFLOW_BUCKET}/{s3_input_key} to {local_input_path}")
         s3_client.download_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=s3_path.lstrip("/"),
+            Key=s3_input_key,
             Filename=local_input_path,
         )
 
@@ -59,19 +59,21 @@ def lambda_handler(event, context):
         processed_json = f"{request_id}.report.json"
         local_output_path = os.path.join(LOCAL_DIR, processed_json)
 
-        output_key = f"pharmcat_{request_id}.json"
+        s3_output_key = f"pharmcat_{request_id}.json"
+        print(f"Uploading {local_output_path} to s3://{PGXFLOW_BUCKET}/{s3_output_key}")
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=output_key,
+            Key=s3_output_key,
             Filename=local_output_path,
         )
 
+        print(f"Deleting s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
-            Key=s3_path.lstrip("/"),
+            Key=s3_input_key,
         )
 
-        s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
+
         lambda_client.invoke(
             FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
             InvocationType="Event",
@@ -79,8 +81,8 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project,
-                    "location": s3_output_location,
-                    "sourceVcfLocation": source_vcf_location,
+                    "s3Key": s3_output_key,
+                    "sourceVcfKey": source_vcf_key,
                 }
             ),
         )
