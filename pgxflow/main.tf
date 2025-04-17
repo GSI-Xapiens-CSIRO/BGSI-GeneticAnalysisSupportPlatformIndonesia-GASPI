@@ -66,6 +66,7 @@ module "lambda-preprocessor" {
   environment_variables = {
     DPORTAL_BUCKET           = var.data-portal-bucket-name
     PGXFLOW_BUCKET           = aws_s3_bucket.pgxflow-bucket.bucket
+    REFERENCE_BUCKET         = aws_s3_bucket.pgxflow-references.bucket
     PGXFLOW_PHARMCAT_LAMBDA  = module.lambda-pharmcat.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"

@@ -72,6 +72,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/project-files/*",
+      "${aws_s3_bucket.pgxflow-references.arn}/preprocessor/*",
     ]
   }
   statement {

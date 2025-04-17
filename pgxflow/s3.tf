@@ -9,3 +9,9 @@ resource "aws_s3_bucket" "lambda-layers-bucket" {
   force_destroy = true
   tags          = var.common-tags
 }
+
+resource "aws_s3_bucket" "pgxflow-references" {
+  bucket_prefix = "pgxflow-backend-references-"
+  force_destroy = true
+  tags          = var.common-tags
+}

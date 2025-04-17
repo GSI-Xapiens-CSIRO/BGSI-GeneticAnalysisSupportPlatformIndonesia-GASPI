@@ -1,8 +1,6 @@
 import json
 import os
 import subprocess
-from pathlib import Path
-from urllib.parse import urlparse
 
 import boto3
 
@@ -13,10 +11,21 @@ s3_client = boto3.client("s3")
 LOCAL_DIR = "/tmp"
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
+REFERENCE_BUCKET = os.environ["REFERENCE_BUCKET"]
 PGXFLOW_PHARMCAT_LAMBDA = os.environ["PGXFLOW_PHARMCAT_LAMBDA"]
+PHARMCAT_REFERENCES = [
+    "pharmcat_positions.vcf.bgz",
+    "pharmcat_positions.vcf.bgz.csi",
+    "pharmcat_positions.uniallelic.vcf.bgz",
+    "pharmcat_positions.uniallelic.vcf.bgz.csi",
+    "reference.fna.bgz",
+    "reference.fna.bgz.fai", 
+    "reference.fna.bgz.gzi",
+    "pharmcat_regions.bed",
+]
 
 
-def run_preprocessor(input_path, vcf):
+def run_preprocessor(input_path, vcf, reference_fna, reference_vcf):
     """Run the PharmCAT VCF preprocessor."""
     cmd = [
         "python3",
@@ -27,6 +36,10 @@ def run_preprocessor(input_path, vcf):
         LOCAL_DIR,
         "--base-filename",
         vcf,
+        "-refFna",
+        reference_fna,
+        "-refVcf",
+        reference_vcf,
     ]
     subprocess.run(cmd, check=True)
 
@@ -34,43 +47,52 @@ def run_preprocessor(input_path, vcf):
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
-    location = event["location"]
+    source_vcf_key = event["sourceVcfKey"]
     project = event["projectName"]
 
     try:
-        s3_path = urlparse(location).path
         vcf = f"{request_id}.vcf.gz"
-
         local_input_path = os.path.join(LOCAL_DIR, vcf)
+
+        print(f"Calling s3.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}")
         s3_client.download_file(
             Bucket=DPORTAL_BUCKET,
-            Key=s3_path.lstrip("/"),
+            Key=source_vcf_key,
             Filename=local_input_path,
         )
 
-        #s3_reference_fasta = f"{REFERENCE_FASTA_BASE}.fna.gz"
-        #local_reference_fasta = os.path.join(LOCAL_DIR, f"{REFERENCE_FASTA_BASE}.fna.gz")
-        #for ext in ["", ".fai", ".gzi"]:
-        #    s3_path = f"{s3_reference_fasta}{ext}"
-        #    local_path = f"{local_reference_fasta}{ext}"
-        #    s3_client.download_file(
-        #        Bucket=REFERENCE_BUCKET,
-        #        Key=s3_path,
-        #        Filename=local_path,
-        #    )
+        local_reference_dir = os.path.join(LOCAL_DIR, "preprocessor_refs")
+        os.makedirs(local_reference_dir, exist_ok=True)
 
-        run_preprocessor(local_input_path, request_id)
+        local_references = [os.path.join(local_reference_dir, reference_file) for reference_file in PHARMCAT_REFERENCES]
+        for local_reference_path in local_references:
+            # Skip download if file exists to leverage warm starts
+            if os.path.exists(local_reference_path):
+                print(f"Skipping download of {local_reference_path} as it already exists.")
+                continue
+            reference_key = f"preprocessor/{os.path.basename(local_reference_path)}"
+            local_reference_path = os.path.join(local_reference_dir, local_reference_path)
+            print(f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}")
+            s3_client.download_file(
+                Bucket=REFERENCE_BUCKET,
+                Key=reference_key,
+                Filename=local_reference_path,
+            )
+        reference_vcf = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[0])
+        reference_fna = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[4])
+
+        run_preprocessor(local_input_path, request_id, reference_fna, reference_vcf)
         preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
         local_output_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
 
-        output_key = f"preprocessed_{request_id}.vcf.gz"
+        s3_output_key = f"preprocessed_{request_id}.vcf.gz"
+        print(f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=output_key,
+            Key=s3_output_key,
             Filename=local_output_path,
         )
 
-        s3_output_location = f"s3://{PGXFLOW_BUCKET}/{output_key}"
         lambda_client.invoke(
             FunctionName=PGXFLOW_PHARMCAT_LAMBDA,
             InvocationType="Event",
@@ -78,8 +100,8 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project,
-                    "location": s3_output_location,
-                    "sourceVcfLocation": location,
+                    "s3Key": s3_output_key,
+                    "sourceVcfKey": source_vcf_key,
                 }
             ),
         )
