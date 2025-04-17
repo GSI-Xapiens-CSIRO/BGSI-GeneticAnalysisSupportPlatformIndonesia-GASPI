@@ -1,13 +1,10 @@
-import gzip
 import os
 import json
 
 import boto3
-import botocore
 
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project
-from search import get_page
 
 RESULT_BUCKET = os.environ["RESULT_BUCKET"]
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
@@ -26,16 +23,6 @@ def read_size_from_s3(bucket_name, key):
     return response["Body"].read()
 
 
-def get_index(key):
-    try:
-        index = s3_resource.Object(RESULT_BUCKET, key).get()
-        index = gzip.decompress(index["Body"].read())
-        index = json.loads(index)
-        return index
-    except botocore.exceptions.ClientError:
-        return None
-
-
 def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
 
@@ -46,7 +33,6 @@ def lambda_handler(event, _):
         results_path = (
             f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
         )
-        index_path = f"{results_path}.index.json"
 
         check_user_in_project(sub, project_name)
 
@@ -54,50 +40,16 @@ def lambda_handler(event, _):
         file_size = s3_client.head_object(Bucket=RESULT_BUCKET, Key=results_path)[
             "ContentLength"
         ]
-        if 0 < file_size <= 5 * 10**6:
-            content = read_from_s3(RESULT_BUCKET, results_path, 0, file_size)
-            return bundle_response(
-                200,
-                {
-                    "url": None,
-                    "pages": {"-": 1},
-                    "page": 1,
-                    "content": content.decode("utf-8"),
-                },
-            )
-
-        if index := get_index(index_path):
-            pages = list(index.keys())
-            page = int(event["queryStringParameters"].get("page", 1))
-
-            entry = get_page(index, page)
-            if not entry:
-                return bad_request("Page not found.")
-
-            content = read_from_s3(
-                RESULT_BUCKET,
-                results_path,
-                entry["page_start_f"],
-                entry["page_end_f"] - entry["page_start_f"],
-            )
-
-            page_dict = {
-                page_entry: len(index[page_entry]["page_start_f"])
-                for page_entry in pages
-            }
-
-            return bundle_response(
-                200,
-                {
-                    "url": None,
-                    "pages": page_dict,
-                    "page": entry["page"],
-                    "content": content.decode("utf-8"),
-                },
-            )
-        else:
-            # No index found, return error
-            return bad_request("Index not found for this request.")
+        content = read_from_s3(RESULT_BUCKET, results_path, 0, file_size)
+        return bundle_response(
+            200,
+            {
+                "url": None,
+                "pages": {"-": 1},
+                "page": 1,
+                "content": content.decode("utf-8"),
+            },
+        )
 
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON")
