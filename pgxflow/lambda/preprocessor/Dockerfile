@@ -49,8 +49,6 @@ WORKDIR /opt/preprocessor
 
 RUN pip install -r requirements.txt
 
-RUN python -c "import preprocessor; preprocessor.prep_pharmcat_positions()"
-
 WORKDIR ${LAMBDA_TASK_ROOT}
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
