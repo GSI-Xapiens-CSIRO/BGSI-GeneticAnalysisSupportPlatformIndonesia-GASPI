@@ -124,8 +124,9 @@ module "lambda-postprocessor" {
     RESULT_SUFFIX            = local.result_suffix
     PGXFLOW_BUCKET           = aws_s3_bucket.pgxflow-bucket.bucket
     DPORTAL_BUCKET           = var.data-portal-bucket-name
-    GENE_ORGANISATIONS       = join(",", var.pgxflow-configuration["gene_organisations"])
-    GENES                    = join(",", var.pgxflow-configuration["genes"])
+    ORGANISATIONS            = jsonencode(var.pgxflow_configuration.ORGANISATIONS)
+    GENES                    = join(",", var.pgxflow_configuration.GENES)
+    DRUGS                    = join(",", var.pgxflow_configuration.DRUGS)
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }

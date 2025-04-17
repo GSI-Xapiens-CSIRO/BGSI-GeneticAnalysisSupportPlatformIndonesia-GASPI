@@ -22,9 +22,26 @@ variable "data-portal-bucket-arn" {
 }
 
 # PGxFlow Configuration
-variable "pgxflow-configuration" {
-  type        = map(list(string))
-  description = "Configuration for the PGxFlow backend lambda functions."
+variable "hub_name" {
+  type        = string
+  description = "Configuration for the hub"
+}
+
+variable "pgxflow_configuration" {
+  type = object({
+    ORGANISATIONS = list(object({
+      gene = string
+      drug = string
+    }))
+    GENES = list(string)
+    DRUGS = list(string)
+  })
+  description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
+
+  validation {
+    condition     = var.pgxflow_configuration != null
+    error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
+  }
 }
 
 # Throttling variables
