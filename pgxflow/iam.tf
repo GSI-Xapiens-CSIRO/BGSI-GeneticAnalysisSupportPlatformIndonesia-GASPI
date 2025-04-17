@@ -145,7 +145,8 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.pgxflow-bucket.arn
+      aws_s3_bucket.pgxflow-bucket.arn,
+      var.data-portal-bucket-arn,
     ]
   }
   statement {
