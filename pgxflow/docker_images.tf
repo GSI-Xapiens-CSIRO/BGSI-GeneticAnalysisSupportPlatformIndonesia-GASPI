@@ -28,7 +28,10 @@ module "docker_image_preprocessor_lambda" {
     ]
   })
   use_image_tag = false
-  source_path   = "${path.module}/lambda/preprocessor"
+  build_args = {
+    SHARED_LAYER_PATH = "${path.module}/shared_resources/python-modules/python/shared"
+  }
+  source_path = "${path.module}/lambda/preprocessor"
 
   triggers = {
     dir_sha = data.external.preprocessor_lambda_source_hash.result.hash
@@ -67,7 +70,10 @@ module "docker_image_pharmcat_lambda" {
     ]
   })
   use_image_tag = false
-  source_path   = "${path.module}/lambda/pharmcat"
+  build_args = {
+    SHARED_LAYER_PATH = "${path.module}/shared_resources/python-modules/python/shared"
+  }
+  source_path = "${path.module}/lambda/pharmcat"
 
   triggers = {
     dir_sha = data.external.pharmcat_lambda_source_hash.result.hash
