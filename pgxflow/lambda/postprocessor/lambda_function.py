@@ -1,271 +1,152 @@
-import gzip
 import json
 import os
-import subprocess
-from urllib.parse import urlparse
-from collections import defaultdict
 
 import boto3
-import ijson
 
+from genes import yield_genes
+from drugs import yield_drugs
+from utils import create_b64_id
 from shared.utils import handle_failed_execution
 from shared.dynamodb import update_clinic_job
-
-s3_client = boto3.client("s3")
 
 LOCAL_DIR = "/tmp"
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
-GENE_ORGANISATIONS = os.environ["GENE_ORGANISATIONS"].strip().split(",")
-GENES = os.environ["GENES"].strip().split(",")
+ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
+
+s3_client = boto3.client("s3")
 
 
-def query_zygosity(input_vcf=None, chrom=None, pos=None):
-    args = [
-        "bcftools",
-        "query",
-        "-f",
-        "[%GT]\n",
-        input_vcf,
-        "-r",
-        f"{chrom}:{pos}-{pos}",
-    ]
-    try:
-        bcftools_output = subprocess.check_output(
-            args=args, cwd="/tmp", encoding="utf-8"
-        )
-        return bcftools_output.strip()
-    except subprocess.CalledProcessError as e:
-        print(
-            f"cmd {e.cmd} returned non-zero error code {e.returncode}. stderr:\n{e.stderr}"
-        )
-
-
-def yield_genes(pharmcat_output_json, source_vcf):
-    with open(pharmcat_output_json, "rb") as f:
-        parser = ijson.parse(f)
-
-        current_organisation = None
-        current_gene = None
-        in_diplotype_array = False
-        in_variant_array = False
-
-        for prefix, event, value in parser:
-            if prefix == "genes" and event == "map_key":
-                current_organisation = value
-
-            if current_organisation not in GENE_ORGANISATIONS:
-                continue
-
-            if prefix == f"genes.{current_organisation}" and event == "map_key":
-                current_gene = value
-                diplotypes = []
-                condensed_diplotypes = []
-            if current_gene not in GENES:
-                continue
-
-            if (
-                not in_diplotype_array
-                and prefix
-                == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes"
-                and event == "start_array"
-            ):
-                in_diplotype_array = True
-
-            if (
-                not in_variant_array
-                and prefix == f"genes.{current_organisation}.{current_gene}.variants"
-                and event == "start_array"
-            ):
-                in_variant_array = True
-
-            if in_diplotype_array:
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes.item"
-                    and event == "start_map"
-                ):
-                    diplotype = {
-                        "organisation": current_organisation,
-                        "gene": current_gene,
-                        "alleles": [],
-                        "phenotypes": [],
-                        "variants": {},
-                    }
-                    condensed_diplotype = {
-                        "organisation": current_organisation,
-                        "gene": current_gene,
-                        "alleles": [],
-                    }
-
-                for allele in ["allele1", "allele2"]:
-                    if (
-                        prefix
-                        == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes.item.{allele}.name"
-                        and event == "string"
-                    ):
-                        diplotype["alleles"].append(value)
-                        condensed_diplotype["alleles"].append(value)
-
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes.item.phenotypes.item"
-                ):
-                    diplotype["phenotypes"].append(value)
-
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes.item"
-                    and event == "end_map"
-                ):
-                    diplotypes.append(diplotype)
-                    condensed_diplotypes.append(condensed_diplotype)
-
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.sourceDiplotypes"
-                    and event == "end_array"
-                ):
-                    in_diplotype_array = False
-
-            elif in_variant_array:
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.variants.item"
-                    and event == "start_map"
-                ):
-                    variant = {
-                        "chr": "",
-                        "pos": "",
-                        "rsid": "",
-                        "call": "",
-                        "alleles": [],
-                    }
-
-                for property, key in [
-                    ("chromosome", "chr"),
-                    ("position", "pos"),
-                    ("dbSnpId", "rsid"),
-                    ("call", "call"),
-                ]:
-                    if (
-                        prefix
-                        == f"genes.{current_organisation}.{current_gene}.variants.item.{property}"
-                    ):
-                        variant[key] = value
-
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.variants.item.alleles.item"
-                ):
-                    variant["alleles"].append(value)
-
-                if (
-                    prefix
-                    == f"genes.{current_organisation}.{current_gene}.variants.item"
-                    and event == "end_map"
-                    and variant["call"] is not None
-                ):
-                    rsid = variant.pop("rsid")
-                    variant["zygosity"] = query_zygosity(
-                        source_vcf, variant["chr"], variant["pos"]
-                    )
-                    for diplotype in diplotypes:
-                        if set(diplotype["alleles"]) & set(variant["alleles"]):
-                            diplotype["variants"][rsid] = variant
-
-                if (
-                    prefix == f"genes.{current_organisation}.{current_gene}.variants"
-                    and event == "end_array"
-                ):
-                    yield (diplotypes, condensed_diplotypes)
-                    in_variant_array = False
-
-            else:
-                continue
-
-
-def lambda_handler(event, context):
+def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
-    location = event["location"]
+    s3_input_key = event["s3Key"]
     project = event["projectName"]
-    source_vcf_location = event["sourceVcfLocation"]
+    source_vcf_key = event["sourceVcfKey"]
 
     try:
-        s3_path = urlparse(location).path
         processed_json = f"{request_id}.pharmcat.json"
+        tmp1_diplotypes_jsonl = os.path.join(LOCAL_DIR, f"tmp1_diplotypes_{processed_json}l")
+        tmp2_diplotypes_jsonl = os.path.join(LOCAL_DIR, f"tmp2_diplotypes_{processed_json}l")
+        tmp_variants_jsonl = os.path.join(LOCAL_DIR, f"tmp_variants_{processed_json}l")
+        postprocessed_json = f"out_{processed_json}"
 
         local_input_path = os.path.join(LOCAL_DIR, processed_json)
+        print(f"Downloading s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.download_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=s3_path.lstrip("/"),
+            Key=s3_input_key,
             Filename=local_input_path,
         )
-
-        index = defaultdict(lambda: defaultdict(list))
-        max_lines_per_page = 10_000
-        max_size_per_page = 10 * 10**6
-
-        postprocessed_jsonl = f"{request_id}.postprocessed.jsonl"
-        local_output_path = f"{LOCAL_DIR}/{postprocessed_jsonl}"
-
-        with open(local_output_path, "w") as f:
-            lines_read = 0
-            size_read = 0
-            page_start_offset = 0
-            page_num = 1
-
-            for diplotype_chunk, condensed_diplotype_chunk in yield_genes(
-                local_input_path, source_vcf_location
+ 
+        diplotype_offsets = {}
+        drugs_to_genes = {entry["drug"]: entry["gene"] for entry in ORGANISATIONS}
+        with open(tmp1_diplotypes_jsonl, "w") as d1_f, open(tmp_variants_jsonl, "w") as v_f:
+            for diplotype_chunk, diplotype_id_chunk, variant_chunk in yield_genes(
+                local_input_path, source_vcf_key 
             ):
                 for i in range(len(diplotype_chunk)):
-                    offset = f.tell()
-                    diplotype = diplotype_chunk[i]
+                    offset = d1_f.tell()
+                    diplotype_id = diplotype_id_chunk[i]
+                    diplotype_offsets[diplotype_id] = offset
+                    json.dump(diplotype_chunk[i], d1_f)
+                    d1_f.write("\n")
 
-                    json_string = json.dumps(diplotype)
-                    f.write(json_string + "\n")
+                visited_mapping_ids = set()
+                for i in range(len(variant_chunk)):
+                    mapping_id = variant_chunk[i]["mapping"]
+                    if mapping_id not in visited_mapping_ids:
+                        visited_mapping_ids.add(mapping_id)
+                        json.dump(variant_chunk[i], v_f)
+                        v_f.write("\n")
 
-                    record_size = len(json_string) + 1
+        with open(tmp1_diplotypes_jsonl, "rb") as d1_f, open(tmp2_diplotypes_jsonl, "w") as d2_f:
+            visited_annotations = set()
+            for annotation_chunk in yield_drugs(local_input_path):
+                for i in range(len(annotation_chunk)):
+                    annotation = annotation_chunk[i]
+                    annotation_id = create_b64_id(
+                        annotation["org"],
+                        annotation["drug"],
+                        annotation["gene"],
+                        annotation["alleles"],
+                    )
+                    if annotation_id in visited_annotations:
+                        continue
+                    visited_annotations.add(annotation_id)
 
-                    if lines_read >= max_lines_per_page or size_read >= max_size_per_page:
-                        index[page_num]["page_start_f"].append(page_start_offset)
-                        index[page_num]["page_end_f"].append(offset + record_size)
-                        page_num += 1
-                        page_start_offset = offset + record_size
-                        lines_read = 0
-                        size_read = 0
+                    diplotype_mapping_id = create_b64_id(
+                        drugs_to_genes.get(annotation["org"]),
+                        annotation["gene"],
+                        annotation["alleles"],
+                    )
+                    offset = diplotype_offsets.get(diplotype_mapping_id)
+                    d1_f.seek(offset)
+                    diplotype = json.loads(d1_f.readline())
+                    for prop in [
+                        "implications",
+                        "recommendation",
+                        "dosingInformation",
+                        "alternateDrugAvailable",
+                        "otherPrescribingGuidance",
+                    ]:
+                        diplotype[prop] = annotation[prop]
 
-                    lines_read += 1
-                    size_read += record_size
+                    json.dump(diplotype, d2_f)
+                    d2_f.write("\n")
 
-            final_offset = f.tell()
-            if not index.get(page_num, {}).get("page_start_f", None):
-                index[page_num]["page_start_f"].append(page_start_offset)
-                index[page_num]["page_end_f"].append(final_offset + record_size)
+        diplotypes = []
+        variants = []
+        diplotype_cols = ()
+        variant_cols = ()
+        
+        with open(tmp2_diplotypes_jsonl, "rb") as d2_f, open(tmp_variants_jsonl, "rb") as v_f:
+            for line in d2_f:
+                diplotype = json.loads(line)
+                if len(diplotypes) == 1:
+                    diplotype_cols = tuple(diplotype.keys())
+                diplotypes.append(diplotype)
 
-        output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
+            for line in v_f:
+                variant = json.loads(line)
+                if len(variants) == 0:
+                    variant_cols = tuple(variant.keys())
+                variants.append(variant)
+
+        local_output_path = os.path.join(LOCAL_DIR, postprocessed_json)
+        with open(local_output_path, "w") as out_f:
+            json.dump(
+                [
+                    {
+                        "cols": diplotype_cols,
+                        "data": diplotypes,
+                    },
+                    {
+                        "cols": variant_cols,
+                        "data": variants,
+                    },
+                ],
+                out_f,
+                indent=4,
+            )
+            
+        s3_output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
+
+        print(f"Uploading {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
         s3_client.upload_file(
             Filename=local_output_path,
             Bucket=DPORTAL_BUCKET,
-            Key=output_key,
+            Key=s3_output_key
         )
 
-        index = json.dumps(index).encode()
-        index = gzip.compress(index)
-        index_key = f"{output_key}.index.json.gz"
-        s3_client.put_object(
-            Bucket=DPORTAL_BUCKET,
-            Key=index_key,
-            Body=index,
-        )
-
+        print(f"Deleteing s3://{DPORTAL_BUCKET}/{s3_input_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
-            Key=s3_path.lstrip("/"),
+            Key=s3_input_key,
         )
-
+        
         update_clinic_job(request_id, job_status="completed")
+ 
     except Exception as e:
         handle_failed_execution(request_id, e)
