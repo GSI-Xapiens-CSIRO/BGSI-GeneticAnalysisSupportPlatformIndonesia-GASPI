@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "lambda-initFlow" {
+data "aws_iam_policy_document" "lambda-initPharmcat" {
   statement {
     actions = [
       "s3:ListBucket",
@@ -72,7 +72,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/project-files/*",
-      "${aws_s3_bucket.pgxflow-references.arn}/preprocessor/*",
+      "${var.pgxflow-reference-bucket-arn}/preprocessor/*",
     ]
   }
   statement {
@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
       "s3:PutObject",
     ]
     resources = [
-      "${aws_s3_bucket.pgxflow-bucket.arn}/*",
+      "${var.pgxflow-backend-bucket-arn}/*",
     ]
   }
   statement {
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "lambda-pharmcat" {
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.pgxflow-bucket.arn,
+      var.pgxflow-backend-bucket-arn,
     ]
   }
   statement {
@@ -118,7 +118,7 @@ data "aws_iam_policy_document" "lambda-pharmcat" {
       "s3:DeleteObject",
     ]
     resources = [
-      "${aws_s3_bucket.pgxflow-bucket.arn}/*"
+      "${var.pgxflow-backend-bucket-arn}/*"
     ]
   }
   statement {
@@ -146,7 +146,7 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.pgxflow-bucket.arn,
+      var.pgxflow-backend-bucket-arn,
       var.data-portal-bucket-arn,
     ]
   }
@@ -156,7 +156,7 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
       "s3:DeleteObject",
     ]
     resources = [
-      "${aws_s3_bucket.pgxflow-bucket.arn}/*"
+      "${var.pgxflow-backend-bucket-arn}/*"
     ]
   }
   statement {

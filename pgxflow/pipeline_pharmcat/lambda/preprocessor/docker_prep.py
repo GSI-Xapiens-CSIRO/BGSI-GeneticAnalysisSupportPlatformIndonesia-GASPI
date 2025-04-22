@@ -32,7 +32,7 @@ def update_shared():
         shutil.rmtree(f"{DIRECTORY}/shared")
         
     shutil.copytree(
-        f"{DIRECTORY}/../../shared_resources/python-modules/python/shared",
+        f"{DIRECTORY}/../../../shared_resources/python-modules/python/shared",
         f"{DIRECTORY}/shared"
     )
 
