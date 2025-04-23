@@ -21,6 +21,30 @@ export function clinicFilter<T extends Record<string, any>>(
   update(filtered);
 }
 
+export function clinicMultiFilter<T extends Record<string, any>>(
+  rows: T[],
+  terms: string[],
+  update: (filtered: T[]) => void,
+): void {
+  if (!terms || terms.length == 0) {
+    update(rows);
+    return;
+  }
+
+  const lowerTerms = terms.map((t) => t.toLowerCase());
+
+  const filtered = rows.filter((row) => {
+    return Object.entries(row).some(([_, value]) => {
+      return (
+        isFilterable(value) &&
+        lowerTerms.some((term) => value.toString().toLowerCase().includes(term))
+      );
+    });
+  });
+
+  update(filtered);
+}
+
 function isFilterable(value: unknown): value is { toString(): string } {
   return (
     value !== null &&

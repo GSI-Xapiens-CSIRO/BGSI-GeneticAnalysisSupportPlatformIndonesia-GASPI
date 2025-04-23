@@ -85,7 +85,7 @@
               </td>
             </ng-container>
             @for (column of diplotypeColumns; track $index) {
-              @if (column !== "selected" && column !== "mappingId") {
+              @if (column !== "selected" && column !== "mapping") {
                 <ng-container [matColumnDef]="column">
                   <th
                     mat-header-cell
@@ -104,13 +104,15 @@
                   </td>
                 </ng-container>
               }
-              @if (column === "mappingId") {
+              @if (column === "mapping") {
                 <ng-container [matColumnDef]="column">
                   <th
                     mat-header-cell
                     *matHeaderCellDef
                     class="whitespace-nowrap"
-                  ></th>
+                  >
+                  {{ column }}
+                </th>
                   <td mat-cell *matCellDef="let element">
                     <a
                       (click)="filterRelatedVariants(element[column])"
@@ -128,7 +130,7 @@
               matRowDef
               cdkVirtualFor
               [matRowDefColumns]="diplotypeColumns"
-              [cdkVirtualForOf]="diplotypeDataRows"
+              [cdkVirtualForOf]="diplotypeDataRows.value"
             >
               <tr mat-row></tr>
             </ng-template>
@@ -171,24 +173,6 @@
           Clear Variant Filter
         </button>
       }
-      @if ((cs.selectedVariants | async)!.size > 0) {
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="openAnnotateDialog()"
-          class="w-[110px]"
-        >
-          Annotate
-        </button>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="openSaveForReportingDialog()"
-          class="w-[175px]"
-        >
-          Save for Reporting
-        </button>
-      }
     </div>
     @if (variantDataRows.value.length > 0) {
       <div class="mb-2">
@@ -205,7 +189,7 @@
             (matSortChange)="resortVariants($event)"
           >
             @for (column of variantColumns; track $index) {
-              @if (column !== "mappingId") {
+              @if (column !== "mapping") {
                 <ng-container [matColumnDef]="column">
                   <th
                     mat-header-cell
@@ -224,18 +208,20 @@
                   </td>
                 </ng-container>
               }
-              @if (column === "mappingId") {
+              @if (column === "mapping") {
                 <ng-container [matColumnDef]="column">
                   <th
                     mat-header-cell
                     *matHeaderCellDef
                     class="whitespace-nowrap"
-                  ></th>
+                  >
+                  {{ column }}
+                </th>
                   <td mat-cell *matCellDef="let element">
                     <a
                       (click)="filterRelatedDiplotype(element[column])"
                       class="text-blue-500 hover:underline cursor-pointer"
-                      >See related diplotype</a
+                      >See related diplotypes</a
                     >
                   </td>
                 </ng-container>
@@ -248,7 +234,7 @@
               matRowDef
               cdkVirtualFor
               [matRowDefColumns]="variantColumns"
-              [cdkVirtualForOf]="variantDataRows"
+              [cdkVirtualForOf]="variantDataRows.value"
             >
               <tr mat-row></tr>
             </ng-template>

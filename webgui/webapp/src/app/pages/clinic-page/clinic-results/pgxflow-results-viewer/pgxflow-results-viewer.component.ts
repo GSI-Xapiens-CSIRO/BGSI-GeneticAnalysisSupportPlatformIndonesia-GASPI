@@ -37,7 +37,11 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
+import {
+  clinicFilter,
+  clinicMultiFilter,
+  clinicResort,
+} from 'src/app/utils/clinic';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { HelpTextComponent } from '../help-text/help-text.component';
@@ -116,24 +120,8 @@ export class PGXFlowResultsViewerComponent {
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   protected results: PGXFlowResult | null = null;
-  protected diplotypeColumns: string[] = [
-    'selected',
-    'Organisation',
-    'Gene Name',
-    'Alleles',
-    'Phenotypes',
-    'Variants',
-    'mappingId',
-  ];
-  protected variantColumns: string[] = [
-    'RSID',
-    'Chromosome',
-    'Position',
-    'Call',
-    'Alleles',
-    'Zygosity',
-    'mappingId',
-  ];
+  protected diplotypeColumns: string[] = [];
+  protected variantColumns: string[] = [];
   protected diplotypeOriginalRows: any[] = [];
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
@@ -236,8 +224,8 @@ export class PGXFlowResultsViewerComponent {
   }
 
   resetRelatedDiplotype() {
-    this.diplotypeScopeReduced = false;
     this.resetDiplotypes();
+    this.diplotypeScopeReduced = false;
   }
 
   filterVariants() {
@@ -253,16 +241,19 @@ export class PGXFlowResultsViewerComponent {
     this.cdr.detectChanges();
   }
 
-  filterRelatedVariants(mappingId: string) {
+  filterRelatedVariants(mappingIds: string[]) {
     this.variantScopeReduced = true;
-    this.variantFilterField.setValue(mappingId);
-    this.filterVariants();
+    this.variantFilterField.setValue('');
+    const terms = mappingIds;
+    clinicMultiFilter(this.variantOriginalRows, terms, (filtered) => {
+      this.variantDataRows.next(filtered);
+    });
     this.cdr.detectChanges();
   }
 
   resetRelatedVariants() {
-    this.variantScopeReduced = false;
     this.resetVariants();
+    this.variantScopeReduced = false;
   }
 
   async openAnnotateDialog() {
@@ -318,6 +309,26 @@ export class PGXFlowResultsViewerComponent {
     this.results = result;
     this.resultsLength = result.pages[result.page];
 
+    const resultJson = JSON.parse(result.content);
+
+    console.log(resultJson);
+
+    const diplotypes = resultJson[0].data;
+    this.diplotypeColumns = ['selected', ...resultJson[0].cols];
+    const variants = resultJson[1].data;
+    this.variantColumns = resultJson[1].cols;
+
+    this.diplotypeOriginalRows = diplotypes;
+    this.variantOriginalRows = variants;
+
+    this.diplotypeDataRows.next(this.diplotypeOriginalRows);
+    this.variantDataRows.next(this.variantOriginalRows);
+  }
+
+  /*updateTable(result: PGXFlowResult): void {
+    this.results = result;
+    this.resultsLength = result.pages[result.page];
+
     const lines = result.content.split('\n');
     this.diplotypeOriginalRows = lines
       .filter((l) => l.length > 0)
@@ -355,5 +366,5 @@ export class PGXFlowResultsViewerComponent {
       });
     this.diplotypeDataRows.next(this.diplotypeOriginalRows);
     this.variantDataRows.next(this.variantOriginalRows);
-  }
+  }*/
 }
