@@ -5,7 +5,8 @@ provider "aws" {
 data "aws_caller_identity" "this" {}
 
 locals {
-  clinic_api_url = var.clinic-mode == "svep" ? module.svep[0].api_url : module.pgxflow[0].api_url
+  clinic_mode    = contains(["RSUP", "RSCM"], var.hub_name) ? "svep" : "pgxflow"
+  clinic_api_url = local.clinic_mode == "svep" ? module.svep[0].api_url : module.pgxflow[0].api_url
 }
 
 
@@ -26,7 +27,7 @@ module "cognito" {
 }
 
 module "pgxflow" {
-  count = var.clinic-mode == "pgxflow" ? 1 : 0
+  count = local.clinic_mode == "pgxflow" ? 1 : 0
 
   source                         = "./pgxflow"
   region                         = var.region
@@ -36,7 +37,8 @@ module "pgxflow" {
   method-queue-size              = var.pgxflow-method-queue-size
   web_acl_arn                    = module.security.web_acl_arn
   cognito-user-pool-arn          = module.cognito.cognito_user_pool_arn
-  pgxflow-configuration          = var.pgxflow-configuration
+  hub_name                       = var.hub_name
+  pgxflow_configuration          = var.pgxflow_configuration
   dynamo-project-users-table     = module.sbeacon.dynamo-project-users-table
   dynamo-project-users-table-arn = module.sbeacon.dynamo-project-users-table-arn
   dynamo-clinic-jobs-table       = module.sbeacon.dynamo-clinic-jobs-table
@@ -83,7 +85,7 @@ module "sbeacon" {
 }
 
 module "svep" {
-  count = var.clinic-mode == "svep" ? 1 : 0
+  count = local.clinic_mode == "svep" ? 1 : 0
 
   source                             = "./svep"
   region                             = var.region
@@ -116,7 +118,7 @@ module "webgui" {
   data_portal_bucket      = module.sbeacon.data-portal-bucket
   api_endpoint_sbeacon    = module.sbeacon.api_url
   api_endpoint_clinic     = local.clinic_api_url
-  clinic_mode             = var.clinic-mode
+  clinic_mode             = local.clinic_mode
   bui-ssm-parameter-name  = var.bui-ssm-parameter-name
   web_acl_arn             = module.security.web_acl_arn
   hub_name                = var.hub_name

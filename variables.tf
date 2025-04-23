@@ -69,21 +69,6 @@ variable "bui-ssm-parameter-name" {
   default     = "bui-ssm-beacon-ui-url"
 }
 
-variable "clinic-mode" {
-  type        = string
-  description = "Specifies whether to enable sVEP or PGxFlow in the clinic"
-  default     = "svep"
-  validation {
-    condition     = contains(["svep", "pgxflow"], var.clinic-mode)
-    error_message = "Valid options for clinic_mode are 'svep' or 'pgxflow'."
-  }
-}
-
-variable "pgxflow-configuration" {
-  type        = map(list(string))
-  description = "Environment variable configuration for pgxflow"
-}
-
 variable "enable-inspector" {
   description = "Enables inspector scanning"
   type        = bool
@@ -138,4 +123,18 @@ variable "hub_name" {
   type        = string
   description = "Configuration for the hub"
   default     = "NONE"
+}
+
+variable "pgxflow_configuration" {
+  type = object({
+    ORGANISATIONS = list(object({
+      gene = string
+      drug = string
+    }))
+    GENES = list(string)
+    DRUGS = list(string)
+  })
+  description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
+  default     = null
+  nullable    = true
 }
