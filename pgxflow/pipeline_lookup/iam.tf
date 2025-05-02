@@ -155,3 +155,30 @@ data "aws_iam_policy_document" "lambda-lookup" {
     ]
   }
 }
+
+data "aws_iam_policy_document" "lambda-getResultsURL" {
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
+    ]
+  }
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.data-portal-bucket-arn
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
+}
