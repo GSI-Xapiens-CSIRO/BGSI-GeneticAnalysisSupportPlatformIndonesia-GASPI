@@ -9,6 +9,13 @@ resource "aws_api_gateway_rest_api" "PgxApi" {
   }
 }
 
+locals {
+  api_redeployment_hash = sha1(jsonencode(join("", compact([
+    var.hub_name == "RSPON" || var.hub_name == "RSJPD" ? module.pipeline_pharmcat[0].pipeline_pharmcat_redeployment_hash : null,
+    var.hub_name == "RSIGNG" || var.hub_name == "RSJPD" ? module.pipeline_lookup[0].pipeline_lookup_redeployment_hash : null,
+  ]))))
+}
+
 #
 # Deployment
 #
@@ -22,7 +29,7 @@ resource "aws_api_gateway_deployment" "PgxApi" {
   }
   # taint deployment if either of the child module API resources change
   triggers = {
-    redeployment = module.pipeline_pharmcat[0].pipeline_pharmcat_redeployment_hash
+    redeployment = local.api_redeployment_hash
   }
 }
 

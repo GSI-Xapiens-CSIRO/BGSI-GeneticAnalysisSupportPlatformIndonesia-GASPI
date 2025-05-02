@@ -1,0 +1,157 @@
+data "aws_iam_policy_document" "lambda-initLookup" {
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.data-portal-bucket-arn,
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "projects/*/project-files/*",
+      ]
+    }
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/project-files/*",
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      module.lambda-dbsnp.lambda_function_arn,
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda-dbsnp" {
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.data-portal-bucket-arn,
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "projects/*/project-files/*",
+      ]
+    }
+  }
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.pgxflow-reference-bucket-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/project-files/*",
+      "${var.pgxflow-reference-bucket-arn}/*",
+    ]
+  }
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${var.pgxflow-backend-bucket-arn}/*",
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-lookup.lambda_function_arn,
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda-lookup" {
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.pgxflow-reference-bucket-arn,
+      var.pgxflow-backend-bucket-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.pgxflow-reference-bucket-arn}/*",
+      "${var.pgxflow-backend-bucket-arn}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*",
+    ]
+  }
+  statement {
+    actions = [
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${var.pgxflow-backend-bucket-arn}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+}
