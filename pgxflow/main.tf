@@ -1,15 +1,12 @@
 data "aws_caller_identity" "this" {}
 
 locals {
-  result_suffix          = "_results.jsonl"
   python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
   python_modules_layer   = module.python_modules_layer.lambda_layer_arn
   binaries_layer         = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
 }
 
 module "pipeline_pharmcat" {
-  count = contains(["RSPON", "RSJPD"], var.hub_name) ? 1 : 0
-
   source                               = "./pipeline_pharmcat"
   region                               = var.region
   data-portal-bucket-name              = var.data-portal-bucket-name
@@ -37,8 +34,6 @@ module "pipeline_pharmcat" {
 }
 
 module "pipeline_lookup" {
-  count = contains(["RSIGNG", "RSJPD"], var.hub_name) ? 1 : 0
-
   source                               = "./pipeline_lookup"
   region                               = var.region
   data-portal-bucket-name              = var.data-portal-bucket-name

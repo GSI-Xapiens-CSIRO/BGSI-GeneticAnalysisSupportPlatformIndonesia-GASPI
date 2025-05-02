@@ -11,8 +11,8 @@ resource "aws_api_gateway_rest_api" "PgxApi" {
 
 locals {
   api_redeployment_hash = sha1(jsonencode(join("", compact([
-    var.hub_name == "RSPON" || var.hub_name == "RSJPD" ? module.pipeline_pharmcat[0].pipeline_pharmcat_redeployment_hash : null,
-    var.hub_name == "RSIGNG" || var.hub_name == "RSJPD" ? module.pipeline_lookup[0].pipeline_lookup_redeployment_hash : null,
+    module.pipeline_pharmcat.pipeline_pharmcat_redeployment_hash,
+    module.pipeline_lookup.pipeline_lookup_redeployment_hash,
   ]))))
 }
 
