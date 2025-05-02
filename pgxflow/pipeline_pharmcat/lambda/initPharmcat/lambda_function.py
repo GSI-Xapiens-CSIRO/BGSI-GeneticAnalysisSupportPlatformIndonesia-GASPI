@@ -34,7 +34,7 @@ def lambda_handler(event, context):
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         source_vcf_key = body_dict["location"]
-        
+
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
@@ -52,11 +52,7 @@ def lambda_handler(event, context):
     input_vcf = Path(input_vcf_key).name
 
     payload = json.dumps(
-        {
-            "requestId": request_id,
-            "projectName": project,
-            "sourceVcfKey": input_vcf_key 
-        }
+        {"requestId": request_id, "projectName": project, "sourceVcfKey": input_vcf_key}
     )
 
     print(f"Invoking preprocessor lambda with payload:\n{payload}")

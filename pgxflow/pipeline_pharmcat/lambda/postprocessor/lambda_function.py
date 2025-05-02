@@ -27,8 +27,12 @@ def lambda_handler(event, _):
 
     try:
         processed_json = f"{request_id}.pharmcat.json"
-        tmp1_diplotypes_jsonl = os.path.join(LOCAL_DIR, f"tmp1_diplotypes_{processed_json}l")
-        tmp2_diplotypes_jsonl = os.path.join(LOCAL_DIR, f"tmp2_diplotypes_{processed_json}l")
+        tmp1_diplotypes_jsonl = os.path.join(
+            LOCAL_DIR, f"tmp1_diplotypes_{processed_json}l"
+        )
+        tmp2_diplotypes_jsonl = os.path.join(
+            LOCAL_DIR, f"tmp2_diplotypes_{processed_json}l"
+        )
         tmp_variants_jsonl = os.path.join(LOCAL_DIR, f"tmp_variants_{processed_json}l")
         postprocessed_json = f"out_{processed_json}"
 
@@ -39,12 +43,14 @@ def lambda_handler(event, _):
             Key=s3_input_key,
             Filename=local_input_path,
         )
- 
+
         diplotype_offsets = {}
         drugs_to_genes = {entry["drug"]: entry["gene"] for entry in ORGANISATIONS}
-        with open(tmp1_diplotypes_jsonl, "w") as d1_f, open(tmp_variants_jsonl, "w") as v_f:
+        with open(tmp1_diplotypes_jsonl, "w") as d1_f, open(
+            tmp_variants_jsonl, "w"
+        ) as v_f:
             for diplotype_chunk, diplotype_id_chunk, variant_chunk in yield_genes(
-                local_input_path, source_vcf_key 
+                local_input_path, source_vcf_key
             ):
                 for i in range(len(diplotype_chunk)):
                     offset = d1_f.tell()
@@ -61,7 +67,9 @@ def lambda_handler(event, _):
                         json.dump(variant_chunk[i], v_f)
                         v_f.write("\n")
 
-        with open(tmp1_diplotypes_jsonl, "rb") as d1_f, open(tmp2_diplotypes_jsonl, "w") as d2_f:
+        with open(tmp1_diplotypes_jsonl, "rb") as d1_f, open(
+            tmp2_diplotypes_jsonl, "w"
+        ) as d2_f:
             visited_annotations = set()
             for annotation_chunk in yield_drugs(local_input_path):
                 for i in range(len(annotation_chunk)):
@@ -100,8 +108,10 @@ def lambda_handler(event, _):
         variants = []
         diplotype_cols = ()
         variant_cols = ()
-        
-        with open(tmp2_diplotypes_jsonl, "rb") as d2_f, open(tmp_variants_jsonl, "rb") as v_f:
+
+        with open(tmp2_diplotypes_jsonl, "rb") as d2_f, open(
+            tmp_variants_jsonl, "rb"
+        ) as v_f:
             for line in d2_f:
                 diplotype = json.loads(line)
                 if len(diplotypes) == 1:
@@ -130,14 +140,16 @@ def lambda_handler(event, _):
                 out_f,
                 indent=4,
             )
-            
-        s3_output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
 
-        print(f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
+        s3_output_key = (
+            f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
+        )
+
+        print(
+            f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}"
+        )
         s3_client.upload_file(
-            Filename=local_output_path,
-            Bucket=DPORTAL_BUCKET,
-            Key=s3_output_key
+            Filename=local_output_path, Bucket=DPORTAL_BUCKET, Key=s3_output_key
         )
 
         print(f"Calling s3_client.delete_object s3://{PGXFLOW_BUCKET}/{s3_input_key}")
@@ -145,8 +157,8 @@ def lambda_handler(event, _):
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,
         )
-        
+
         update_clinic_job(request_id, job_status="completed")
- 
+
     except Exception as e:
         handle_failed_execution(request_id, e)

@@ -5,6 +5,7 @@ import subprocess
 import boto3
 
 from shared.utils import handle_failed_execution
+
 lambda_client = boto3.client("lambda")
 s3_client = boto3.client("s3")
 
@@ -19,7 +20,7 @@ PHARMCAT_REFERENCES = [
     "pharmcat_positions.uniallelic.vcf.bgz",
     "pharmcat_positions.uniallelic.vcf.bgz.csi",
     "reference.fna.bgz",
-    "reference.fna.bgz.fai", 
+    "reference.fna.bgz.fai",
     "reference.fna.bgz.gzi",
     "pharmcat_regions.bed",
 ]
@@ -64,15 +65,24 @@ def lambda_handler(event, context):
         local_reference_dir = os.path.join(LOCAL_DIR, "preprocessor_refs")
         os.makedirs(local_reference_dir, exist_ok=True)
 
-        local_references = [os.path.join(local_reference_dir, reference_file) for reference_file in PHARMCAT_REFERENCES]
+        local_references = [
+            os.path.join(local_reference_dir, reference_file)
+            for reference_file in PHARMCAT_REFERENCES
+        ]
         for local_reference_path in local_references:
             # Skip download if file exists to leverage warm starts
             if os.path.exists(local_reference_path):
-                print(f"Skipping download of {local_reference_path} as it already exists.")
+                print(
+                    f"Skipping download of {local_reference_path} as it already exists."
+                )
                 continue
             reference_key = f"preprocessor/{os.path.basename(local_reference_path)}"
-            local_reference_path = os.path.join(local_reference_dir, local_reference_path)
-            print(f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}")
+            local_reference_path = os.path.join(
+                local_reference_dir, local_reference_path
+            )
+            print(
+                f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}"
+            )
             s3_client.download_file(
                 Bucket=REFERENCE_BUCKET,
                 Key=reference_key,
@@ -86,7 +96,9 @@ def lambda_handler(event, context):
         local_output_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
 
         s3_output_key = f"preprocessed_{request_id}.vcf.gz"
-        print(f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
+        print(
+            f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}"
+        )
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_output_key,

@@ -95,14 +95,14 @@ def update_clinic_job(
         print(f"[update_clinic_job] - Skipping email for job: {job_id}")
 
     # TODO: Implement include pgxflow email notifications
-    #send_job_email(
+    # send_job_email(
     #    job_id=job_id,
     #    job_status=job_status,
     #    project_name=project_name,
     #    input_vcf=input_vcf,
     #    user_id=user_id,
     #    is_from_failed_execution=is_from_failed_execution,
-    #)
+    # )
 
 
 def check_user_in_project(sub, project):

@@ -3,6 +3,7 @@ import traceback
 
 from shared.dynamodb import query_clinic_job, update_clinic_job
 
+
 def handle_failed_execution(job_id, error_message):
     traceback.print_exc()
     job = query_clinic_job(job_id)

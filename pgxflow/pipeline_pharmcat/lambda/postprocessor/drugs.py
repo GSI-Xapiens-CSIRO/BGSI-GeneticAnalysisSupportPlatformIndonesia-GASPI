@@ -29,6 +29,7 @@ def strip_html(string):
     stripper.feed(string)
     return stripper.get_data()
 
+
 def create_annotation_objects(current_organisation, current_drug):
     return {
         "org": current_organisation,
@@ -41,7 +42,8 @@ def create_annotation_objects(current_organisation, current_drug):
         "alternateDrugAvailable": None,
         "otherPrescribingGuidance": None,
     }
-    
+
+
 def yield_drugs(pharmcat_output_json):
     with open(pharmcat_output_json, "rb") as f:
         parser = ijson.parse(f)

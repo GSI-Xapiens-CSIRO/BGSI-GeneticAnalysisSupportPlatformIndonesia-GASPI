@@ -73,7 +73,6 @@ def lambda_handler(event, context):
             Key=s3_input_key,
         )
 
-
         lambda_client.invoke(
             FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
             InvocationType="Event",

@@ -4,7 +4,13 @@ import subprocess
 
 import ijson
 
-from utils import is_entering_array, is_exiting_array, is_entering_map, is_exiting_map, create_b64_id 
+from utils import (
+    is_entering_array,
+    is_exiting_array,
+    is_entering_map,
+    is_exiting_map,
+    create_b64_id,
+)
 
 
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
@@ -13,7 +19,7 @@ ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
 
 def query_zygosity(input_vcf_key=None, chrom=None, pos=None):
-    input_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{input_vcf_key}" 
+    input_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{input_vcf_key}"
     args = [
         "bcftools",
         "query",
@@ -24,7 +30,9 @@ def query_zygosity(input_vcf_key=None, chrom=None, pos=None):
         f"{chrom}:{pos}-{pos}",
     ]
     try:
-        bcftools_output = subprocess.check_output(args=args, cwd="/tmp", encoding="utf-8")
+        bcftools_output = subprocess.check_output(
+            args=args, cwd="/tmp", encoding="utf-8"
+        )
         return bcftools_output.strip()
     except subprocess.CalledProcessError as e:
         print(

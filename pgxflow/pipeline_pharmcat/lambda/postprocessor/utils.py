@@ -20,6 +20,7 @@ def is_exiting_map(prefix, event, map_prefix):
     """Check if we're exiting a map in the JSON stream"""
     return prefix == map_prefix and event == "end_map"
 
+
 def create_b64_id(*args):
     """
     Create a base64 encoded ID by joining multiple properties

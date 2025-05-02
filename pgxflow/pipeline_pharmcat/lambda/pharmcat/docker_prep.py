@@ -26,6 +26,7 @@ def hash_dir(dir_path: str):
 
     return sha.hexdigest()
 
+
 def update_shared():
     if os.path.isdir(f"{DIRECTORY}/shared"):
         shutil.rmtree(f"{DIRECTORY}/shared")
