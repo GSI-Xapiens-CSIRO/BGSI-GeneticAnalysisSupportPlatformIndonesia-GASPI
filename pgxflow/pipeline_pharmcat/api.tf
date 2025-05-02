@@ -12,7 +12,7 @@ resource "aws_api_gateway_resource" "pipeline_pharmcat" {
 # 
 resource "aws_api_gateway_resource" "submit" {
   rest_api_id = var.pgxflow-api-gateway-id
-  parent_id   = var.pgxflow-api-gateway-root-resource-id
+  parent_id   = aws_api_gateway_resource.pipeline_pharmcat.id
   path_part   = "submit"
 }
 
@@ -178,7 +178,7 @@ resource "aws_lambda_permission" "APIInitPharmcat" {
 #
 resource "aws_api_gateway_resource" "results" {
   rest_api_id = var.pgxflow-api-gateway-id
-  parent_id   = var.pgxflow-api-gateway-root-resource-id
+  parent_id   = aws_api_gateway_resource.pipeline_pharmcat.id
   path_part   = "results"
 }
 
