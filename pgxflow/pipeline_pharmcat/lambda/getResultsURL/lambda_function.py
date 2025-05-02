@@ -6,7 +6,7 @@ import boto3
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project
 
-RESULT_BUCKET = os.environ["RESULT_BUCKET"]
+DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 s3_resource = boto3.resource("s3")
 s3_client = boto3.client("s3")
@@ -37,10 +37,10 @@ def lambda_handler(event, _):
         check_user_in_project(sub, project_name)
 
         # Handle small files (less than 5MB) by returning the entire content
-        file_size = s3_client.head_object(Bucket=RESULT_BUCKET, Key=results_path)[
+        file_size = s3_client.head_object(Bucket=DPORTAL_BUCKET, Key=results_path)[
             "ContentLength"
         ]
-        content = read_from_s3(RESULT_BUCKET, results_path, 0, file_size)
+        content = read_from_s3(DPORTAL_BUCKET, results_path, 0, file_size)
         return bundle_response(
             200,
             {
@@ -57,6 +57,4 @@ def lambda_handler(event, _):
         return bad_request("Invalid parameters.")
     except Exception as e:
         print("Unhandled", e)
-        return bad_request(
-            "Unhandled exception. Please contact admin with the jobId."
-        )
+        return bad_request("Unhandled exception. Please contact admin with the jobId.")

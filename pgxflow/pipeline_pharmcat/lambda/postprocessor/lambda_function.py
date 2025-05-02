@@ -133,14 +133,14 @@ def lambda_handler(event, _):
             
         s3_output_key = f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
 
-        print(f"Uploading {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
+        print(f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}")
         s3_client.upload_file(
             Filename=local_output_path,
             Bucket=DPORTAL_BUCKET,
             Key=s3_output_key
         )
 
-        print(f"Deleteing s3://{DPORTAL_BUCKET}/{s3_input_key}")
+        print(f"Calling s3_client.delete_object s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,

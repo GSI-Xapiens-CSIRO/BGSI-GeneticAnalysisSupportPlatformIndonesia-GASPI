@@ -1,7 +1,7 @@
 data "aws_caller_identity" "this" {}
 
 locals {
-  result_suffix = "_results.jsonl"
+  result_suffix = "_pharmcat_results.jsonl"
 }
 
 #
@@ -34,7 +34,6 @@ module "lambda-initPharmcat" {
 
   layers = [
     var.python_modules_layer,
-    var.python_libraries_layer,
     var.binaries_layer,
   ]
 }
@@ -141,8 +140,8 @@ module "lambda-postprocessor" {
 module "lambda-getResultsURL" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "pgxflow-backend-getResultsURL"
-  description         = "Returns the presigned results URL for PGxFlow results"
+  function_name       = "pgxflow-backend-pharmcat-getResultsURL"
+  description         = "Returns the presigned results URL for PGxFlow pharmcat results"
   handler             = "lambda_function.lambda_handler"
   runtime             = "python3.12"
   memory_size         = 1792
@@ -158,9 +157,8 @@ module "lambda-getResultsURL" {
 
   environment_variables = {
     RESULT_SUFFIX              = local.result_suffix
-    RESULT_BUCKET              = var.data-portal-bucket-name
+    DPORTAL_BUCKET             = var.data-portal-bucket-name
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
-    HTS_S3_HOST                = "s3.${var.region}.amazonaws.com"
   }
 
   layers = [
