@@ -106,37 +106,25 @@ def lambda_handler(event, _):
 
         diplotypes = []
         variants = []
-        diplotype_cols = ()
-        variant_cols = ()
 
         with open(tmp2_diplotypes_jsonl, "rb") as d2_f, open(
             tmp_variants_jsonl, "rb"
         ) as v_f:
             for line in d2_f:
                 diplotype = json.loads(line)
-                if len(diplotypes) == 1:
-                    diplotype_cols = tuple(diplotype.keys())
                 diplotypes.append(diplotype)
 
             for line in v_f:
                 variant = json.loads(line)
-                if len(variants) == 0:
-                    variant_cols = tuple(variant.keys())
                 variants.append(variant)
 
         local_output_path = os.path.join(LOCAL_DIR, postprocessed_json)
         with open(local_output_path, "w") as out_f:
             json.dump(
-                [
-                    {
-                        "cols": diplotype_cols,
-                        "data": diplotypes,
-                    },
-                    {
-                        "cols": variant_cols,
-                        "data": variants,
-                    },
-                ],
+                {
+                    "diplotypes": diplotypes,
+                    "variants": variants,
+                },
                 out_f,
                 indent=4,
             )
