@@ -31,10 +31,10 @@ def update_shared():
     if os.path.isdir(f"{DIRECTORY}/shared"):
         shutil.rmtree(f"{DIRECTORY}/shared")
 
-        shutil.copytree(
-            f"{DIRECTORY}/../../../shared_resources/python-modules/python/shared",
-            f"{DIRECTORY}/shared",
-        )
+    shutil.copytree(
+        f"{DIRECTORY}/../../../shared_resources/python-modules/python/shared",
+        f"{DIRECTORY}/shared",
+    )
 
 
 if __name__ == "__main__":
