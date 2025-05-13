@@ -93,6 +93,7 @@ def lambda_handler(event, _):
                     d1_f.seek(offset)
                     diplotype = json.loads(d1_f.readline())
                     for prop in [
+                        "drug",
                         "implications",
                         "recommendation",
                         "dosingInformation",
