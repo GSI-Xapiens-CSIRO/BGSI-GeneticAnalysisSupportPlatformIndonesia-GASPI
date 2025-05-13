@@ -55,7 +55,9 @@ def lambda_handler(event, context):
         vcf = f"{request_id}.vcf.gz"
         local_input_path = os.path.join(LOCAL_DIR, vcf)
 
-        print(f"Calling s3.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}")
+        print(
+            f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key} to {local_input_path}"
+        )
         s3_client.download_file(
             Bucket=DPORTAL_BUCKET,
             Key=source_vcf_key,
@@ -81,13 +83,14 @@ def lambda_handler(event, context):
                 local_reference_dir, local_reference_path
             )
             print(
-                f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key}"
+                f"Calling s3_client.download_file from s3://{REFERENCE_BUCKET}/{reference_key} to {local_reference_path}"
             )
             s3_client.download_file(
                 Bucket=REFERENCE_BUCKET,
                 Key=reference_key,
                 Filename=local_reference_path,
             )
+
         reference_vcf = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[0])
         reference_fna = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[4])
 
@@ -97,7 +100,7 @@ def lambda_handler(event, context):
 
         s3_output_key = f"preprocessed_{request_id}.vcf.gz"
         print(
-            f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}"
+            f"Calling s3_client.upload_file from {local_output_path} to s3://{PGXFLOW_BUCKET}/{s3_output_key}"
         )
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
