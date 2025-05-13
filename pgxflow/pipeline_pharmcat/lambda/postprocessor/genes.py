@@ -4,6 +4,7 @@ import subprocess
 
 import ijson
 
+from shared.utils import CheckedProcess
 from utils import (
     is_entering_array,
     is_exiting_array,
@@ -29,15 +30,9 @@ def query_zygosity(input_vcf_key=None, chrom=None, pos=None):
         "-r",
         f"{chrom}:{pos}-{pos}",
     ]
-    try:
-        bcftools_output = subprocess.check_output(
-            args=args, cwd="/tmp", encoding="utf-8"
-        )
-        return bcftools_output.strip()
-    except subprocess.CalledProcessError as e:
-        print(
-            f"cmd {e.cmd} returned non-zero error code {e.returncode}. stderr:\n{e.stderr}"
-        )
+    query_process = CheckedProcess(args)
+    query_output = query_process.check()
+    return query_output.strip()
 
 
 def create_diplotype(current_org, current_gene):

@@ -1,12 +1,12 @@
 import csv
+import gzip
+import io
 import json
 import os
-from io import StringIO
-import subprocess
 
 import boto3
 
-from shared.utils import handle_failed_execution
+from shared.utils import CheckedProcess, handle_failed_execution
 from shared.dynamodb import update_clinic_job
 
 LOCAL_DIR = "/tmp"
@@ -20,29 +20,13 @@ s3_client = boto3.client("s3")
 lambda_client = boto3.client("lambda")
 
 
-def get_rsids(local_annotated_vcf_path):
-    try:
-        query_rsid_args = ["bcftools", "query", "-f", "%ID\n", local_annotated_vcf_path]
-        output = subprocess.check_output(
-            args=query_rsid_args,
-            cwd=LOCAL_DIR,
-            stderr=subprocess.PIPE,
-            encoding="utf-8",
-        )
-        return output.strip().split("\n")
-    except subprocess.CalledProcessError as e:
-        print(
-            f"cmd {e.cmd} returned non-zero error code {e.returncode}. stderr:\n{e.stderr}"
-        )
-
-
 def load_lookup():
     response = s3_client.get_object(
         Bucket=REFERENCE_BUCKET,
         Key=LOOKUP_REFERENCE,
     )
     body = response["Body"]
-    csvfile = StringIO(body.read().decode("utf-8-sig"))
+    csvfile = io.StringIO(body.read().decode("utf-8-sig"))
     reader = csv.DictReader(csvfile)
     lookup_table = {}
     for row in reader:
@@ -63,7 +47,16 @@ def lambda_handler(event, context):
     annotated_vcf_s3_uri = f"s3://{PGXFLOW_BUCKET}/{dbsnp_annotated_vcf_key}"
 
     try:
-        rsids = get_rsids(annotated_vcf_s3_uri)
+        query_rsid_args = [
+            "bcftools",
+            "query",
+            "-f",
+            "%ID\n",
+            annotated_vcf_s3_uri,
+        ]
+        query_rsid_process = CheckedProcess(query_rsid_args)
+        query_rsid_output = query_rsid_process.check()
+        rsids = query_rsid_output.strip().split("\n")
 
         lookup_table = load_lookup()
 
@@ -95,7 +88,7 @@ def lambda_handler(event, context):
         )
 
         dbsnp_annotated_vcf_index_key = f"{dbsnp_annotated_vcf_key}.csi"
-        print(f"Deleting {dbsnp_annotated_vcf_index_key}")
+        print(f"Deleting s3://{PGXFLOW_BUCKET}/{dbsnp_annotated_vcf_index_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
             Key=dbsnp_annotated_vcf_index_key,

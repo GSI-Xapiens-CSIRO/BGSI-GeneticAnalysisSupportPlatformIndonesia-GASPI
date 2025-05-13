@@ -7,6 +7,7 @@ from io import StringIO
 import boto3
 
 from shared.utils import (
+    CheckedProcess,
     get_vcf_chromosomes,
     get_chromosome_mapping,
     match_chromosome_name,
@@ -47,6 +48,9 @@ def generate_target_region_files(source_chromosome_mapping):
             chr = reversed_chromosome_mapping[normalised_chr]
             start = row["start"]
             end = row["end"]
+            # The association matrix has positions that could be either starts or ends (ambiguous)
+            # Adding both positions to regions.txt to ensure we catch all possible matches
+            # Abiguity resolved by cross-referencing with dbSNP RSIDs as the source of truth
             f.write(f"{chr}\t{start}\n")
             f.write(f"{chr}\t{end}\n")
             n_f.write(f"{normalised_chr}\t{start}\n")
@@ -76,14 +80,12 @@ def filter_and_rename_chrs(
             "-o",
             local_vcf_path,
         ]
-        subprocess.check_output(
-            args=rename_vcf_args, cwd=LOCAL_DIR, stderr=subprocess.PIPE
-        )
+        rename_vcf_process = CheckedProcess(rename_vcf_args)
+        rename_vcf_process.check()
 
         index_renamed_vcf_args = ["bcftools", "index", local_vcf_path]
-        subprocess.check_output(
-            args=index_renamed_vcf_args, cwd=LOCAL_DIR, stderr=subprocess.PIPE
-        )
+        index_renamed_vcf_process = CheckedProcess(index_renamed_vcf_args)
+        index_renamed_vcf_process.check()
 
         return local_vcf_path
     except subprocess.CalledProcessError as e:
@@ -109,15 +111,13 @@ def annotate_rsids(local_renamed_vcf_path, dbsnp_vcf_s3_uri, local_norm_regions_
             "-o",
             local_annotated_vcf_path,
         ]
-        subprocess.check_output(
-            args=annotate_vcf_args, cwd=LOCAL_DIR, stderr=subprocess.PIPE
-        )
+        annotate_vcf_process = CheckedProcess(annotate_vcf_args)
+        annotate_vcf_process.check()
 
         local_annotated_vcf_index_path = f"{local_annotated_vcf_path}.csi"
         index_annotated_vcf_args = ["bcftools", "index", local_annotated_vcf_path]
-        subprocess.check_output(
-            args=index_annotated_vcf_args, cwd=LOCAL_DIR, stderr=subprocess.PIPE
-        )
+        index_annotated_vcf_process = CheckedProcess(index_annotated_vcf_args)
+        index_annotated_vcf_process.check()
 
         return local_annotated_vcf_path, local_annotated_vcf_index_path
     except subprocess.CalledProcessError as e:
