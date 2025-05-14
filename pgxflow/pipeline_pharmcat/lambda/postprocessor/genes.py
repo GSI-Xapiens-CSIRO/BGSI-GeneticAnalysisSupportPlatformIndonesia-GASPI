@@ -39,6 +39,7 @@ def create_diplotype(current_org, current_gene):
     return {
         "org": current_org,
         "gene": current_gene,
+        "drug": "",
         "alleles": [],
         "phenotypes": [],
         "variants": [],
