@@ -48,13 +48,8 @@ def generate_target_region_files(source_chromosome_mapping):
             chr = reversed_chromosome_mapping[normalised_chr]
             start = row["start"]
             end = row["end"]
-            # The association matrix has positions that could be either starts or ends (ambiguous)
-            # Adding both positions to regions.txt to ensure we catch all possible matches
-            # Abiguity resolved by cross-referencing with dbSNP RSIDs as the source of truth
-            f.write(f"{chr}\t{start}\n")
-            f.write(f"{chr}\t{end}\n")
-            n_f.write(f"{normalised_chr}\t{start}\n")
-            n_f.write(f"{normalised_chr}\t{end}\n")
+            f.write(f"{chr}\t{start}\t{end}\n")
+            n_f.write(f"{normalised_chr}\t{start}\t{end}\n")
 
     return local_regions_path, local_norm_regions_path
 
