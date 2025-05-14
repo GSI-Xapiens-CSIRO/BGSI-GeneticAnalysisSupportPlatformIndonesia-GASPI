@@ -30,10 +30,11 @@ def strip_html(string):
     return stripper.get_data()
 
 
-def create_annotation_objects(current_organisation, current_drug):
+def create_annotation_objects(current_organisation, current_drug, pmids):
     return {
         "org": current_organisation,
         "drug": current_drug,
+        "pmids": pmids,
         "gene": "",
         "alleles": [],
         "implications": [],
@@ -51,6 +52,7 @@ def yield_drugs(pharmcat_output_json):
         DRUG_ORGS = {entry["drug"] for entry in ORGANISATIONS}
         current_org = None
         current_drug = None
+        in_citation_array = False
         in_annotation_array = False
         in_annotation_diplotype_array = False
 
@@ -69,6 +71,26 @@ def yield_drugs(pharmcat_output_json):
             if current_drug not in DRUGS:
                 continue
 
+            # Check whether processing citations
+            citation_array_prefix = f"drugs.{current_org}.{current_drug}.citations"
+            if is_entering_array(
+                in_citation_array, prefix, event, citation_array_prefix
+            ):
+                # Reset pmids
+                pmids = []
+                in_citation_array = True
+
+            # Citation processing
+            if in_citation_array:
+                citation_prefix = f"{citation_array_prefix}.item"
+
+                # Store pmids in array to be added to annotation
+                if prefix == f"{citation_prefix}.pmid" and event == "string":
+                    pmids.append(value)
+
+                if is_exiting_array(prefix, event, citation_array_prefix):
+                    in_citation_array = False
+
             # Check whether processing drug annotations
             annotation_array_prefix = (
                 f"drugs.{current_org}.{current_drug}.guidelines.item.annotations"
@@ -83,7 +105,9 @@ def yield_drugs(pharmcat_output_json):
                 # Reset drug annotation object at new occurrence
                 annotation_prefix = f"{annotation_array_prefix}.item"
                 if is_entering_map(prefix, event, annotation_prefix):
-                    annotation = create_annotation_objects(current_org, current_drug)
+                    annotation = create_annotation_objects(
+                        current_org, current_drug, pmids
+                    )
 
                 # Add drug implications
                 if (

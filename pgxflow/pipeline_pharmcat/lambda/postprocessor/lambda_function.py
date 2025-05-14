@@ -93,7 +93,10 @@ def lambda_handler(event, _):
                     d1_f.seek(offset)
                     diplotype = json.loads(d1_f.readline())
                     for prop in [
+                        # Organisation from drug annotation replaces org from gene
+                        "org",
                         "drug",
+                        "pmids",
                         "implications",
                         "recommendation",
                         "dosingInformation",
