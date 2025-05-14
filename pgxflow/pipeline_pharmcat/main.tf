@@ -1,7 +1,7 @@
 data "aws_caller_identity" "this" {}
 
 locals {
-  result_suffix = "_pharmcat_results.jsonl"
+  result_suffix = "_pharmcat_results.json"
 }
 
 #
