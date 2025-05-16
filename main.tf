@@ -75,7 +75,7 @@ module "svep" {
   cognito-user-pool-id               = module.cognito.cognito_user_pool_id
   hub_name                           = var.hub_name
   filters                            = var.svep-filters
-  svep-references-table-name         = var.svep-references-table-name
+  # svep-references-table-name         = var.svep-references-table-name
 
   common-tags = merge(var.common-tags, {
     "NAME" = "svep-backend"
