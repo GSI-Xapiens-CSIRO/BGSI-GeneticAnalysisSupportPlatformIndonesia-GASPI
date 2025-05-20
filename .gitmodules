@@ -5,11 +5,10 @@
 [submodule "svep"]
 	path = svep
 	url = https://github.com/GSI-Xapiens-CSIRO/sVEP-BGSi.git
-	
-[submodule "report_templates"]
-	path = report_templates
-	url = https://github.com/GSI-Xapiens-CSIRO/report_templates
 
 [submodule "pgxflow"]
 	path = pgxflow
 	url = https://github.com/GSI-Xapiens-CSIRO/pgxflow-BGSi.git
+[submodule "report_templates"]
+	path = report_templates
+	url = https://github.com/GSI-Xapiens-CSIRO/report_templates
