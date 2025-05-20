@@ -32,7 +32,10 @@ def load_lookup():
     for row in reader:
         rsid = row["Variant"]
         values = {key: row[key] for key in row}
-        lookup_table[rsid] = values
+        if rsid in lookup_table:
+            lookup_table[rsid].append(values)
+        else:
+            lookup_table[rsid] = [values]
     return lookup_table
 
 
@@ -65,8 +68,9 @@ def lambda_handler(event, context):
             for rsid in rsids:
                 if rsid not in lookup_table:
                     continue
-                json.dump(lookup_table[rsid], f)
-                f.write("\n")
+                for value in lookup_table[rsid]:
+                    json.dump(value, f)
+                    f.write("\n")
 
         s3_output_key = (
             f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
