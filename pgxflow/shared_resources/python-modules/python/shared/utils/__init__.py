@@ -7,3 +7,10 @@ from .chrom_matching import (
     get_chromosome_mapping,
     match_chromosome_name,
 )
+from .reference_utils import (
+    sort,
+    bgzip,
+    tabix_index,
+    fetch_remote_content,
+    query_references_table,
+)

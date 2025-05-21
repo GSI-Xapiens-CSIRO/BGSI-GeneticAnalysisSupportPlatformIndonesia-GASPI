@@ -165,3 +165,35 @@ module "lambda-getResultsURL" {
     var.python_modules_layer,
   ]
 }
+
+#
+# updateReferenceFiles Lambda Function
+#
+module "lambda-updateReferenceFiles" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-pharmcat-updateReferenceFiles"
+  description         = "Updates PharmCAT references and logs software versions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-updateReferenceFiles.json,
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/updateReferenceFiles"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    REFERENCE_LOCATION              = var.pgxflow-reference-bucket-name
+    DYNAMO_PGXFLOW_REFERENCES_TABLE = var.dynamo-references-table
+    EC2_IAM_INSTANCE_PROFILE        = aws_iam_instance_profile.ec2_references_instance_profile.name
+  }
+
+  layers = [
+    var.python_modules_layer
+  ]
+}

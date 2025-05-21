@@ -106,6 +106,16 @@ variable "dynamo-clinic-jobs-table-arn" {
   description = "Dynamo clinic jobs table ARN"
 }
 
+variable "dynamo-references-table" {
+  type        = string
+  description = "Dynamo PGxFlow references table"
+}
+
+variable "dynamo-references-table-arn" {
+  type        = string
+  description = "Dynamo PGxFlow references table ARN"
+}
+
 # cognito variables
 variable "cognito-user-pool-arn" {
   type        = string

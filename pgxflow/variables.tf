@@ -21,29 +21,6 @@ variable "data-portal-bucket-arn" {
   description = "ARN of the S3 bucket where the data portal files are stored."
 }
 
-# PGxFlow Configuration
-variable "hub_name" {
-  type        = string
-  description = "Configuration for the hub"
-}
-
-variable "pgxflow_configuration" {
-  type = object({
-    ORGANISATIONS = list(object({
-      gene = string
-      drug = string
-    }))
-    GENES = list(string)
-    DRUGS = list(string)
-  })
-  description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
-
-  validation {
-    condition     = var.pgxflow_configuration != null
-    error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
-  }
-}
-
 # Throttling variables
 variable "method-max-request-rate" {
   type        = number
@@ -86,4 +63,32 @@ variable "dynamo-clinic-jobs-table-arn" {
 variable "cognito-user-pool-arn" {
   type        = string
   description = "Cognito user pool ARN"
+}
+
+variable "pgxflow-references-table-name" {
+  type        = string
+  description = "Name of the references table"
+}
+
+# PGxFlow Configuration
+variable "hub_name" {
+  type        = string
+  description = "Configuration for the hub"
+}
+
+variable "pgxflow_configuration" {
+  type = object({
+    ORGANISATIONS = list(object({
+      gene = string
+      drug = string
+    }))
+    GENES = list(string)
+    DRUGS = list(string)
+  })
+  description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
+
+  validation {
+    condition     = var.pgxflow_configuration != null
+    error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
+  }
 }
