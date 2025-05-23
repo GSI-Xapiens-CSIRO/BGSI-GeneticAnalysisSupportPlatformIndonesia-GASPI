@@ -109,7 +109,8 @@ export class BeaconIngestDialogComponent {
       (f: string) =>
         (f.endsWith('.vcf.gz') || f.endsWith('.bcf.gz')) &&
         (data.project.files.includes(`${f}.tbi`) ||
-          data.project.files.includes(`${f}.csi`)),
+          data.project.files.includes(`${f}.csi`)) &&
+        !data.project.pendingFiles.includes(f),
     );
     this.tabularKeys = [
       'dataset',
@@ -209,6 +210,7 @@ export class BeaconIngestDialogComponent {
       )
       .pipe(catchError(() => of(null)))
       .subscribe((res: null | { success: boolean; message: string }) => {
+        let ingested = false;
         if (!res) {
           this.tstr.error(
             'Operation failed, please check files and try again',
@@ -221,9 +223,10 @@ export class BeaconIngestDialogComponent {
             'Ingested successfully. Perform indexing when you have ingested all your datasets.',
             'Success',
           );
+          ingested = true;
         }
         this.loading = false;
-        this.dialogRef.close();
+        this.dialogRef.close(ingested);
       });
   }
 }

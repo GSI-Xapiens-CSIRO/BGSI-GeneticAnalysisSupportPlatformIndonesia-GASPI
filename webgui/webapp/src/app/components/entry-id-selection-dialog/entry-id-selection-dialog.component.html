@@ -50,14 +50,13 @@
       </table>
       <br />
     </div>
-    @if (dataSourceEntries.data.length && !loading) {
-      <mat-paginator
-        #paginator
-        [pageSizeOptions]="[10, 50, 100]"
-        [length]="total"
-        page
-      ></mat-paginator>
-    }
+    <mat-paginator
+      #paginator
+      [pageSizeOptions]="[10, 50, 100]"
+      [length]="total"
+      [class.hide]="!(dataSourceEntries.data.length && !loading)"
+    ></mat-paginator>
+
     @if (!dataSourceEntries.data.length && !loading) {
       <p>No entries available in the selected scope</p>
     }
@@ -76,12 +75,7 @@
 } @else {
   <div mat-dialog-content>
     <p>Please select some projects.</p>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="cancel()"
-      class="mr-2.5"
-    >
+    <button mat-raised-button color="primary" (click)="cancel()" class="mr-2.5">
       Cancel
     </button>
   </div>

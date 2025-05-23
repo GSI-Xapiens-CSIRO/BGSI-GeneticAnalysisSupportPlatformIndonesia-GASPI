@@ -50,10 +50,10 @@
         @if (element.errorMessages.length > 0) {
           <br />
           @for (error of element.errorMessages; track error) {
-            <div class="text-red-900">
+            <div class="text-red-600">
               <strong>File:</strong> {{ error.file }}
             </div>
-            <div class="text-red-900">
+            <div class="text-red-600">
               <strong>Error:</strong>
               <pre class="overflow-x-auto">{{ error.error.trim() }}</pre>
             </div>
@@ -67,6 +67,17 @@
           >
             <mat-icon>close</mat-icon>
           </button>
+        }
+        @if (element.pendingFiles.length > 0) {
+          <br />
+          <div class="flex flex-row items-center space-x-2 text-red-600">
+            <mat-icon
+              class="text-white bg-red-600 rounded-full"
+              matTooltip="This project has files that are still being deindeified, until they are deidentified, they cannot be ingested to sBeacon"
+              >priority_high</mat-icon
+            >
+            <p>There are pending files that are still being deidentified</p>
+          </div>
         }
       </td>
     </ng-container>

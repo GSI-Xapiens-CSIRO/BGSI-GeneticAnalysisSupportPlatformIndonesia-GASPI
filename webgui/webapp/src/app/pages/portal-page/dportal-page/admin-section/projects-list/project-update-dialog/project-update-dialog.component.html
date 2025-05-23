@@ -13,6 +13,16 @@
           <mat-icon>delete</mat-icon>
         </button>
         <div class="flex">{{ file }}</div>
+        @if (project.pendingFiles.includes(file)) {
+          &nbsp;(
+          <mat-icon
+            class="text-white bg-red-600 rounded-full"
+            matTooltip="This project has files that are still being deindeified, until they are deidentified, they cannot be ingested to sBeacon"
+            >priority_high</mat-icon
+          >
+          <p>Pending</p>
+          )
+        }
       </div>
     } @empty {
       <h4>No files added to the project yet</h4>

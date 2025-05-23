@@ -21,8 +21,6 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTabsModule } from '@angular/material/tabs';
-import { CommonModule } from '@angular/common';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 enum CmdType {
   LINUX = 'Linux',
@@ -51,8 +49,6 @@ const filePath = '/your/path/to/file.format';
     MatTooltipModule,
     MatIconModule,
     MatTabsModule,
-    CommonModule,
-    NoopAnimationsModule,
   ],
   templateUrl: './access-keys-dialog.component.html',
   styleUrl: './access-keys-dialog.component.scss',
@@ -156,10 +152,10 @@ export class AccessKeysDialogComponent {
       );
 
       const limitSizeInBytes = Math.floor(totalQuotaSize - totalStorageSize);
-      const expires = 60 * 60; // 1 hour
+      const expires = 60 * 5; // 5 minutes
 
-      this.expiredsText = `${expires / 60 / 60} Hour${
-        expires / 60 / 60 > 1 ? 's' : ''
+      this.expiredsText = `${expires / 60} Minute${
+        expires / 60 > 1 ? 's' : ''
       }`;
 
       this.limitSizeText = formatBytes(limitSizeInBytes, 2);
@@ -177,7 +173,7 @@ export class AccessKeysDialogComponent {
         Fields: {
           key: `private/${identityId}/${filename}`,
         },
-        Expires: 60 * 60,
+        Expires: expires,
         Conditions: [['content-length-range', 0, limitSizeInBytes]],
       });
 
