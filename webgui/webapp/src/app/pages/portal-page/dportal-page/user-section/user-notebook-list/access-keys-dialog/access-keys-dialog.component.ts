@@ -152,10 +152,10 @@ export class AccessKeysDialogComponent {
       );
 
       const limitSizeInBytes = Math.floor(totalQuotaSize - totalStorageSize);
-      const expires = 60 * 60; // 1 hour
+      const expires = 60 * 5; // 5 minutes
 
-      this.expiredsText = `${expires / 60 / 60} Hour${
-        expires / 60 / 60 > 1 ? 's' : ''
+      this.expiredsText = `${expires / 60} Minute${
+        expires / 60 > 1 ? 's' : ''
       }`;
 
       this.limitSizeText = formatBytes(limitSizeInBytes, 2);
@@ -173,7 +173,7 @@ export class AccessKeysDialogComponent {
         Fields: {
           key: `private/${identityId}/${filename}`,
         },
-        Expires: 60 * 60,
+        Expires: expires,
         Conditions: [['content-length-range', 0, limitSizeInBytes]],
       });
 
