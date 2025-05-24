@@ -49,6 +49,8 @@ export class ClinicService {
     limit?: number,
     last_evaluated_key?: string | null,
     project?: string,
+    search?: string,
+    job_status?: string,
   ) {
     console.log('get list jobs id');
     return from(
@@ -59,19 +61,37 @@ export class ClinicService {
           queryStringParameters: {
             ...(limit !== undefined && limit !== null ? { limit } : {}),
             ...(last_evaluated_key ? { last_evaluated_key } : {}),
+            ...(search ? { search } : {}),
+            ...(job_status !== 'all' ? { job_status } : {}),
           },
         },
       ),
     );
   }
 
-  submitSvepJob(location: string, projectName: string) {
+  submitSvepJob(location: string, projectName: string, jobName: string) {
+    let pathPart: string;
+    switch (environment.hub_name) {
+      case 'RSCM':
+      case 'RSSARDJITO':
+        pathPart = 'submit';
+        break;
+      case 'RSPON':
+        pathPart = 'pipeline_pharmcat/submit';
+        break;
+      case 'RSIGNG':
+        pathPart = 'pipeline_lookup/submit';
+        break;
+      default:
+        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
+    }
+
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
         return from(
-          API.post(environment.api_endpoint_svep.name, 'submit', {
-            body: { location, projectName, userId },
+          API.post(environment.api_endpoint_clinic.name, pathPart, {
+            body: { location, projectName, userId, jobName },
           }),
         );
       }),
@@ -80,13 +100,13 @@ export class ClinicService {
 
   generateQC(projectName: string, fileName: string, key: string) {
     return from(
-      API.post(environment.api_endpoint_svep.name, 'vcfstats', {
+      API.post(environment.api_endpoint_clinic.name, 'vcfstats', {
         body: { projectName, fileName, key },
       }),
     );
   }
 
-  getSvepResults(
+  getClinicResults(
     requestId: string,
     projectName: string,
     chromosome: string | null = null,
@@ -98,9 +118,24 @@ export class ClinicService {
       ...(page && { page }),
       ...(position && { position }),
     };
+    let pathPart: string;
+    switch (environment.hub_name) {
+      case 'RSCM':
+      case 'RSSARDJITO':
+        pathPart = 'results';
+        break;
+      case 'RSPON':
+        pathPart = 'pipeline_pharmcat/results';
+        break;
+      case 'RSIGNG':
+        pathPart = 'pipeline_lookup/results';
+        break;
+      default:
+        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
+    }
 
     return from(
-      API.get(environment.api_endpoint_svep.name, 'results', {
+      API.get(environment.api_endpoint_clinic.name, pathPart, {
         queryStringParameters: {
           request_id: requestId,
           project_name: projectName,
@@ -218,7 +253,7 @@ export class ClinicService {
     );
   }
 
-  generateReport(project: string, jobId: string) {
+  generateReport(project: string, jobId: string, args: any = {}) {
     return from(
       API.post(
         environment.api_endpoint_sbeacon.name,
@@ -226,8 +261,19 @@ export class ClinicService {
         {
           body: {
             lab: environment.hub_name,
+            ...args,
           },
         },
+      ),
+    );
+  }
+
+  deleteFailedJob(project: string, jobId: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/delete-job/${jobId}`,
+        {},
       ),
     );
   }

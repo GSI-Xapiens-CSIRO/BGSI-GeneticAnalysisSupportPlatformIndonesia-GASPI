@@ -40,7 +40,7 @@ Amplify.configure({
         },
       },
       {
-        ...environment.api_endpoint_svep,
+        ...environment.api_endpoint_clinic,
         custom_header: async () => {
           try {
             return {
