@@ -2,12 +2,10 @@ import json
 import os
 import subprocess
 
-import boto3
+from shared.utils import handle_failed_execution, LoggingClient
 
-from shared.utils import handle_failed_execution
-
-lambda_client = boto3.client("lambda")
-s3_client = boto3.client("s3")
+lambda_client = LoggingClient("lambda")
+s3_client = LoggingClient("s3")
 
 LOCAL_DIR = "/tmp"
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
@@ -55,9 +53,6 @@ def lambda_handler(event, context):
         vcf = f"{request_id}.vcf.gz"
         local_input_path = os.path.join(LOCAL_DIR, vcf)
 
-        print(
-            f"Calling s3_client.download_file from s3://{DPORTAL_BUCKET}/{source_vcf_key} to {local_input_path}"
-        )
         s3_client.download_file(
             Bucket=DPORTAL_BUCKET,
             Key=source_vcf_key,
@@ -78,16 +73,12 @@ def lambda_handler(event, context):
                     f"Skipping download of {local_reference_path} as it already exists."
                 )
                 continue
-            reference_key = f"preprocessor/{os.path.basename(local_reference_path)}"
             local_reference_path = os.path.join(
                 local_reference_dir, local_reference_path
             )
-            print(
-                f"Calling s3_client.download_file from s3://{REFERENCE_BUCKET}/{reference_key} to {local_reference_path}"
-            )
             s3_client.download_file(
                 Bucket=REFERENCE_BUCKET,
-                Key=reference_key,
+                Key=f"preprocessor/{os.path.basename(local_reference_path)}",
                 Filename=local_reference_path,
             )
 
@@ -96,16 +87,12 @@ def lambda_handler(event, context):
 
         run_preprocessor(local_input_path, request_id, reference_fna, reference_vcf)
         preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
-        local_output_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
 
         s3_output_key = f"preprocessed_{request_id}.vcf.gz"
-        print(
-            f"Calling s3_client.upload_file from {local_output_path} to s3://{PGXFLOW_BUCKET}/{s3_output_key}"
-        )
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_output_key,
-            Filename=local_output_path,
+            Filename=os.path.join(LOCAL_DIR, preprocessed_vcf),
         )
 
         lambda_client.invoke(

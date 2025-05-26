@@ -1,7 +1,7 @@
 import json
 import os
 
-import boto3
+from shared.utils import LoggingClient
 
 EC2_IAM_INSTANCE_PROFILE = os.environ["EC2_IAM_INSTANCE_PROFILE"]
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
@@ -16,7 +16,7 @@ REGION_AMI_MAP = {
 
 
 def update_pharmcat(pharmcat_version):
-    ec2_client = boto3.client("ec2")
+    ec2_client = LoggingClient("ec2")
     ami = REGION_AMI_MAP[AWS_REGION]
     device_name = ec2_client.describe_images(ImageIds=[ami])["Images"][0][
         "RootDeviceName"

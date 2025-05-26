@@ -1,14 +1,11 @@
 import json
 import os
 import subprocess
-from urllib.parse import urlparse
 
-import boto3
+from shared.utils import handle_failed_execution, LoggingClient
 
-from shared.utils import handle_failed_execution
-
-lambda_client = boto3.client("lambda")
-s3_client = boto3.client("s3")
+lambda_client = LoggingClient("lambda")
+s3_client = LoggingClient("s3")
 
 LOCAL_DIR = "/tmp"
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
@@ -48,7 +45,6 @@ def lambda_handler(event, context):
         preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
 
         local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
-        print(f"Downloading s3://{PGXFLOW_BUCKET}/{s3_input_key} to {local_input_path}")
         s3_client.download_file(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,
@@ -60,14 +56,12 @@ def lambda_handler(event, context):
         local_output_path = os.path.join(LOCAL_DIR, processed_json)
 
         s3_output_key = f"pharmcat_{request_id}.json"
-        print(f"Uploading {local_output_path} to s3://{PGXFLOW_BUCKET}/{s3_output_key}")
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_output_key,
             Filename=local_output_path,
         )
 
-        print(f"Deleting s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,

@@ -1,12 +1,10 @@
 import json
 import os
 
-import boto3
-
 from genes import yield_genes
 from drugs import yield_drugs
 from utils import create_b64_id
-from shared.utils import handle_failed_execution
+from shared.utils import handle_failed_execution, LoggingClient
 from shared.dynamodb import update_clinic_job
 
 LOCAL_DIR = "/tmp"
@@ -15,7 +13,7 @@ PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
-s3_client = boto3.client("s3")
+s3_client = LoggingClient("s3")
 
 
 def lambda_handler(event, _):
@@ -37,7 +35,6 @@ def lambda_handler(event, _):
         postprocessed_json = f"out_{processed_json}"
 
         local_input_path = os.path.join(LOCAL_DIR, processed_json)
-        print(f"Downloading s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.download_file(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,
@@ -133,18 +130,12 @@ def lambda_handler(event, _):
                 indent=4,
             )
 
-        s3_output_key = (
-            f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
-        )
-
-        print(
-            f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}"
-        )
         s3_client.upload_file(
-            Filename=local_output_path, Bucket=DPORTAL_BUCKET, Key=s3_output_key
+            Filename=local_output_path,
+            Bucket=DPORTAL_BUCKET,
+            Key=f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}",
         )
 
-        print(f"Calling s3_client.delete_object s3://{PGXFLOW_BUCKET}/{s3_input_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_input_key,

@@ -1,15 +1,14 @@
 import os
 import json
 
-import boto3
-
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project
+from shared.utils import LoggingClient
 
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 
-s3_client = boto3.client("s3")
+s3_client = LoggingClient("s3")
 
 
 def lambda_handler(event, _):

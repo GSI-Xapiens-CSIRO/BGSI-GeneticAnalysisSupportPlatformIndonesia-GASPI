@@ -4,14 +4,13 @@ import os
 import subprocess
 from urllib.parse import urlparse
 
-import boto3
-
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, update_clinic_job
+from shared.utils import LoggingClient
 
 PGXFLOW_DBSNP_LAMBDA = os.environ["PGXFLOW_DBSNP_LAMBDA"]
 
-lambda_client = boto3.client("lambda")
+lambda_client = LoggingClient("lambda")
 
 
 def get_sample_count(location):
