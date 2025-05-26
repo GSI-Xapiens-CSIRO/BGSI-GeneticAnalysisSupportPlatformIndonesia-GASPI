@@ -1,5 +1,4 @@
 import json
-import urllib.request
 
 from shared.utils import fetch_remote_content, query_references_table
 

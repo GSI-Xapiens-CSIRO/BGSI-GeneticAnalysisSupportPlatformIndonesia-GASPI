@@ -4,16 +4,15 @@ import os
 import subprocess
 from urllib.parse import urlparse
 
-import boto3
-
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, update_clinic_job
+from shared.utils import LoggingClient
 
 PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
     "PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA"
 ]
 
-lambda_client = boto3.client("lambda")
+lambda_client = LoggingClient("lambda")
 
 
 def get_sample_count(location):
@@ -51,15 +50,16 @@ def lambda_handler(event, context):
     input_vcf_key = parsed_location.path.lstrip("/")
     input_vcf = Path(input_vcf_key).name
 
-    payload = json.dumps(
-        {"requestId": request_id, "projectName": project, "sourceVcfKey": input_vcf_key}
-    )
-
-    print(f"Invoking preprocessor lambda with payload:\n{payload}")
     lambda_client.invoke(
         FunctionName=PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA,
         InvocationType="Event",
-        Payload=payload,
+        Payload=json.dumps(
+            {
+                "requestId": request_id,
+                "projectName": project,
+                "sourceVcfKey": input_vcf_key,
+            }
+        ),
     )
 
     update_clinic_job(

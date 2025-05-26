@@ -1,7 +1,6 @@
-import json
-
 from version_checks import check_pharmcat_version
 from pharmcat import update_pharmcat
+
 
 def lambda_handler(event, context):
     if event.get("source") == "aws.events":
