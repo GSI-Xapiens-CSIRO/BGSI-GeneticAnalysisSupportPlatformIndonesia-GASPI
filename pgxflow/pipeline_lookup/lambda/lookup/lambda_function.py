@@ -1,23 +1,19 @@
 import csv
-import gzip
 import io
 import json
 import os
 
-import boto3
-
-from shared.utils import CheckedProcess, handle_failed_execution
-from shared.dynamodb import update_clinic_job
+from shared.utils import CheckedProcess, handle_failed_execution, LoggingClient
 
 LOCAL_DIR = "/tmp"
-RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 REFERENCE_BUCKET = os.environ["REFERENCE_BUCKET"]
 LOOKUP_REFERENCE = os.environ["LOOKUP_REFERENCE"]
+PGXFLOW_GNOMAD_LAMBDA = os.environ["PGXFLOW_GNOMAD_LAMBDA"]
 
-s3_client = boto3.client("s3")
-lambda_client = boto3.client("lambda")
+s3_client = LoggingClient("s3")
+lambda_client = LoggingClient("lambda")
 
 
 def load_lookup():
@@ -43,8 +39,6 @@ def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
     project_name = event["projectName"]
-    # Source VCF will be used for gnomad annotations
-    source_vcf_key = event["sourceVcfKey"]
     dbsnp_annotated_vcf_key = event["dbsnpAnnotatedVcfKey"]
 
     annotated_vcf_s3_uri = f"s3://{PGXFLOW_BUCKET}/{dbsnp_annotated_vcf_key}"
@@ -54,50 +48,58 @@ def lambda_handler(event, context):
             "bcftools",
             "query",
             "-f",
-            "%ID\n",
+            "%ID\t%CHROM\t%POS\t%REF\t%ALT\n",
             annotated_vcf_s3_uri,
         ]
         query_rsid_process = CheckedProcess(query_rsid_args)
-        query_rsid_output = query_rsid_process.check()
-        rsids = query_rsid_output.strip().split("\n")
-
         lookup_table = load_lookup()
+        lookup_results = []
+        for line in query_rsid_process.stdout:
+            rsid, chrom, pos_s, ref, alt = line.strip().split("\t")
+            for lookup_values in lookup_table.get(rsid, []):
+                for allele in alt.split(","):
+                    if allele == ".":
+                        continue
+                    lookup_results.append(
+                        dict(
+                            **lookup_values,
+                            **{
+                                "chromVcf": chrom,
+                                "posVcf": int(pos_s),
+                                "refVcf": ref,
+                                "altVcf": allele,
+                            },
+                        )
+                    )
+        query_rsid_process.check()
 
-        local_output_path = os.path.join(LOCAL_DIR, f"annotated_{request_id}.jsonl")
-        with open(local_output_path, "w") as f:
-            for rsid in rsids:
-                if rsid not in lookup_table:
-                    continue
-                for value in lookup_table[rsid]:
-                    json.dump(value, f)
-                    f.write("\n")
-
-        s3_output_key = (
-            f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
-        )
-
-        print(
-            f"Calling s3_client.upload_file from {local_output_path} to s3://{DPORTAL_BUCKET}/{s3_output_key}"
-        )
-        s3_client.upload_file(
-            Bucket=DPORTAL_BUCKET,
+        s3_output_key = f"{request_id}_lookup.json"
+        s3_client.put_object(
+            Bucket=PGXFLOW_BUCKET,
             Key=s3_output_key,
-            Filename=local_output_path,
+            Body=json.dumps(lookup_results).encode(),
         )
 
-        print(f"Deleting {annotated_vcf_s3_uri}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
             Key=dbsnp_annotated_vcf_key,
         )
 
-        dbsnp_annotated_vcf_index_key = f"{dbsnp_annotated_vcf_key}.csi"
-        print(f"Deleting s3://{PGXFLOW_BUCKET}/{dbsnp_annotated_vcf_index_key}")
         s3_client.delete_object(
             Bucket=PGXFLOW_BUCKET,
-            Key=dbsnp_annotated_vcf_index_key,
+            Key=f"{dbsnp_annotated_vcf_key}.csi",
         )
 
-        update_clinic_job(request_id, job_status="completed")
+        lambda_client.invoke(
+            FunctionName=PGXFLOW_GNOMAD_LAMBDA,
+            InvocationType="Event",
+            Payload=json.dumps(
+                {
+                    "requestId": request_id,
+                    "projectName": project_name,
+                    "inputDataKey": s3_output_key,
+                }
+            ),
+        )
     except Exception as e:
         handle_failed_execution(request_id, e)

@@ -132,6 +132,43 @@ data "aws_iam_policy_document" "lambda-lookup" {
   statement {
     actions = [
       "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${var.pgxflow-backend-bucket-arn}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-gnomad.lambda_function_arn,
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda-gnomad" {
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.pgxflow-backend-bucket-arn}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "s3:PutObject",
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*",

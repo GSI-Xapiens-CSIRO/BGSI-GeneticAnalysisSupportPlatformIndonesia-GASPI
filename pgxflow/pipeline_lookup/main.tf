@@ -103,6 +103,7 @@ module "lambda-lookup" {
     DPORTAL_BUCKET           = var.data-portal-bucket-name
     REFERENCE_BUCKET         = var.pgxflow-reference-bucket-name
     LOOKUP_REFERENCE         = var.lookup_reference
+    PGXFLOW_GNOMAD_LAMBDA    = module.lambda-gnomad.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
@@ -113,6 +114,39 @@ module "lambda-lookup" {
   ]
 }
 
+#
+# gnomad lambda function
+#
+module "lambda-gnomad" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-gnomad"
+  description         = "Adds data from gnomAD to the lookup results"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 600
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-gnomad.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/gnomad"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    RESULT_SUFFIX            = local.result_suffix
+    PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
+    DPORTAL_BUCKET           = var.data-portal-bucket-name
+    DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+  }
+
+  layers = [
+    var.python_modules_layer,
+    var.binaries_layer,
+  ]
+}
 #
 # getResultsURL lambda function
 #

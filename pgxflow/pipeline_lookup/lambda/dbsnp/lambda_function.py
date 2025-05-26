@@ -4,9 +4,8 @@ import os
 import subprocess
 from io import StringIO
 
-import boto3
-
 from shared.utils import (
+    LoggingClient,
     CheckedProcess,
     get_vcf_chromosomes,
     get_chromosome_mapping,
@@ -22,8 +21,8 @@ DBSNP_REFERENCE = os.environ["DBSNP_REFERENCE"]
 LOOKUP_REFERENCE = os.environ["LOOKUP_REFERENCE"]
 PGXFLOW_LOOKUP_LAMBDA = os.environ["PGXFLOW_LOOKUP_LAMBDA"]
 
-lambda_client = boto3.client("lambda")
-s3_client = boto3.client("s3")
+lambda_client = LoggingClient("lambda")
+s3_client = LoggingClient("s3")
 
 
 def generate_target_region_files(source_chromosome_mapping):
@@ -148,9 +147,6 @@ def lambda_handler(event, context):
         os.remove(local_renamed_vcf_path)
 
         annotated_vcf_key = f"annotated_{request_id}.vcf.gz"
-        print(
-            f"Calling s3_client.upload_file from {local_annotated_vcf_path} to s3://{DPORTAL_BUCKET}/{annotated_vcf_key}"
-        )
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
             Key=annotated_vcf_key,
@@ -158,13 +154,9 @@ def lambda_handler(event, context):
         )
         os.remove(local_annotated_vcf_path)
 
-        annotated_vcf_index_key = f"{annotated_vcf_key}.csi"
-        print(
-            f"Calling s3_client.upload_file from {local_annotated_vcf_index_path} to s3://{DPORTAL_BUCKET}/{annotated_vcf_index_key}"
-        )
         s3_client.upload_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=annotated_vcf_index_key,
+            Key=f"{annotated_vcf_key}.csi",
             Filename=local_annotated_vcf_index_path,
         )
         os.remove(local_annotated_vcf_index_path)
@@ -176,7 +168,6 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project_name,
-                    "sourceVcfKey": source_vcf_key,
                     "dbsnpAnnotatedVcfKey": annotated_vcf_key,
                 }
             ),

@@ -1,6 +1,7 @@
 from .lambda_utils import (
     CheckedProcess,
     handle_failed_execution,
+    LoggingClient,
 )
 from .chrom_matching import (
     get_vcf_chromosomes,
