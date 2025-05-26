@@ -106,6 +106,10 @@ def _truncate_string(string, max_length=MAX_PRINT_LENGTH):
     return f"{string[:snip_start]}{placeholder}{string[snip_end:]}"
 
 
+def short_json(obj, max_length=MAX_PRINT_LENGTH):
+    return _truncate_string(json.dumps(obj, default=str), max_length)
+
+
 class LoggingClient:
     def __init__(self, client):
         self.client = boto3.client(client)
@@ -116,8 +120,8 @@ class LoggingClient:
 
     def aws_api_call(self, function_name, kwargs):
         function = getattr(self.client, function_name)
-        kwargs_string = _truncate_string(json.dumps(kwargs, default=str))
-        print(
-            f"Calling {self.client_name}.{function_name} with kwargs: {kwargs_string}"
-        )
-        return function(**kwargs)
+        call_name = f"{self.client_name}.{function_name}"
+        print(f"Calling {call_name} with kwargs: {short_json(kwargs)}")
+        response = function(**kwargs)
+        print(f"Received response from {call_name}: {short_json(response)}")
+        return response
