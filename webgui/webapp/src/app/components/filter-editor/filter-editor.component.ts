@@ -20,7 +20,6 @@ import { MatButtonModule } from '@angular/material/button';
   selector: 'app-filter-editor',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,

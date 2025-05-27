@@ -75,13 +75,27 @@
           <mat-label>Size of Data</mat-label>
           <input matInput type="number" formControlName="quotaSize" />
           <span matTextSuffix>GB</span>
-          <mat-error>Field is required</mat-error>
+          <mat-error>
+            @if (form.get('quotaSize')?.hasError('required')) {
+              Field is required
+            }
+            @if (form.get('quotaSize')?.hasError('quotaExceeded')) {
+              The Size of data must be more than {{ usageSizeText }}.
+            }
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Count of Queries</mat-label>
           <input matInput type="number" formControlName="quotaQueryCount" />
           <span matTextSuffix>Count</span>
-          <mat-error>Field is required</mat-error>
+          <mat-error>
+            @if (form.get('quotaQueryCount')?.hasError('required')) {
+              Field is required
+            }
+            @if (form.get('quotaQueryCount')?.hasError('quotaExceeded')) {
+                The query count must be more than {{ usageCount }}.
+            }
+          </mat-error>
         </mat-form-field>
 
         <div class="flex space-x-2">

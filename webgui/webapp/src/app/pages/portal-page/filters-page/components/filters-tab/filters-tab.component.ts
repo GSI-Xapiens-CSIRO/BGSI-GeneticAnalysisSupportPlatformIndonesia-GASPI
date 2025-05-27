@@ -159,6 +159,7 @@ export class FiltersTabComponent {
       } else {
         if (!data) {
           this.tstr.error('API request failed', 'Error');
+          this.ss.end();
           return;
         }
       }

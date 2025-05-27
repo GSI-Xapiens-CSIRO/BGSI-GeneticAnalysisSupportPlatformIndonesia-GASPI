@@ -227,6 +227,8 @@ export class ProjectsListComponent {
           .subscribe((res: any) => {
             if (!res) {
               this.tstr.error('API request failed', 'Error');
+            } else if (!res.success) {
+              this.tstr.error(res.message, 'Error');
             } else {
               this.tstr.success(
                 'Indexing is happening in the background. It might take a few minutes.',

@@ -65,9 +65,14 @@ variable "api_endpoint_sbeacon" {
   description = "API endpoint for sbeacon."
 }
 
-variable "api_endpoint_svep" {
+variable "api_endpoint_clinic" {
   type        = string
-  description = "API endpoint for svep."
+  description = "API endpoint for the clinic. Connects either to sVEP of PGxFlow functionality depending on var.enable-pgxflow"
+}
+
+variable "clinic_mode" {
+  type        = string
+  description = "Specifies whether to enable sVEP or PGxFlow in the clinic"
 }
 
 variable "bui-ssm-parameter-name" {

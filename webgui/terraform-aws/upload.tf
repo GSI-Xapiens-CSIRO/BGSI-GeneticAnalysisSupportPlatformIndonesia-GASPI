@@ -12,7 +12,8 @@ data "external" "build" {
     user_pool_web_client_id = var.user_pool_web_client_id
     data_portal_bucket      = var.data_portal_bucket
     api_endpoint_sbeacon    = var.api_endpoint_sbeacon
-    api_endpoint_svep       = var.api_endpoint_svep
+    api_endpoint_clinic     = var.api_endpoint_clinic
+    clinic_mode             = var.clinic_mode
     hub_name                = var.hub_name
   }
   working_dir = path.module

@@ -34,31 +34,28 @@
 
   <app-profile-menu></app-profile-menu>
 </div>
-<div [@collapse]="isCollapsed ? 'closed' : 'open'" class="bui-menu">
-  <div class="bui-menu-wrapper">
-    <ul class="bui-menu-items">
-      @if (auth.user | async) {
-        <li class="bui-menu-item" [routerLinkActive]="'active'">
-          <a [routerLink]="['home']" accesskey="1" title="">About</a>
-        </li>
-        <li class="bui-menu-item" [routerLinkActive]="'active'">
-          <a [routerLink]="['dportal']" accesskey="1" title="">Data Portal</a>
-        </li>
-        <li class="bui-menu-item" [routerLinkActive]="'active'">
-          <a [routerLink]="['clinic']" accesskey="3" title="">Clinic</a>
-        </li>
-      }
-      @if ((auth.userGroups | async)!.has("administrators")) {
-        <li class="bui-menu-item" [routerLinkActive]="'active'">
-          <a [routerLink]="['admin']" title="">Admin</a>
-        </li>
-      }
-    </ul>
+
+<!-- nav   -->
+<div class="bui-menu">
+  @if (!isCollapsed) {
+    <div class="bui-menu-wrapper">
+      <list-menu />
+      <div class="bui-profile-lg-visibility">
+        <app-profile-menu></app-profile-menu>
+      </div>
+    </div>
+  }
+  <!-- desktop nav  -->
+  <div class="bui-menu-wrapper-desktop">
     <div class="bui-profile-lg-visibility">
+      <list-menu />
       <app-profile-menu></app-profile-menu>
     </div>
   </div>
+  <!-- end desktop nav  -->
 </div>
+<!-- end nav  -->
+
 <div class="bui-card-background">
   <div class="bui-card-resize">
     <router-outlet></router-outlet>
