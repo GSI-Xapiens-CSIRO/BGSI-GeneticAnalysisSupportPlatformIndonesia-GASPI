@@ -7,7 +7,6 @@ from io import StringIO
 from shared.utils import (
     LoggingClient,
     CheckedProcess,
-    get_vcf_chromosomes,
     get_chromosome_mapping,
     match_chromosome_name,
     handle_failed_execution,
@@ -130,8 +129,7 @@ def lambda_handler(event, context):
     dbsnp_vcf_s3_uri = f"s3://{REFERENCE_BUCKET}/{DBSNP_REFERENCE}"
 
     try:
-        source_chromosomes = get_vcf_chromosomes(source_vcf_s3_uri)
-        source_chromosome_mapping = get_chromosome_mapping(source_chromosomes)
+        source_chromosome_mapping = get_chromosome_mapping(source_vcf_s3_uri)
 
         local_regions_path, local_norm_regions_path = generate_target_region_files(
             source_chromosome_mapping

@@ -69,7 +69,8 @@ def get_regions(slice_size_mbp):
     return regions
 
 
-def get_chromosome_mapping(vcf_chroms):
+def get_chromosome_mapping(vcf):
+    vcf_chroms = get_vcf_chromosomes(vcf)
     return {chrom: match_chromosome_name(chrom) for chrom in vcf_chroms}
 
 
