@@ -92,3 +92,19 @@ variable "pgxflow_configuration" {
     error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
   }
 }
+
+variable "lookup_configuration" {
+  type = object({
+    assoc_matrix_filename = string
+    chr_header            = string
+    start_header          = string
+    end_header            = string
+  })
+  description = "Configuration for the lookup table"
+  default     = null
+
+  validation {
+    condition     = var.lookup_configuration != null
+    error_message = "If PGxFlow is enabled, the lookup_configuration variable cannot be null"
+  }
+}

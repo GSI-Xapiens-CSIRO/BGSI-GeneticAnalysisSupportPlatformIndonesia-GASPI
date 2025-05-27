@@ -65,7 +65,10 @@ module "lambda-dbsnp" {
     REFERENCE_BUCKET         = var.pgxflow-reference-bucket-name
     PGXFLOW_LOOKUP_LAMBDA    = module.lambda-lookup.lambda_function_arn
     DBSNP_REFERENCE          = var.dbsnp_reference
-    LOOKUP_REFERENCE         = var.lookup_reference
+    LOOKUP_REFERENCE         = var.lookup_configuration["assoc_matrix_filename"]
+    CHR_HEADER               = var.lookup_configuration["chr_header"]
+    START_HEADER             = var.lookup_configuration["start_header"]
+    END_HEADER               = var.lookup_configuration["end_header"]
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
@@ -102,7 +105,10 @@ module "lambda-lookup" {
     PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
     DPORTAL_BUCKET           = var.data-portal-bucket-name
     REFERENCE_BUCKET         = var.pgxflow-reference-bucket-name
-    LOOKUP_REFERENCE         = var.lookup_reference
+    LOOKUP_REFERENCE         = var.lookup_configuration["assoc_matrix_filename"]
+    CHR_HEADER               = var.lookup_configuration["chr_header"]
+    START_HEADER             = var.lookup_configuration["start_header"]
+    END_HEADER               = var.lookup_configuration["end_header"]
     PGXFLOW_GNOMAD_LAMBDA    = module.lambda-gnomad.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"

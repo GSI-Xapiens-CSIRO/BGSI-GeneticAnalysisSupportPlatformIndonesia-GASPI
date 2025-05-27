@@ -52,6 +52,7 @@ module "pipeline_lookup" {
   pgxflow-api-gateway-execution-arn    = aws_api_gateway_rest_api.PgxApi.execution_arn
   pgxflow-user-pool-authorizer-id      = aws_api_gateway_authorizer.pgxflow_user_pool_authorizer.id
   hub_name                             = var.hub_name
+  lookup_configuration                 = var.lookup_configuration
   dynamo-project-users-table           = var.dynamo-project-users-table
   dynamo-project-users-table-arn       = var.dynamo-project-users-table-arn
   dynamo-clinic-jobs-table             = var.dynamo-clinic-jobs-table

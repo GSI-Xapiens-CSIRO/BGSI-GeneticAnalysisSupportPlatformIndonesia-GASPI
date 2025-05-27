@@ -20,6 +20,9 @@ REFERENCE_BUCKET = os.environ["REFERENCE_BUCKET"]
 DBSNP_REFERENCE = os.environ["DBSNP_REFERENCE"]
 LOOKUP_REFERENCE = os.environ["LOOKUP_REFERENCE"]
 PGXFLOW_LOOKUP_LAMBDA = os.environ["PGXFLOW_LOOKUP_LAMBDA"]
+CHR_HEADER = os.environ["CHR_HEADER"]
+START_HEADER = os.environ["START_HEADER"]
+END_HEADER = os.environ["END_HEADER"]
 
 lambda_client = LoggingClient("lambda")
 s3_client = LoggingClient("s3")
@@ -41,12 +44,12 @@ def generate_target_region_files(source_chromosome_mapping):
     reversed_chromosome_mapping = {v: k for k, v in source_chromosome_mapping.items()}
     with open(local_regions_path, "w") as f, open(local_norm_regions_path, "w") as n_f:
         for row in reader:
-            normalised_chr = match_chromosome_name(row["chr"])
+            normalised_chr = match_chromosome_name(row[CHR_HEADER])
             if normalised_chr not in reversed_chromosome_mapping:
                 continue
             chr = reversed_chromosome_mapping[normalised_chr]
-            start = row["start"]
-            end = row["end"]
+            start = row[START_HEADER]
+            end = row[END_HEADER]
             f.write(f"{chr}\t{start}\t{end}\n")
             n_f.write(f"{normalised_chr}\t{start}\t{end}\n")
 

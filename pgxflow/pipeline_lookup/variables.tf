@@ -68,12 +68,6 @@ variable "hub_name" {
   description = "Configuration for the hub"
 }
 
-variable "lookup_reference" {
-  type        = string
-  description = "Base filename of the file used to lookup custom annotations"
-  default     = "RSIGNG_association_matrix.csv"
-}
-
 variable "dbsnp_reference" {
   type        = string
   description = "Base filename of the dbSNP reference file"
@@ -141,4 +135,15 @@ variable "python_modules_layer" {
 variable "binaries_layer" {
   type        = string
   description = "Binaries layer"
+}
+
+variable "lookup_configuration" {
+  type = object({
+    assoc_matrix_filename = string
+    chr_header            = string
+    start_header          = string
+    end_header            = string
+  })
+  description = "Configuration for the lookup table"
+  default     = null
 }
