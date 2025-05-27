@@ -1,0 +1,252 @@
+<mat-card>
+    <mat-card-content>
+      <h2>Definitions</h2>
+      <app-help-text />
+    </mat-card-content>
+  </mat-card>
+  <mat-card class="mt-4">
+    <mat-card-content>
+      <h2>Diplotypes Table</h2>
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        @if (!diplotypeScopeReduced) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="diplotypeFilterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filterDiplotypes()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetDiplotypes()"
+            class="w-[110px]"
+          >
+            Reset
+          </button>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetRelatedDiplotype()"
+            class="w-[200px]"
+          >
+            Clear Diplotype Filter
+          </button>
+        }
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
+      @if (diplotypeDataRows.value.length > 0) {
+        <div class="mb-2">
+          <strong>Click on table headers to sort</strong>
+        </div>
+        <div
+          class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
+        >
+          <cdk-virtual-scroll-viewport [style.height.px]="500">
+            <table
+              mat-table
+              [dataSource]="diplotypeDataView"
+              matSort
+              (matSortChange)="resortDiplotypes($event)"
+            >
+              <ng-container matColumnDef="selected">
+                <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
+                <td mat-cell *matCellDef="let row">
+                  <mat-checkbox
+                    (change)="handleSelectionChange(row, $event.checked)"
+                    [checked]="
+                      (cs.selectedVariants | async)!.has(cs.hashRow(row))
+                    "
+                  >
+                  </mat-checkbox>
+                </td>
+              </ng-container>
+              @for (column of diplotypeColumns; track $index) {
+                @if (column !== "selected") {
+                  <ng-container [matColumnDef]="column">
+                    <th
+                      mat-header-cell
+                      *matHeaderCellDef
+                      class="whitespace-nowrap"
+                      mat-sort-header
+                    >
+                      {{ column }}
+                    </th>
+                    <td
+                      mat-cell
+                      *matCellDef="let element"
+                      class="whitespace-nowrap"
+                    >
+                      @if (column === "Related Variants") {
+                        <a
+                          (click)="filterRelatedVariants(element[column])"
+                          class="text-blue-500 hover:underline cursor-pointer"
+                          >See related variants</a
+                        >
+                      } @else if ([
+                        "PubMed IDs",
+                        "Variants",
+                      ].includes(column)) {
+                        <div>
+                          @for (id of element[column]; track id; let i = $index) {
+                            <span
+                              class="cursor-pointer text-blue-500"
+                              (click)="handleRedirectUrl(column, id)"
+                            >
+                              {{ id }}   
+                          </span>{{ i < element[column].length - 1 ? ',' : '' }}
+                          }
+                        </div>                        
+                      }
+                      @else {
+                        {{ element[column] }}
+                      }
+                    </td>
+                  </ng-container>
+                }
+              }
+  
+              <tr mat-header-row *matHeaderRowDef="diplotypeColumns"></tr>
+              <ng-template
+                let-row
+                matRowDef
+                cdkVirtualFor
+                [matRowDefColumns]="diplotypeColumns"
+                [cdkVirtualForOf]="diplotypeDataRows.value"
+              >
+                <tr mat-row></tr>
+              </ng-template>
+            </table>
+          </cdk-virtual-scroll-viewport>
+        </div>
+      }
+    </mat-card-content>
+    <mat-card-content>
+      <h2>Variants Table</h2>
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        @if (!variantScopeReduced) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="variantFilterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filterVariants()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetVariants()"
+            class="w-[110px]"
+          >
+            Reset
+          </button>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetRelatedVariants()"
+            class="w-[200px]"
+          >
+            Clear Variant Filter
+          </button>
+        }
+      </div>
+      @if (variantDataRows.value.length > 0) {
+        <div class="mb-2">
+          <strong>Click on table headers to sort</strong>
+        </div>
+        <div
+          class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
+        >
+          <cdk-virtual-scroll-viewport [style.height.px]="500">
+            <table
+              mat-table
+              [dataSource]="variantDataView"
+              matSort
+              (matSortChange)="resortVariants($event)"
+            >
+              @for (column of variantColumns; track $index) {
+                @if (column === "Related Diplotypes") {
+                  <ng-container [matColumnDef]="column">
+                    <th
+                      mat-header-cell
+                      *matHeaderCellDef
+                      class="whitespace-nowrap"
+                    >
+                    {{ column }}
+                  </th>
+                    <td mat-cell *matCellDef="let element">
+                      <a
+                        (click)="filterRelatedDiplotype(element[column])"
+                        class="text-blue-500 hover:underline cursor-pointer"
+                        >See related diplotypes</a
+                      >
+                    </td>
+                  </ng-container>
+                }
+                @else {
+                  <ng-container [matColumnDef]="column">
+                    <th
+                      mat-header-cell
+                      *matHeaderCellDef
+                      class="whitespace-nowrap"
+                      mat-sort-header
+                    >
+                      {{ column }}
+                    </th>
+                    <td
+                      mat-cell
+                      *matCellDef="let element"
+                      class="whitespace-nowrap"
+                    >
+                      {{ element[column] }}
+                    </td>
+                  </ng-container>
+                }
+              }
+  
+              <tr mat-header-row *matHeaderRowDef="variantColumns"></tr>
+              <ng-template
+                let-row
+                matRowDef
+                cdkVirtualFor
+                [matRowDefColumns]="variantColumns"
+                [cdkVirtualForOf]="variantDataRows.value"
+              >
+                <tr mat-row></tr>
+              </ng-template>
+            </table>
+          </cdk-virtual-scroll-viewport>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+  

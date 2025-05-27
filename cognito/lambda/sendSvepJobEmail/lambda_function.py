@@ -31,11 +31,17 @@ def lambda_handler(event, context):
         body_message = f"<p>Thank you for your patience waiting for us to generate the results of {input_vcf} files from project {project_name}.</p>"
 
         if job_status == "completed":
-            body_message += f"<p><b>Please load the results on the VEP Results page </b> or click the link <a href='{svep_ui_url}'>here</a>.</p>"
             subject += f" {project_name} has completed"
+
+            body_message += f"<p><b>Please load the results on the VEP Results page </b> or click the link <a href='{svep_ui_url}'>here</a>.</p>"
         elif job_status == "failed":
-            body_message += "<p><b>We are sorry that the result generated failed</b>, please check your VCF file again.</p>"
             subject += f" {project_name} is failed"
+
+            body_message += "<p><b>We are sorry that the result generated failed</b>, please check your VCF file again.</p>"
+        elif job_status == "pending":
+            subject += f" {project_name} pending and job deleted"
+
+            body_message += "<p>We apologize that the generated result failed, please double check your VCF file. We have also removed the job from the list.</p>"
 
         body_html = f"""
 <html>

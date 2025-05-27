@@ -30,7 +30,11 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AwsService } from 'src/app/services/aws.service';
-import { bytesToGigabytes, gigabytesToBytes } from 'src/app/utils/file';
+import {
+  bytesToGigabytes,
+  formatBytes,
+  gigabytesToBytes,
+} from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 
 @Component({
@@ -64,6 +68,7 @@ export class AdminUserClickDialogComponent implements OnInit {
   protected usageSize = 0;
   protected usageCount = 0;
   protected loadingCostEstimation: boolean = true;
+  usageSizeText = '';
 
   constructor(
     public dialogRef: MatDialogRef<AdminUserClickDialogComponent>,
@@ -96,6 +101,31 @@ export class AdminUserClickDialogComponent implements OnInit {
       .pipe(debounceTime(400), distinctUntilChanged())
       .subscribe((values) => {
         this.loadingCostEstimation = true;
+
+        const queryCountCtrl = this.form.get('quotaQueryCount');
+        const quotaSizeCtrl = this.form.get('quotaSize');
+
+        this.usageSizeText = formatBytes(this.usageSize);
+
+        if (gigabytesToBytes(values.quotaSize) < this.usageSize) {
+          quotaSizeCtrl?.setErrors({ quotaExceeded: true });
+          return;
+        }
+
+        if (values.quotaQueryCount < this.usageCount) {
+          queryCountCtrl?.setErrors({ quotaExceeded: true });
+          return;
+        }
+
+        // Clear error if condition no longer applies
+        if (queryCountCtrl?.hasError('quotaExceeded')) {
+          queryCountCtrl.setErrors(null);
+        }
+
+        if (quotaSizeCtrl?.hasError('quotaExceeded')) {
+          quotaSizeCtrl.setErrors(null);
+        }
+
         if (values.quotaQueryCount && values.quotaSize) {
           this.aws
             .calculateQuotaEstimationPerMonth(

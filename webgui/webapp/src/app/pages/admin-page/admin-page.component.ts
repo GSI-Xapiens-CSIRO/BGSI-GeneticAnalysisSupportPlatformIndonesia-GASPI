@@ -19,6 +19,7 @@ import {
   MatPaginator,
   MatPaginatorIntl,
   MatPaginatorModule,
+  PageEvent,
 } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -33,6 +34,7 @@ import { SpinnerService } from 'src/app/services/spinner.service';
 import { bytesToGigabytes, formatBytes } from 'src/app/utils/file';
 import { MatIconModule } from '@angular/material/icon';
 import { AwsService } from 'src/app/services/aws.service';
+import { ToastrModule, ToastrService } from 'ngx-toastr';
 // import { testUsers } from './test_responses/test_users';
 
 // Docs: https://material.angular.io/components/paginator/examples
@@ -79,6 +81,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatTableModule,
     MatPaginatorModule,
     MatIconModule,
+    ToastrModule,
   ],
 })
 export class AdminPageComponent implements OnInit {
@@ -100,8 +103,7 @@ export class AdminPageComponent implements OnInit {
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
-  private pageTokens: (string | null)[] = [];
-  private lastPage: number = 0;
+  private pageTokens = new Map<number, string>();
 
   constructor(
     private adminServ: AdminService,
@@ -109,6 +111,7 @@ export class AdminPageComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private dg: MatDialog,
     private aws: AwsService,
+    private tstr: ToastrService,
   ) {
     this.newUserForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -130,33 +133,16 @@ export class AdminPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.listUsers();
+    this.listUsers(0);
     this.usersTableDataSource.paginator = this.paginator;
     this.cd.detectChanges();
 
-    this.paginator.page.subscribe(() => {
+    this.paginator.page.subscribe((event: PageEvent) => {
       if (this.pageSize != this.paginator.pageSize) {
         this.resetPagination();
-        return this.listUsers();
-      }
-
-      if (
-        _.isEmpty(this.pageTokens.at(-1)) &&
-        !_.isEmpty(this.pageTokens) &&
-        this.lastPage < this.paginator.pageIndex
-      ) {
-        // last page
-        this.paginator.pageIndex--;
-      } else if (this.lastPage < this.paginator.pageIndex) {
-        this.lastPage++;
-        this.listUsers();
-      } else if (this.lastPage > this.paginator.pageIndex) {
-        this.lastPage--;
-        // remove next page token
-        this.pageTokens.pop();
-        // remove current page token
-        this.pageTokens.pop();
-        this.listUsers();
+        this.listUsers(0);
+      } else {
+        this.listUsers(event.pageIndex);
       }
     });
   }
@@ -189,7 +175,7 @@ export class AdminPageComponent implements OnInit {
     dialog.afterClosed().subscribe((data) => {
       if (_.get(data, 'reload', false)) {
         this.resetPagination();
-        this.listUsers();
+        this.listUsers(0);
       }
     });
   }
@@ -202,21 +188,20 @@ export class AdminPageComponent implements OnInit {
     dialog.afterClosed().subscribe((data) => {
       if (_.get(data, 'reload', false)) {
         this.resetPagination();
-        this.listUsers();
+        this.listUsers(0);
       }
     });
   }
 
   resetPagination() {
-    this.pageTokens = [];
-    this.lastPage = 0;
+    this.pageTokens = new Map<number, string>();
     this.paginator.pageIndex = 0;
     this.pageSize = this.paginator.pageSize;
   }
 
   filterUsers() {
     this.resetPagination();
-    this.listUsers();
+    this.listUsers(0);
   }
 
   formatData(quota: number, used: number, isConvert: boolean, isRaw?: boolean) {
@@ -230,23 +215,43 @@ export class AdminPageComponent implements OnInit {
     return ` ${quota} Count(s) / ${used} Count(s)`;
   }
 
-  listUsers() {
+  listUsers(page: number) {
     const form = this.filterUsersForm.value;
     let key = null;
     let query = null;
-    this.usersLoading = true;
 
     if (form.key && !_.isEmpty(form.query)) {
       key = form.key;
       query = form.query;
     }
 
+    // not the first page but the page token is not set
+    if (!this.pageTokens.get(page) && page > 0) {
+      this.paginator.pageIndex--;
+      this.tstr.warning('No more items to show', 'Warning');
+      return;
+    }
+
+    this.usersLoading = true;
     this.adminServ
-      .listUsers(this.pageSize, this.pageTokens.at(-1) || null, key, query)
+      .listUsers(this.pageSize, this.pageTokens.get(page) || null, key, query)
       .pipe(catchError(() => of(null)))
       .subscribe(async (response) => {
-        if (response) {
-          this.pageTokens.push(response.pagination_token);
+        if (!response) {
+          this.tstr.error('API request failed', 'Error');
+          this.usersTableDataSource.data = [];
+        } else {
+          //handle if there no data on next page (set page index and last page to prev value)
+          if (
+            response &&
+            response.users.length <= 0 &&
+            this.paginator.pageIndex > 0
+          ) {
+            this.paginator.pageIndex--;
+            this.tstr.warning('No more items to show', 'Warning');
+            this.usersLoading = false;
+            return;
+          }
 
           const users = _.map(_.get(response, 'users', []), (user: any) => {
             const usageCount = user.Usage?.usageCount ?? 0;
@@ -304,6 +309,8 @@ export class AdminPageComponent implements OnInit {
 
           // reassign data
           this.usersTableDataSource = users;
+          // set next page token
+          this.pageTokens.set(page + 1, response.pagination_token);
         }
 
         this.usersLoading = false;
