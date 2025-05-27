@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 import os
 from html.parser import HTMLParser
@@ -67,7 +68,7 @@ def yield_drugs(pharmcat_output_json):
             if prefix == f"drugs.{current_org}" and event == "map_key":
                 current_drug = value
                 # Reset annotations for each new drug
-                annotations = []
+                annotation_chunk = []
             if current_drug not in DRUGS:
                 continue
 
@@ -98,6 +99,7 @@ def yield_drugs(pharmcat_output_json):
             if is_entering_array(
                 in_annotation_array, prefix, event, annotation_array_prefix
             ):
+                annotations = []
                 in_annotation_array = True
 
             # Annotation processing
@@ -105,7 +107,7 @@ def yield_drugs(pharmcat_output_json):
                 # Reset drug annotation object at new occurrence
                 annotation_prefix = f"{annotation_array_prefix}.item"
                 if is_entering_map(prefix, event, annotation_prefix):
-                    annotation = create_annotation_objects(
+                    base_annotation = create_annotation_objects(
                         current_org, current_drug, pmids
                     )
 
@@ -114,14 +116,14 @@ def yield_drugs(pharmcat_output_json):
                     prefix == f"{annotation_prefix}.implications.item"
                     and event == "string"
                 ):
-                    annotation["implications"].append(strip_html(value))
+                    base_annotation["implications"].append(strip_html(value))
 
                 # Add recommendations
                 if (
                     prefix == f"{annotation_prefix}.drugRecommendation"
                     and event == "string"
                 ):
-                    annotation["recommendation"] = strip_html(value)
+                    base_annotation["recommendation"] = strip_html(value)
 
                 annotation_diplotype_array_prefix = (
                     f"{annotation_prefix}.genotypes.item.diplotypes"
@@ -134,11 +136,14 @@ def yield_drugs(pharmcat_output_json):
                 ):
                     in_annotation_diplotype_array = True
 
-                # Retrieving alleles. Link drugs back to condensed diplotypes
+                # Retrieving alleles - used to link drugs back to condensed diplotypes
                 if in_annotation_diplotype_array:
                     annotation_diplotype_prefix = (
                         f"{annotation_diplotype_array_prefix}.item"
                     )
+                    
+                    if is_entering_map(prefix, event, annotation_diplotype_prefix):
+                        annotation = deepcopy(base_annotation)
 
                     if (
                         prefix == f"{annotation_diplotype_prefix}.gene"
@@ -152,6 +157,9 @@ def yield_drugs(pharmcat_output_json):
                             and event == "string"
                         ):
                             annotation["alleles"].append(value)
+                            
+                    if is_exiting_map(prefix, event, annotation_diplotype_prefix):
+                        annotations.append(annotation)
 
                     if (
                         prefix == annotation_diplotype_array_prefix
@@ -166,10 +174,11 @@ def yield_drugs(pharmcat_output_json):
                     ("otherPrescribingGuidance"),
                 ]:
                     if prefix == f"{annotation_prefix}.{key}":
-                        annotation[key] = value
+                        for annotation in annotations:
+                            annotation[key] = value
 
                 if is_exiting_map(prefix, event, annotation_prefix):
-                    annotations.append(annotation)
+                    annotation_chunk.extend(annotations)
 
                 if is_exiting_array(prefix, event, annotation_array_prefix):
                     yield annotations
