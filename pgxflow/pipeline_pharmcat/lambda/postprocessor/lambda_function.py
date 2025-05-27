@@ -87,6 +87,9 @@ def lambda_handler(event, _):
                         annotation["alleles"],
                     )
                     offset = diplotype_offsets.get(diplotype_mapping_id)
+                    if offset is None:
+                        print(f"Skippping the following annotation as it is not associated with any diplotype:\n{annotation}")
+                        continue
                     d1_f.seek(offset)
                     diplotype = json.loads(d1_f.readline())
                     for prop in [
