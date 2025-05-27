@@ -57,6 +57,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
     ]
     resources = [
       var.data-portal-bucket-arn,
+      var.pgxflow-reference-bucket-arn,
     ]
     condition {
       test     = "StringLike"
@@ -72,7 +73,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/project-files/*",
-      "${var.pgxflow-reference-bucket-arn}/preprocessor/*",
+      "${var.pgxflow-reference-bucket-arn}/*",
     ]
   }
   statement {
