@@ -78,7 +78,7 @@ def lambda_handler(event, context):
             )
             s3_client.download_file(
                 Bucket=REFERENCE_BUCKET,
-                Key=f"preprocessor/{os.path.basename(local_reference_path)}",
+                Key=f"pharmcat-preprocessor/{os.path.basename(local_reference_path)}",
                 Filename=local_reference_path,
             )
 
