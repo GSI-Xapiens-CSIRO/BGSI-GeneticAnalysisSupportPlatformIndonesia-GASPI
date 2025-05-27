@@ -15,23 +15,20 @@ REGION_AMI_MAP = {
 }
 
 
-def update_pharmcat(pharmcat_version):
+def update_dbsnp(dbsnp_hash):
     ec2_client = boto3.client("ec2")
     ami = REGION_AMI_MAP[AWS_REGION]
     device_name = ec2_client.describe_images(ImageIds=[ami])["Images"][0][
         "RootDeviceName"
     ]
 
-    pharmcat_version_number = pharmcat_version.lstrip("v")
-    with open("pharmcat.sh") as user_data_file:
+    with open("dbsnp.sh") as user_data_file:
         ec2_startup = (
             user_data_file.read()
             .replace("__REGION__", AWS_REGION)
             .replace("__TABLE__", DYNAMO_PGXFLOW_REFERENCES_TABLE)
-            .replace("__PHARMCAT_ID__", "pharmcat_version")
-            .replace("__PHARMCAT_VERSION__", pharmcat_version)
-            .replace("__PHARMCAT_VERSION_NO__", pharmcat_version_number)
-            .replace("__PHARMGKB_ID__", "pharmgkb_version")
+            .replace("__DBSNP_ID__", "dbsnp_hash")
+            .replace("__DBSNP_HASH__", dbsnp_hash)
             .replace("__REFERENCE_LOCATION__", REFERENCE_LOCATION)
         )
     try:
@@ -45,7 +42,7 @@ def update_pharmcat(pharmcat_version):
                     "DeviceName": device_name,
                     "Ebs": {
                         "DeleteOnTermination": True,
-                        "VolumeSize": 10,
+                        "VolumeSize": 50,
                         "VolumeType": "gp3",
                         "Encrypted": True,
                     },
@@ -64,9 +61,9 @@ def update_pharmcat(pharmcat_version):
         instance_id = response["Instances"][0]["InstanceId"]
     except Exception as e:
         print(f"Error launching EC2 instance: {str(e)}")
-        return {"statusCode": 500, "body": json.dump("Error launching EC2 instance")}
+        return {"statusCode": 500, "body": json.dumps("Error launching EC2 instance")}
     print(
-        f"Launched EC2 instance {instance_id} to retrieve pharmcat references and software versions"
+        f"Launched EC2 instance {instance_id} to retrieve dbsnp references"
     )
     return {
         "StatusCode": 200,

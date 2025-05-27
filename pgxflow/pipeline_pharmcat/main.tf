@@ -190,7 +190,7 @@ module "lambda-updateReferenceFiles" {
   environment_variables = {
     REFERENCE_LOCATION              = var.pgxflow-reference-bucket-name
     DYNAMO_PGXFLOW_REFERENCES_TABLE = var.dynamo-references-table
-    EC2_IAM_INSTANCE_PROFILE        = aws_iam_instance_profile.ec2_references_instance_profile.name
+    EC2_IAM_INSTANCE_PROFILE        = var.ec2-references-instance-profile
   }
 
   layers = [

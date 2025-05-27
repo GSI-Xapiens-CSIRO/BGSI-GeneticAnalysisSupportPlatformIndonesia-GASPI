@@ -28,6 +28,8 @@ module "pipeline_pharmcat" {
   dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
   dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
   dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
+  ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
+  ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
   python_libraries_layer               = local.python_libraries_layer
   python_modules_layer                 = local.python_modules_layer
   binaries_layer                       = local.binaries_layer
@@ -54,6 +56,10 @@ module "pipeline_lookup" {
   dynamo-project-users-table-arn       = var.dynamo-project-users-table-arn
   dynamo-clinic-jobs-table             = var.dynamo-clinic-jobs-table
   dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
+  dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
+  dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
+  ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
+  ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
   python_libraries_layer               = local.python_libraries_layer
   python_modules_layer                 = local.python_modules_layer
   binaries_layer                       = local.binaries_layer
