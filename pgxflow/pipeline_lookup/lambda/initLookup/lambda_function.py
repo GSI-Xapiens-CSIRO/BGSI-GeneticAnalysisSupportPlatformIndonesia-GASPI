@@ -28,7 +28,8 @@ def lambda_handler(event, context):
         return bad_request("No body sent with request")
     try:
         body_dict = json.loads(event_body)
-        request_id = event["requestContext"]["requestId"]
+        request_id = body_dict.get("requestId")
+        request_id = f"{request_id}" if request_id is not None else event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         source_vcf_key = body_dict["location"]
 
