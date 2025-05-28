@@ -117,19 +117,53 @@ module "lambda-postprocessor" {
   tags = var.common-tags
 
   environment_variables = {
-    RESULT_SUFFIX            = local.result_suffix
-    PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
-    DPORTAL_BUCKET           = var.data-portal-bucket-name
-    ORGANISATIONS            = jsonencode(var.pgxflow_configuration.ORGANISATIONS)
-    GENES                    = join(",", var.pgxflow_configuration.GENES)
-    DRUGS                    = join(",", var.pgxflow_configuration.DRUGS)
-    DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
-    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
+    PGXFLOW_BUCKET                 = var.pgxflow-backend-bucket-name
+    DPORTAL_BUCKET                 = var.data-portal-bucket-name
+    PGXFLOW_PHARMCAT_GNOMAD_LAMBDA = module.lambda-gnomad.lambda_function_arn
+    ORGANISATIONS                  = jsonencode(var.pgxflow_configuration.ORGANISATIONS)
+    GENES                          = join(",", var.pgxflow_configuration.GENES)
+    DRUGS                          = join(",", var.pgxflow_configuration.DRUGS)
+    DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
+    HTS_S3_HOST                    = "s3.${var.region}.amazonaws.com"
   }
 
   layers = [
     var.python_modules_layer,
     var.python_libraries_layer,
+    var.binaries_layer,
+  ]
+}
+
+#
+# gnomad lambda function
+#
+module "lambda-gnomad" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-pharmcat-gnomad"
+  description         = "Adds data from gnomAD to the pharmcat results"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 600
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-gnomad.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/gnomad"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DPORTAL_BUCKET           = var.data-portal-bucket-name
+    PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
+    RESULT_SUFFIX            = local.result_suffix
+    DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+  }
+
+  layers = [
+    var.python_modules_layer,
     var.binaries_layer,
   ]
 }

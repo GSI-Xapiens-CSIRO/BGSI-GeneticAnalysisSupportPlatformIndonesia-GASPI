@@ -5,21 +5,20 @@ from genes import yield_genes
 from drugs import yield_drugs
 from utils import create_b64_id
 from shared.utils import handle_failed_execution, LoggingClient
-from shared.dynamodb import update_clinic_job
 
 LOCAL_DIR = "/tmp"
-RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
-DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
+PGXFLOW_PHARMCAT_GNOMAD_LAMBDA = os.environ["PGXFLOW_PHARMCAT_GNOMAD_LAMBDA"]
 
+lambda_client = LoggingClient("lambda")
 s3_client = LoggingClient("s3")
 
 
 def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
-    s3_input_key = event["s3Key"]
+    s3_key = event["s3Key"]
     project = event["projectName"]
     source_vcf_key = event["sourceVcfKey"]
 
@@ -32,12 +31,11 @@ def lambda_handler(event, _):
             LOCAL_DIR, f"tmp2_diplotypes_{processed_json}l"
         )
         tmp_variants_jsonl = os.path.join(LOCAL_DIR, f"tmp_variants_{processed_json}l")
-        postprocessed_json = f"out_{processed_json}"
 
         local_input_path = os.path.join(LOCAL_DIR, processed_json)
         s3_client.download_file(
             Bucket=PGXFLOW_BUCKET,
-            Key=s3_input_key,
+            Key=s3_key,
             Filename=local_input_path,
         )
 
@@ -88,7 +86,9 @@ def lambda_handler(event, _):
                     )
                     offset = diplotype_offsets.get(diplotype_mapping_id)
                     if offset is None:
-                        print(f"Skippping the following annotation as it is not associated with any diplotype:\n{annotation}")
+                        print(
+                            f"Skippping the following annotation as it is not associated with any diplotype:\n{annotation}"
+                        )
                         continue
                     d1_f.seek(offset)
                     diplotype = json.loads(d1_f.readline())
@@ -122,29 +122,26 @@ def lambda_handler(event, _):
                 variant = json.loads(line)
                 variants.append(variant)
 
-        local_output_path = os.path.join(LOCAL_DIR, postprocessed_json)
-        with open(local_output_path, "w") as out_f:
-            json.dump(
+        s3_client.put_object(
+            Bucket=PGXFLOW_BUCKET,
+            Key=s3_key,
+            Body=json.dumps(
                 {
                     "diplotypes": diplotypes,
                     "variants": variants,
-                },
-                out_f,
-                indent=4,
-            )
-
-        s3_client.upload_file(
-            Filename=local_output_path,
-            Bucket=DPORTAL_BUCKET,
-            Key=f"projects/{project}/clinical-workflows/{request_id}{RESULT_SUFFIX}",
+                }
+            ).encode(),
         )
-
-        s3_client.delete_object(
-            Bucket=PGXFLOW_BUCKET,
-            Key=s3_input_key,
+        lambda_client.invoke(
+            FunctionName=PGXFLOW_PHARMCAT_GNOMAD_LAMBDA,
+            InvocationType="Event",
+            Payload=json.dumps(
+                {
+                    "requestId": request_id,
+                    "projectName": project,
+                    "s3Key": s3_key,
+                }
+            ),
         )
-
-        update_clinic_job(request_id, job_status="completed")
-
     except Exception as e:
         handle_failed_execution(request_id, e)

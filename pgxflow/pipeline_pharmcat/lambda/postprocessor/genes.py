@@ -1,9 +1,10 @@
 import json
 import os
+import re
 
 import ijson
 
-from shared.utils import CheckedProcess
+from shared.utils import CheckedProcess, get_chromosome_mapping
 from utils import (
     is_entering_array,
     is_exiting_array,
@@ -18,20 +19,28 @@ GENES = os.environ["GENES"].strip().split(",")
 ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
 
-def query_zygosity(input_vcf_key=None, chrom=None, pos=None):
-    input_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{input_vcf_key}"
+def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
     args = [
         "bcftools",
         "query",
         "-f",
-        "[%GT]\n",
-        input_vcf_s3_uri,
+        "%POS\t%REF\t%ALT\t[%GT]\n",
+        vcf_s3_location,
         "-r",
         f"{chrom}:{pos}-{pos}",
     ]
     query_process = CheckedProcess(args)
     query_output = query_process.check()
-    return query_output.strip()
+    pos_vcf, ref_vcf, alt_vcf, gt = query_output.strip().split("\t")
+    alts = [ref_vcf] + alt_vcf.split(",")
+    alts_vcf = [alts[int(i)] if i.isdigit() else "." for i in re.split(r"[|/]", gt)]
+    return {
+        "chromRef": chrom_mapping[chrom],
+        "posVcf": int(pos_vcf),
+        "refVcf": ref_vcf,
+        "altsVcf": alts_vcf,
+        "zygosity": gt,
+    }
 
 
 def create_diplotype(current_org, current_gene):
@@ -69,6 +78,8 @@ def yield_genes(pharmcat_output_json, source_vcf):
     Yields:
         tuple: (diplotypes, diplotypeIds, variants) for each gene
     """
+    input_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{source_vcf}"
+    chrom_mapping = get_chromosome_mapping(input_vcf_s3_uri)
     with open(pharmcat_output_json, "rb") as f:
         parser = ijson.parse(f)
 
@@ -164,9 +175,14 @@ def yield_genes(pharmcat_output_json, source_vcf):
                     and event == "end_map"
                     and variant["call"] is not None
                 ):
-                    # Add zygosity using the source VCF
-                    variant["zygosity"] = query_zygosity(
-                        source_vcf, variant["chr"], variant["pos"]
+                    # Add zygosity and pos/ref/alt using the source VCF
+                    variant.update(
+                        query_variant_zygosity(
+                            chrom_mapping,
+                            input_vcf_s3_uri,
+                            variant["chr"],
+                            variant["pos"],
+                        )
                     )
 
                     # Create an ID to uniquely identify variants - eliminiates duplicate variants

@@ -154,7 +154,7 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
   statement {
     actions = [
       "s3:GetObject",
-      "s3:DeleteObject",
+      "s3:PutObject",
     ]
     resources = [
       "${var.pgxflow-backend-bucket-arn}/*"
@@ -170,10 +170,10 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
   }
   statement {
     actions = [
-      "s3:PutObject",
+      "lambda:InvokeFunction",
     ]
     resources = [
-      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
+      module.lambda-gnomad.lambda_function_arn,
     ]
   }
   statement {
@@ -183,6 +183,35 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda-gnomad" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${var.pgxflow-backend-bucket-arn}/*"
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
     ]
   }
 }
