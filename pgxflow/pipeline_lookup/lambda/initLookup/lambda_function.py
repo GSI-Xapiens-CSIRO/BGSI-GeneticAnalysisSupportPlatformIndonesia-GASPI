@@ -68,6 +68,7 @@ def lambda_handler(event, context):
         request_id = f"{request_id}" if request_id is not None else event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         source_vcf_key = body_dict["location"]
+        job_name = body_dict["jobName"]
 
         check_user_in_project(sub, project)
     except ValueError:
@@ -103,6 +104,7 @@ def lambda_handler(event, context):
 
     update_clinic_job(
         job_id=request_id,
+        job_name=job_name,
         job_status="pending",
         project_name=project,
         input_vcf=input_vcf,

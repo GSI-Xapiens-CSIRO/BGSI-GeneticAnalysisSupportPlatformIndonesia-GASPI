@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import json
 import os
 
@@ -68,6 +69,7 @@ def send_job_email(
 def update_clinic_job(
     job_id,
     job_status,
+    job_name=None,
     project_name=None,
     input_vcf=None,
     failed_step=None,
@@ -80,6 +82,10 @@ def update_clinic_job(
     update_fields = {"job_status": {"S": job_status}}
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
+    if job_name is not None:
+        update_fields["job_name"] = {"S": job_name}
+        now = datetime.now(timezone.utc)
+        update_fields["created_at"] = {"S": now.strftime("%Y-%m-%dT%H:%M:%S.%f+0000")}
     if input_vcf is not None:
         update_fields["input_vcf"] = {"S": input_vcf}
     if failed_step is not None:
