@@ -4,7 +4,7 @@ import re
 
 import ijson
 
-from shared.utils import CheckedProcess, get_chromosome_mapping
+from shared.utils import CheckedProcess, get_chromosome_mapping, match_chromosome_name
 from utils import (
     is_entering_array,
     is_exiting_array,
@@ -20,6 +20,8 @@ ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
 
 def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
+    reversed_chrom_mapping = {v: k for k, v in chrom_mapping.items()}
+    chrom = reversed_chrom_mapping[match_chromosome_name(chrom)]
     args = [
         "bcftools",
         "query",
