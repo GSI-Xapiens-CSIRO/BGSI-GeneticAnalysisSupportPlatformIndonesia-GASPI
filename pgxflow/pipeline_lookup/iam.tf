@@ -20,6 +20,7 @@ data "aws_iam_policy_document" "lambda-initLookup" {
     ]
     resources = [
       "${var.data-portal-bucket-arn}/projects/*/project-files/*",
+      "${var.pgxflow-reference-bucket-arn}/*",
     ]
   }
   statement {

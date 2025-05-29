@@ -76,7 +76,7 @@ variable "hub_name" {
   description = "Configuration for the hub"
 }
 
-variable "pgxflow_configuration" {
+variable "pharmcat_configuration" {
   type = object({
     ORGANISATIONS = list(object({
       gene = string
@@ -86,11 +86,6 @@ variable "pgxflow_configuration" {
     DRUGS = list(string)
   })
   description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
-
-  validation {
-    condition     = var.pgxflow_configuration != null
-    error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
-  }
 }
 
 variable "lookup_configuration" {
@@ -100,11 +95,5 @@ variable "lookup_configuration" {
     start_header          = string
     end_header            = string
   })
-  description = "Configuration for the lookup table"
-  default     = null
-
-  validation {
-    condition     = var.lookup_configuration != null
-    error_message = "If PGxFlow is enabled, the lookup_configuration variable cannot be null"
-  }
+  description = "Filename and header information (chr, start, end) for the association matrix"
 }

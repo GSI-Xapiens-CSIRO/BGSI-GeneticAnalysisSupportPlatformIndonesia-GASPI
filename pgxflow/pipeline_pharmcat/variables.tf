@@ -68,7 +68,7 @@ variable "hub_name" {
   description = "Configuration for the hub"
 }
 
-variable "pgxflow_configuration" {
+variable "pharmcat_configuration" {
   type = object({
     ORGANISATIONS = list(object({
       gene = string
@@ -78,11 +78,6 @@ variable "pgxflow_configuration" {
     DRUGS = list(string)
   })
   description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
-
-  validation {
-    condition     = var.pgxflow_configuration != null
-    error_message = "If PGxFlow is enabled, the pgxflow_configuration variable cannot be null"
-  }
 }
 
 # external dynamodb tables

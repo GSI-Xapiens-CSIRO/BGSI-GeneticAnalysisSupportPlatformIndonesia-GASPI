@@ -27,9 +27,12 @@ module "lambda-initPharmcat" {
 
   environment_variables = {
     PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = module.lambda-preprocessor.lambda_function_arn
-    HTS_S3_HOST                          = "s3.${var.region}.amazonaws.com"
+    ORGANISATIONS                        = jsonencode(var.pharmcat_configuration.ORGANISATIONS)
+    GENES                                = join(",", var.pharmcat_configuration.GENES)
+    DRUGS                                = join(",", var.pharmcat_configuration.DRUGS)
     DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    HTS_S3_HOST                          = "s3.${var.region}.amazonaws.com"
   }
 
   layers = [
@@ -117,12 +120,13 @@ module "lambda-postprocessor" {
   tags = var.common-tags
 
   environment_variables = {
+    RESULT_SUFFIX                  = local.result_suffix
     PGXFLOW_BUCKET                 = var.pgxflow-backend-bucket-name
     DPORTAL_BUCKET                 = var.data-portal-bucket-name
     PGXFLOW_PHARMCAT_GNOMAD_LAMBDA = module.lambda-gnomad.lambda_function_arn
-    ORGANISATIONS                  = jsonencode(var.pgxflow_configuration.ORGANISATIONS)
-    GENES                          = join(",", var.pgxflow_configuration.GENES)
-    DRUGS                          = join(",", var.pgxflow_configuration.DRUGS)
+    ORGANISATIONS                  = jsonencode(var.pharmcat_configuration.ORGANISATIONS)
+    GENES                          = join(",", var.pharmcat_configuration.GENES)
+    DRUGS                          = join(",", var.pharmcat_configuration.DRUGS)
     DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
     HTS_S3_HOST                    = "s3.${var.region}.amazonaws.com"
   }

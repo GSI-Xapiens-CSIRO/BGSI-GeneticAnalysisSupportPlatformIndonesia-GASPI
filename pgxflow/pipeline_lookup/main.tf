@@ -26,10 +26,15 @@ module "lambda-initLookup" {
   tags = var.common-tags
 
   environment_variables = {
+    REFERENCE_BUCKET           = var.pgxflow-reference-bucket-name
     PGXFLOW_DBSNP_LAMBDA       = module.lambda-dbsnp.lambda_function_arn
-    HTS_S3_HOST                = "s3.${var.region}.amazonaws.com"
+    LOOKUP_REFERENCE           = var.lookup_configuration["assoc_matrix_filename"]
+    CHR_HEADER                 = var.lookup_configuration["chr_header"]
+    START_HEADER               = var.lookup_configuration["start_header"]
+    END_HEADER                 = var.lookup_configuration["end_header"]
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE   = var.dynamo-clinic-jobs-table
+    HTS_S3_HOST                = "s3.${var.region}.amazonaws.com"
   }
 
   layers = [

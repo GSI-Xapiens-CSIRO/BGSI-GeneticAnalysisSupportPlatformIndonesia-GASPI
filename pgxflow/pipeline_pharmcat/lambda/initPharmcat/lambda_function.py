@@ -11,6 +11,9 @@ from shared.utils import LoggingClient
 PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
     "PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA"
 ]
+ORGANISATIONS = json.loads(os.environ.get("ORGANISATIONS"))
+GENES = os.environ.get("GENES")
+DRUGS = os.environ.get("DRUGS")
 
 lambda_client = LoggingClient("lambda")
 
@@ -19,6 +22,25 @@ def get_sample_count(location):
     cmd = f'bcftools query -l "{location}" | wc -l'
     result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
     return int(result.stdout.strip())
+
+
+def check_pgxflow_configuration():
+    if not ORGANISATIONS:
+        return (
+            False,
+            "ORGANISATIONS environment variable is not set. Please contact an AWS administrator.",
+        )
+    if not GENES:
+        return (
+            False,
+            "GENES environment variable is not set. Please contact an AWS administrator.",
+        )
+    if not DRUGS:
+        return (
+            False,
+            "DRUGS environment variable is not set. Please contact an AWS administrator.",
+        )
+    return True, None
 
 
 def lambda_handler(event, context):
@@ -38,6 +60,10 @@ def lambda_handler(event, context):
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
+    
+    passed, error_message = check_pgxflow_configuration()
+    if not passed:
+        return bad_request(error_message)
 
     try:
         sample_count = get_sample_count(source_vcf_key)

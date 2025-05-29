@@ -1,7 +1,10 @@
+import csv
+from io import StringIO
 import json
 from pathlib import Path
 import os
 import subprocess
+import traceback
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
@@ -9,14 +12,47 @@ from shared.dynamodb import check_user_in_project, update_clinic_job
 from shared.utils import LoggingClient
 
 PGXFLOW_DBSNP_LAMBDA = os.environ["PGXFLOW_DBSNP_LAMBDA"]
+REFERENCE_BUCKET = os.environ["REFERENCE_BUCKET"]
+LOOKUP_REFERENCE = os.environ["LOOKUP_REFERENCE"]
+CHR_HEADER = os.environ["CHR_HEADER"]
+START_HEADER = os.environ["START_HEADER"]
+END_HEADER = os.environ["END_HEADER"]
 
 lambda_client = LoggingClient("lambda")
+s3_client = LoggingClient("s3")
 
 
 def get_sample_count(location):
     cmd = f'bcftools query -l "{location}" | wc -l'
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return int(result.stdout.strip())
+
+
+def check_assoc_matrix():
+    try:
+        response = s3_client.get_object(Bucket=REFERENCE_BUCKET, Key=LOOKUP_REFERENCE)
+    except Exception as e:
+        traceback.print_exc() 
+        return (
+            False,
+            f"Unable to access association matrix at s3://{REFERENCE_BUCKET}/{LOOKUP_REFERENCE}. Please contact an AWS administrator.",
+        )
+
+    required_columns = [CHR_HEADER, START_HEADER, END_HEADER]
+    try:
+        body = response["Body"].read().decode("utf-8")
+        reader = csv.DictReader(StringIO(body))
+    except Exception as e:
+        traceback.print_exc()
+        return False, "Unable to read the association matrix file. Please contact an AWS administrator."
+    missing_columns = [col for col in required_columns if col not in reader.fieldnames]
+    if missing_columns:
+        return (
+            False,
+            f"Missing required column(s) in association matrix: {', '.join(missing_columns)}. Please contact an AWS administrator.",
+        )
+
+    return True, None
 
 
 def lambda_handler(event, context):
@@ -36,6 +72,10 @@ def lambda_handler(event, context):
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
+    
+    passed, error_message = check_assoc_matrix()
+    if not passed:
+        return bad_request(error_message)
 
     try:
         sample_count = get_sample_count(source_vcf_key)
