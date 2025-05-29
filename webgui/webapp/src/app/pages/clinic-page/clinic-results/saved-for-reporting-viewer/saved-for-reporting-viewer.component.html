@@ -1,0 +1,250 @@
+<mat-card class="mt-4" [class.hide]="variants.length == 0">
+  <mat-card-content>
+    <h2>Variants selected for reporting</h2>
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
+      <button
+        mat-mini-fab
+        color="primary"
+        class="flex items-center"
+        (click)="refresh()"
+      >
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <br />
+      @for (variant of variants; track $index) {
+        <div>
+          <strong class="cursor-pointer"
+            >[<span
+              class="text-red-500"
+              (click)="deleteSavedVariants(variant.name)"
+              >X</span
+            >] {{ variant.comment }}</strong
+          >
+          <br />
+          @for (info of variant.variants; track $index) {
+            @for (item of info | keyvalue; track $index) {
+              {{ item.key }}: {{ item.value }}
+              @if (!$last) {
+                |
+              }
+            }
+            <br />
+            @if (variant.annotations[$index]) {
+              <span class="ml-4"
+                >Annotation: {{ variant.annotations[$index] }}</span
+              >
+              <br />
+            }
+          }
+          <span class="text-xs"
+            >Saved by: {{ variant.user?.firstName }}
+            {{ variant.user?.lastName }} ({{ variant.user?.email }})</span
+          >
+          <br />
+          <span class="text-xs"
+            >Saved at:
+            {{ variant.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
+          >
+          <br />
+        </div>
+        @if (!$last) {
+          <div class="w-full h-1 bg-primary-60 my-1"></div>
+        }
+      } @empty {
+        <div class="text-center">No variants available</div>
+      }
+    </div>
+    <mat-paginator
+      class="block"
+      #paginator
+      [pageSizeOptions]="[5, 10, 50]"
+      [pageSize]="pageSize"
+      length="9999"
+      (page)="pageChange($event)"
+    ></mat-paginator>
+    <div class="flex flex-row justify-between items-center">
+      @if (hub) {
+        @switch (hub) {
+          @case ("RSCM") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSCM()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSIGNG") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSIGNG()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSPON") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSPON()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSSARDJITO") {
+            <div class="flex flex-col space-y-1">
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'crd')"
+                >
+                  CRD Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'crd')"
+                >
+                  CRD Positive (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'md')"
+                >
+                  MD Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'md')"
+                >
+                  MD Positive (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'generic')"
+                >
+                  Generic Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'generic')"
+                >
+                  Generic Positive (ID)
+                </button>
+              </div>
+            </div>
+          }
+        }
+      } @else {
+        <p>Lab configuration is not set. Please contact the administrator.</p>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card class="mt-4" [class.hide]="variants.length !== 0">
+  <mat-card-content>
+    <h2>No variants selected for reporting</h2>
+    <p>
+      Generating report will create the negative findings report for the
+      individual.
+    </p>
+    @if (hub) {
+      @switch (hub) {
+        @case ("RSCM") {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="generateReportRSCM()"
+          >
+            Generate Report
+          </button>
+        }
+        @case ("RSSARDJITO") {
+          <div class="flex flex-col space-y-1">
+            <div class="flex flex-row space-x-1">
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('en', 'crd')"
+              >
+                CRD Negative (EN)
+              </button>
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('id', 'crd')"
+              >
+                CRD Negative (ID)
+              </button>
+            </div>
+            <div class="flex flex-row space-x-1">
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('en', 'md')"
+              >
+                MD Negative (EN)
+              </button>
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('id', 'md')"
+              >
+                MD Negative (ID)
+              </button>
+            </div>
+            <div class="flex flex-row space-x-1">
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('en', 'generic')"
+              >
+                Generic Negative (EN)
+              </button>
+              <button
+                class="w-[200px]"
+                mat-raised-button
+                color="primary"
+                (click)="generateReportRSSARDJITO('id', 'generic')"
+              >
+                Generic Negative (ID)
+              </button>
+            </div>
+          </div>
+        }
+        @case ("RSPON") {
+          <p>RSPON Lab does not support negative reporting.</p>
+        }
+        @case ("RSIGNG") {
+          <p>RSIGNG Lab does not support negative reporting.</p>
+        }
+      }
+    } @else {
+      <p>Lab configuration is not set. Please contact the administrator.</p>
+    }
+  </mat-card-content>
+</mat-card>
+<a #downloadLink class="invisible" download="report.pdf"></a>
