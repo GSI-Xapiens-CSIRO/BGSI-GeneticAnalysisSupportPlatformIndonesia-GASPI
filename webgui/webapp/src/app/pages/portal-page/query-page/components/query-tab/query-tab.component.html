@@ -120,6 +120,7 @@
               }
             </mat-select>
             <mat-hint>Select one or more projects</mat-hint>
+            <mat-error>Select at least one project</mat-error>
           </mat-form-field>
         </div>
         <h3>Select scope and granularity</h3>
@@ -154,6 +155,8 @@
               min="0"
               type="number"
             />
+            <mat-error>This field is required</mat-error>
+            <mat-hint>Number of records to skip</mat-hint>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Limit</mat-label>
@@ -165,6 +168,8 @@
               max="500"
               type="number"
             />
+            <mat-error>Limit must be 1 to 500 entries</mat-error>
+            <mat-hint>Maximum number of records to return</mat-hint>
           </mat-form-field>
         </div>
         <div class="bui-custom-entry-checkbox-container">

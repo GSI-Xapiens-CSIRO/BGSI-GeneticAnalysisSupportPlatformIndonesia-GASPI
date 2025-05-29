@@ -24,7 +24,7 @@ resource "aws_cloudfront_response_headers_policy" "bui-security-headers-policy" 
         "img-src 'self' data: content: blob: https://${var.data_portal_bucket}.s3.${var.region}.amazonaws.com;",
         "form-action 'self';",
 
-        "connect-src 'self' ${var.api_endpoint_sbeacon} ${var.api_endpoint_svep}",
+        "connect-src 'self' ${var.api_endpoint_sbeacon} ${var.api_endpoint_clinic}",
         "https://cognito-identity.${var.region}.amazonaws.com https://cognito-idp.${var.region}.amazonaws.com",
         "https://${var.data_portal_bucket}.s3.${var.region}.amazonaws.com https://api.pricing.us-east-1.amazonaws.com",
         "https://igv.org/genomes/ https://hgdownload.soe.ucsc.edu/goldenPath/hg38/;",
@@ -69,7 +69,7 @@ resource "aws_cloudfront_response_headers_policy" "bui-security-headers-policy" 
       header   = "Permissions-Policy"
       override = true
       value    = "geolocation=(), microphone=(), camera=(), payment=(), accelerometer=(), fullscreen=*"
-    } 
+    }
   }
 }
 

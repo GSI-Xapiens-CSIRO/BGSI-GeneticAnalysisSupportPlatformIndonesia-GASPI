@@ -6,13 +6,6 @@ import {
   OnInit,
 } from '@angular/core';
 import { AuthService } from './services/auth.service';
-import {
-  animate,
-  state,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
 import { AsyncPipe } from '@angular/common';
 import {
   RouterLinkActive,
@@ -33,33 +26,12 @@ import { SpinnerService } from './services/spinner.service';
 import { ProfileMenuComponent } from './components/profile-menu/profile-menu.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
+import { ListMenuComponent } from './components/list-menu/list-menu.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  animations: [
-    trigger('collapse', [
-      state(
-        'open',
-        style({
-          height: '*',
-          opacity: 1,
-          visibility: 'visible',
-        }),
-      ),
-      state(
-        'closed',
-        style({
-          height: '0',
-          opacity: 0,
-          visibility: 'hidden',
-        }),
-      ),
-      transition('open => closed', [animate('0.1s ease-out')]),
-      transition('closed => open', [animate('0.1s ease-in')]),
-    ]),
-  ],
   standalone: true,
   imports: [
     MatButtonModule,
@@ -71,6 +43,7 @@ import { Subscription } from 'rxjs';
     AsyncPipe,
     GlobalSpinnerComponent,
     ProfileMenuComponent,
+    ListMenuComponent,
   ],
   providers: [SpinnerService],
 })
@@ -120,9 +93,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.isCollapsed = this.el.nativeElement.offsetWidth < 1200;
+    this.isCollapsed = true;
   }
-
   @HostListener('window:resize', ['event'])
   onResize() {
     this.isCollapsed = this.el.nativeElement.offsetWidth < 1200;
