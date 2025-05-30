@@ -43,6 +43,15 @@ def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
         "altsVcf": alts_vcf,
         "zygosity": gt,
     }
+    
+
+def create_message(current_org, current_gene):
+    return {
+        "org": current_org,
+        "gene": current_gene,
+        "name": "",
+        "message": "",
+    }
 
 
 def create_diplotype(current_org, current_gene):
@@ -88,6 +97,7 @@ def yield_genes(pharmcat_output_json, source_vcf):
         GENE_ORGS = {entry["gene"] for entry in ORGANISATIONS}
         current_org = None
         current_gene = None
+        in_messages_array = False
         in_diplotype_array = False
         in_variant_array = False
 
@@ -101,21 +111,42 @@ def yield_genes(pharmcat_output_json, source_vcf):
             # Filter by gene and reset the list of diplotypes for each new gene
             if prefix == f"genes.{current_org}" and event == "map_key":
                 current_gene = value
+                messages = []
                 diplotypes = []
                 diplotype_ids = []
                 variants = []
             if current_gene not in GENES:
                 continue
+            
+            # Check whether processing messages
+            messages_array_prefix = f"genes.{current_org}.{current_gene}.messages"
+            if is_entering_array(in_messages_array, prefix, event, messages_array_prefix):
+                in_messages_array = True
+                
+            # Message processing
+            if in_messages_array: 
+                # Reset message object at new occurence
+                message_prefix = f"{messages_array_prefix}.item" 
+                if is_entering_map(prefix, event, message_prefix):
+                    message = create_message(current_org, current_gene)
+                    
+                if prefix == f"{message_prefix}.rule_name" and event == "string":
+                    message["name"] = value
+                    
+                if prefix == f"{message_prefix}.message" and event == "string":
+                    message["message"] = value
+                    
+                if is_exiting_map(prefix, event, message_prefix):
+                    messages.append(message)
+                    
+                if is_exiting_array(prefix, event, messages_array_prefix):
+                    in_messages_array = False
 
             # Check whether processing diplotypes
             diplotype_array_prefix = (
                 f"genes.{current_org}.{current_gene}.sourceDiplotypes"
             )
-            if (
-                not in_diplotype_array
-                and prefix == diplotype_array_prefix
-                and event == "start_array"
-            ):
+            if is_entering_array(in_diplotype_array, prefix, event, diplotype_array_prefix):
                 in_diplotype_array = True
 
             # Diplotype preocessing
@@ -206,7 +237,7 @@ def yield_genes(pharmcat_output_json, source_vcf):
 
                 # Yield the diplotype and associated variants at the end of the chunk
                 if is_exiting_array(prefix, event, variant_array_prefix):
-                    yield (diplotypes, diplotype_ids, variants)
+                    yield (diplotypes, diplotype_ids, variants, messages)
                     in_variant_array = False
 
             else:

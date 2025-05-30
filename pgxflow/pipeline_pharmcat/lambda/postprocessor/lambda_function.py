@@ -31,6 +31,7 @@ def lambda_handler(event, _):
             LOCAL_DIR, f"tmp2_diplotypes_{processed_json}l"
         )
         tmp_variants_jsonl = os.path.join(LOCAL_DIR, f"tmp_variants_{processed_json}l")
+        tmp_messages_jsonl = os.path.join(LOCAL_DIR, f"tmp_messages_{processed_json}l")
 
         local_input_path = os.path.join(LOCAL_DIR, processed_json)
         s3_client.download_file(
@@ -43,8 +44,8 @@ def lambda_handler(event, _):
         drugs_to_genes = {entry["drug"]: entry["gene"] for entry in ORGANISATIONS}
         with open(tmp1_diplotypes_jsonl, "w") as d1_f, open(
             tmp_variants_jsonl, "w"
-        ) as v_f:
-            for diplotype_chunk, diplotype_id_chunk, variant_chunk in yield_genes(
+        ) as v_f, open(tmp_messages_jsonl, "w") as m_f:
+            for diplotype_chunk, diplotype_id_chunk, variant_chunk, message_chunk in yield_genes(
                 local_input_path, source_vcf_key
             ):
                 for i in range(len(diplotype_chunk)):
@@ -55,12 +56,16 @@ def lambda_handler(event, _):
                     d1_f.write("\n")
 
                 visited_mapping_ids = set()
-                for i in range(len(variant_chunk)):
-                    mapping_id = variant_chunk[i]["mapping"]
+                for variant in variant_chunk:
+                    mapping_id = variant["mapping"]
                     if mapping_id not in visited_mapping_ids:
                         visited_mapping_ids.add(mapping_id)
-                        json.dump(variant_chunk[i], v_f)
+                        json.dump(variant, v_f)
                         v_f.write("\n")
+                        
+                for message in message_chunk:
+                    json.dump(message, m_f)
+                    m_f.write("\n")
 
         with open(tmp1_diplotypes_jsonl, "rb") as d1_f, open(
             tmp2_diplotypes_jsonl, "w"
@@ -110,10 +115,11 @@ def lambda_handler(event, _):
 
         diplotypes = []
         variants = []
+        messages = []
 
         with open(tmp2_diplotypes_jsonl, "rb") as d2_f, open(
             tmp_variants_jsonl, "rb"
-        ) as v_f:
+        ) as v_f, open(tmp_messages_jsonl, "rb") as m_f:
             for line in d2_f:
                 diplotype = json.loads(line)
                 diplotypes.append(diplotype)
@@ -121,12 +127,17 @@ def lambda_handler(event, _):
             for line in v_f:
                 variant = json.loads(line)
                 variants.append(variant)
+                
+            for line in m_f:
+                message = json.loads(line)
+                messages.append(message)
 
         s3_client.put_object(
             Bucket=PGXFLOW_BUCKET,
             Key=s3_key,
             Body=json.dumps(
                 {
+                    "messages": messages,
                     "diplotypes": diplotypes,
                     "variants": variants,
                 }
