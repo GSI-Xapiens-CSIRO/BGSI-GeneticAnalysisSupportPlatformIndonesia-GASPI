@@ -7,6 +7,7 @@ import {
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { DportalService } from 'src/app/services/dportal.service';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
@@ -69,6 +70,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   imports: [
     ComponentSpinnerComponent,
     MatTableModule,
+    MatSortModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
@@ -88,7 +90,7 @@ export class ProjectsListComponent {
     'name',
     'description',
     'files',
-    'indexed',
+    'ingestedDatasets',
     'actions',
   ];
   protected pageSize = 5;
@@ -97,6 +99,7 @@ export class ProjectsListComponent {
 
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
   private pageTokens = new Map<number, string>();
 
   constructor(
@@ -128,6 +131,24 @@ export class ProjectsListComponent {
         this.setSearchInput(value as string);
         this.list(this.paginator.pageIndex, value as string);
       });
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+    this.dataSource.sortingDataAccessor = (item: Project, property: string) => {
+      switch (property) {
+        case 'files':
+        case 'ingestedDatasets':
+          return Array.isArray(item[property as keyof Project])
+            ? (item[property as keyof Project] as any[]).length
+            : 0;
+        case 'name':
+        case 'description':
+          return item[property as keyof Project] as string;
+        default:
+          return '';
+      }
+    };
   }
 
   resetPagination() {

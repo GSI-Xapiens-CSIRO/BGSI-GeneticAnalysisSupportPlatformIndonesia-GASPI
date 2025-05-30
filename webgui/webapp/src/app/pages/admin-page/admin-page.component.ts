@@ -22,7 +22,12 @@ import {
   PageEvent,
 } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableModule,
+  MatTableDataSource,
+} from '@angular/material/table';
+import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { ComponentSpinnerComponent } from '../../components/component-spinner/component-spinner.component';
@@ -79,6 +84,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatSelectModule,
     MatOptionModule,
     MatTableModule,
+    MatSortModule,
     MatPaginatorModule,
     MatIconModule,
     ToastrModule,
@@ -99,10 +105,12 @@ export class AdminPageComponent implements OnInit {
     'Confirmed',
     'MFA Active',
   ];
-  protected usersTableDataSource: any = [];
+  protected usersTableDataSource = new MatTableDataSource<any>([]);
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild(MatSort)
+  sort!: MatSort;
   private pageTokens = new Map<number, string>();
 
   constructor(
@@ -145,6 +153,7 @@ export class AdminPageComponent implements OnInit {
         this.listUsers(event.pageIndex);
       }
     });
+    this.usersTableDataSource.sort = this.sort;
   }
 
   async openDialog(row: any, res: any) {}
@@ -308,7 +317,7 @@ export class AdminPageComponent implements OnInit {
           );
 
           // reassign data
-          this.usersTableDataSource = users;
+          this.usersTableDataSource.data = users;
           // set next page token
           this.pageTokens.set(page + 1, response.pagination_token);
         }
@@ -318,25 +327,26 @@ export class AdminPageComponent implements OnInit {
   }
 
   updateData(userData: any, userEmail: string, costEstimation: number | null) {
-    const indexData = this.usersTableDataSource.findIndex(
+    const indexData = this.usersTableDataSource.data.findIndex(
       (e: any) => e.Email === userEmail,
     );
 
     if (indexData > -1) {
-      this.usersTableDataSource[indexData]['Size Quota/Usage'] =
+      this.usersTableDataSource.data[indexData]['Size Quota/Usage'] =
         this.formatData(
           userData.quotaSize ?? 0,
-          this.usersTableDataSource[indexData].usageSize ?? 0,
+          this.usersTableDataSource.data[indexData].usageSize ?? 0,
           true,
           true,
         );
-      this.usersTableDataSource[indexData]['Query Quota/Usage'] =
+      this.usersTableDataSource.data[indexData]['Query Quota/Usage'] =
         this.formatData(
           userData.quotaQueryCount ?? 0,
-          this.usersTableDataSource[indexData].usageCount ?? 0,
+          this.usersTableDataSource.data[indexData].usageCount ?? 0,
           false,
         );
-      this.usersTableDataSource[indexData]['Est Cost'] = `$${costEstimation}`;
+      this.usersTableDataSource.data[indexData]['Est Cost'] =
+        `$${costEstimation}`;
       return;
     }
   }

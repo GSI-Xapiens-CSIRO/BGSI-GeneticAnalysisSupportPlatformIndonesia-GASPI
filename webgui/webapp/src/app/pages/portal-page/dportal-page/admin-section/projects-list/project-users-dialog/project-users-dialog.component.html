@@ -1,49 +1,52 @@
 <h1 mat-dialog-title>Current users of: {{ data.project }}</h1>
 <div mat-dialog-content>
-  @if (dataSource.data.length > 0) {
-    <table mat-table [dataSource]="dataSource">
-      <!-- First Name Column -->
-      <ng-container matColumnDef="firstName">
-        <th mat-header-cell *matHeaderCellDef>First Name</th>
-        <td mat-cell *matCellDef="let element">{{ element.firstName }}</td>
-      </ng-container>
+  <table mat-table [dataSource]="dataSource" matSort>
+    <!-- First Name Column -->
+    <ng-container matColumnDef="firstName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>First Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.firstName }}</td>
+    </ng-container>
 
-      <!-- Last Name Column -->
-      <ng-container matColumnDef="lastName">
-        <th mat-header-cell *matHeaderCellDef>Last Name</th>
-        <td mat-cell *matCellDef="let element">{{ element.lastName }}</td>
-      </ng-container>
+    <!-- Last Name Column -->
+    <ng-container matColumnDef="lastName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.lastName }}</td>
+    </ng-container>
 
-      <!-- Email Column -->
-      <ng-container matColumnDef="email">
-        <th mat-header-cell *matHeaderCellDef>Email</th>
-        <td mat-cell *matCellDef="let element">{{ element.email }}</td>
-      </ng-container>
+    <!-- Email Column -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+      <td mat-cell *matCellDef="let element">{{ element.email }}</td>
+    </ng-container>
 
-      <!-- Actions Column -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>
-          <span class="text-center">Actions</span>
-        </th>
-        <td mat-cell *matCellDef="let element">
-          <div class="flex items-center justify-center">
-            <button
-              mat-mini-fab
-              (click)="unAssignUser(element.email)"
-              color="warn"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </td>
-      </ng-container>
+    <!-- Actions Column -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>
+        <span class="text-center">Actions</span>
+      </th>
+      <td mat-cell *matCellDef="let element">
+        <div class="flex items-center justify-center">
+          <button
+            mat-mini-fab
+            (click)="unAssignUser(element.email)"
+            color="warn"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </td>
+    </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-  } @else {
-    <h4>No users added to the project</h4>
-  }
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr class="mat-row" *matNoDataRow>
+    <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+      <div class="text-center py-4">
+        <h4>No users added to the project</h4>
+      </div>
+    </td>
+  </tr>
+  </table>
   <button mat-raised-button mat-dialog-close color="primary" class="w-[110px]">
     close
   </button>
