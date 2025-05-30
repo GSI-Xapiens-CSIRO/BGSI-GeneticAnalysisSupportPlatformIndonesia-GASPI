@@ -1,0 +1,26 @@
+<div
+  (click)="onClick()"
+  class="p-1 cursor-pointer rounded-md flex justify-center items-center relative"
+  style="background: #128f8a"
+>
+  <div class="text-white">+{{ data.length }} more</div>
+</div>
+@if (isShow) {
+  <div
+    #popover
+    class="absolute z-50 shadow-md bg-white p-4 rounded-md bottom-8 right-0"
+  >
+    <div
+      class="no-scrollbar grid grid-cols-4 w-max max-w-[20vw] overflow-auto gap-2"
+    >
+      @for (id of data; track id) {
+        <div
+          class="pub-med p-2 cursor-pointer rounded-md flex justify-center items-center"
+          (click)="handleRedirectUrl(id)"
+        >
+          {{ id }}
+        </div>
+      }
+    </div>
+  </div>
+}

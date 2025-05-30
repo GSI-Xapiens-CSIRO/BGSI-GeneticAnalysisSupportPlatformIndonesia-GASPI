@@ -36,6 +36,8 @@ import {
   gigabytesToBytes,
 } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { NotebookRole } from '../enums';
+import { MatRadioModule } from '@angular/material/radio';
 
 @Component({
   selector: 'app-admin-user-click-dialog',
@@ -50,6 +52,7 @@ import { UserQuotaService } from 'src/app/services/userquota.service';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-user-click-dialog.component.html',
   styleUrls: ['./admin-user-click-dialog.component.scss'],
@@ -69,6 +72,7 @@ export class AdminUserClickDialogComponent implements OnInit {
   protected usageCount = 0;
   protected loadingCostEstimation: boolean = true;
   usageSizeText = '';
+  noteBookRoleValue = NotebookRole;
 
   constructor(
     public dialogRef: MatDialogRef<AdminUserClickDialogComponent>,
@@ -84,6 +88,7 @@ export class AdminUserClickDialogComponent implements OnInit {
       managers: [false],
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
     });
   }
 
@@ -189,6 +194,7 @@ export class AdminUserClickDialogComponent implements OnInit {
           this.form.patchValue({
             quotaSize: bytesToGigabytes(data.Usage.quotaSize),
             quotaQueryCount: data.Usage.quotaQueryCount,
+            notebookRole: data.Usage.notebookRole || '',
           });
         }
 
@@ -259,6 +265,7 @@ export class AdminUserClickDialogComponent implements OnInit {
         quotaQueryCount: this.form.value.quotaQueryCount,
         usageSize: this.usageSize, // bytes
         usageCount: this.usageCount,
+        notebookRole: this.form.value.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }

@@ -58,6 +58,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { BoxDataComponent } from './box-data/box-data.component';
 type SVEPResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -109,6 +110,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    BoxDataComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -202,6 +204,9 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
+  rows: any[] = [];
+
+  expandedMap = new Map<string, boolean>();
 
   constructor(
     protected cs: ClinicService,
@@ -242,6 +247,7 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
       startWith(''),
       map((value) => this._filter(value || '')),
     );
+    this.dataView.subscribe((rows) => (this.rows = rows));
   }
 
   pageChange(event: PageEvent) {
@@ -348,7 +354,6 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
           });
         return row;
       });
-    console.log(lines);
     // this.dataRows.next(this.originalRows);
     this.setFilter();
     this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
@@ -457,5 +462,9 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     return this.columns.filter((option) =>
       option.toLowerCase().includes(filterValue),
     );
+  }
+
+  onToggle(rowId: string, expanded: boolean) {
+    this.expandedMap.set(rowId, expanded);
   }
 }

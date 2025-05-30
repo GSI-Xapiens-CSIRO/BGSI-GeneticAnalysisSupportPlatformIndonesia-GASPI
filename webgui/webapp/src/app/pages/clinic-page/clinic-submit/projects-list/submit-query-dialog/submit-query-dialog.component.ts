@@ -84,6 +84,13 @@ export class SubmitQueryDialogComponent {
         )
         .subscribe((response: any) => {
           if (response) {
+            if (!response.Success) {
+              this.tstr.error(response.Response, 'Error');
+              this.loading = false;
+
+              return;
+            }
+
             this.tstr.success(
               'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
               'Success',

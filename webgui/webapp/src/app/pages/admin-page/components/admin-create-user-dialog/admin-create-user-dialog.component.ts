@@ -27,6 +27,8 @@ import { AwsService } from 'src/app/services/aws.service';
 import { gigabytesToBytes } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 import { ToastrService } from 'ngx-toastr';
+import { MatRadioModule } from '@angular/material/radio';
+import { NotebookRole } from '../enums'; // adjust the path if needed
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -41,6 +43,7 @@ import { ToastrService } from 'ngx-toastr';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-create-user-dialog.component.html',
   styleUrls: ['./admin-create-user-dialog.component.scss'],
@@ -50,6 +53,7 @@ export class AdminCreateUserComponent implements OnInit {
   protected loading = false;
   protected newUserForm: FormGroup;
   protected costEstimation: number | null = 0;
+  noteBookRoleValue = NotebookRole;
 
   constructor(
     public dialogRef: MatDialogRef<AdminCreateUserComponent>,
@@ -71,6 +75,7 @@ export class AdminCreateUserComponent implements OnInit {
       // Quota
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
     });
   }
 
@@ -139,6 +144,7 @@ export class AdminCreateUserComponent implements OnInit {
         quotaQueryCount: this.newUserForm.value.quotaQueryCount,
         usageSize: 0,
         usageCount: 0,
+        notebookRole: this.newUserForm.value.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }

@@ -271,7 +271,7 @@ export class ClinicService {
     return from(
       API.del(
         environment.api_endpoint_sbeacon.name,
-        `dportal/projects/${project}/clinical-workflows/delete-job/${jobId}`,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
         {},
       ),
     );
