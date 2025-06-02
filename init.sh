@@ -3,7 +3,7 @@
 # Save the current directory
 top_level_dir=$(pwd)
 
-directories=("sbeacon" "svep")
+directories=("sbeacon" "svep" "pgxflow")
 
 for dir in "${directories[@]}"; do
   echo "Running init.sh in $dir"
