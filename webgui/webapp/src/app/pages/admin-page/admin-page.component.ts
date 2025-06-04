@@ -247,8 +247,16 @@ export class AdminPageComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe(async (response) => {
         if (!response) {
-          this.tstr.error('API request failed', 'Error');
           this.usersTableDataSource.data = [];
+          this.usersLoading = false;
+
+          // handle if there is no data on first page
+          if (!_.isEmpty(form.query)) {
+            this.tstr.warning('No more items to show', 'Warning');
+            return;
+          }
+
+          this.tstr.error('API request failed', 'Error');
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (
