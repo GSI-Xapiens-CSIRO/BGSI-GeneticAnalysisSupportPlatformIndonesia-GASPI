@@ -72,27 +72,27 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'svep-submit',
+        redirectTo: 'clinic-submit',
       },
       {
-        path: 'svep-submit',
-        loadComponent: () =>
-          import('./pages/clinic-page/svep-submit/svep-submit.component').then(
-            (c) => c.SvepSubmitComponent,
-          ),
-      },
-      {
-        path: 'svep-results',
+        path: 'clinic-submit',
         loadComponent: () =>
           import(
-            './pages/clinic-page/svep-results/svep-results.component'
-          ).then((c) => c.SvepResultsComponent),
+            './pages/clinic-page/clinic-submit/clinic-submit.component'
+          ).then((c) => c.ClinicSubmitComponent),
       },
       {
-        path: 'svep-igv',
+        path: 'clinic-results',
         loadComponent: () =>
-          import('./pages/clinic-page/svep-igv/svep-igv.component').then(
-            (c) => c.SvepIGVComponent,
+          import(
+            './pages/clinic-page/clinic-results/clinic-results.component'
+          ).then((c) => c.ClinicResultsComponent),
+      },
+      {
+        path: 'clinic-igv',
+        loadComponent: () =>
+          import('./pages/clinic-page/clinic-igv/clinic-igv.component').then(
+            (c) => c.ClinicIGVComponent,
           ),
       },
     ],

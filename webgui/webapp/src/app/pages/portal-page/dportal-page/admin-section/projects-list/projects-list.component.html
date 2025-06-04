@@ -33,18 +33,19 @@
   <table
     mat-table
     [dataSource]="dataSource"
+    matSort
     style="margin-bottom: 1rem"
     class="table w-full"
   >
     <!-- Name Column -->
     <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
       <td mat-cell *matCellDef="let element">{{ element.name }}</td>
     </ng-container>
 
     <!-- Description Column -->
     <ng-container matColumnDef="description">
-      <th mat-header-cell *matHeaderCellDef>Description</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
       <td mat-cell *matCellDef="let element">
         <p>{{ element.description }}</p>
         @if (element.errorMessages.length > 0) {
@@ -84,7 +85,7 @@
 
     <!-- Files Column -->
     <ng-container matColumnDef="files">
-      <th mat-header-cell *matHeaderCellDef>Files</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Files</th>
       <td mat-cell *matCellDef="let element">
         @if (element.files.length > 0) {
           <span class="text-cyan-900">{{ element.files.length }} file(s)</span>
@@ -95,8 +96,8 @@
     </ng-container>
 
     <!-- Indexed to Beacon Column -->
-    <ng-container matColumnDef="indexed">
-      <th mat-header-cell *matHeaderCellDef>Added to sBeacon</th>
+    <ng-container matColumnDef="ingestedDatasets">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Added to sBeacon</th>
       <td mat-cell *matCellDef="let element">
         @if (element.ingestedDatasets.length > 0) {
           <span class="text-cyan-900"
