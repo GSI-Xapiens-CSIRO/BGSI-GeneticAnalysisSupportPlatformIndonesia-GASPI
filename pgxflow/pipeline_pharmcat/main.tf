@@ -32,6 +32,7 @@ module "lambda-initPharmcat" {
     DRUGS                                = join(",", var.pharmcat_configuration.DRUGS)
     DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN                   = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                          = "s3.${var.region}.amazonaws.com"
   }
 
@@ -68,6 +69,7 @@ module "lambda-preprocessor" {
     REFERENCE_BUCKET         = var.pgxflow-reference-bucket-name
     PGXFLOW_PHARMCAT_LAMBDA  = module.lambda-pharmcat.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN       = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
 }
@@ -95,6 +97,7 @@ module "lambda-pharmcat" {
     PGXFLOW_BUCKET                        = var.pgxflow-backend-bucket-name
     PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA = module.lambda-postprocessor.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE              = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN                    = module.lambda-sendJobEmail.lambda_function_arn
   }
 }
 
@@ -128,6 +131,7 @@ module "lambda-postprocessor" {
     GENES                          = join(",", var.pharmcat_configuration.GENES)
     DRUGS                          = join(",", var.pharmcat_configuration.DRUGS)
     DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN             = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                    = "s3.${var.region}.amazonaws.com"
   }
 
@@ -164,6 +168,7 @@ module "lambda-gnomad" {
     PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
     RESULT_SUFFIX            = local.result_suffix
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN       = module.lambda-sendJobEmail.lambda_function_arn
   }
 
   layers = [
@@ -233,5 +238,37 @@ module "lambda-updateReferenceFiles" {
 
   layers = [
     var.python_modules_layer
+  ]
+}
+
+#
+# sendJobEmail Lambda Function
+#
+module "lambda-sendJobEmail" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-pharmcat-sendJobEmail"
+  description         = "Invokes sendJobEmail to send email to user"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-sendJobEmail.json,
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/sendJobEmail"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+  }
+
+  layers = [
+    var.python_modules_layer,
   ]
 }

@@ -59,10 +59,20 @@ variable "dynamo-clinic-jobs-table-arn" {
   description = "Dynamo clinic jobs table ARN"
 }
 
+variable "clinic-job-email-lambda-function-arn" {
+  type        = string
+  description = "Lambda function ARN for sending Clinic Job emails"
+}
+
 # cognito variables
 variable "cognito-user-pool-arn" {
   type        = string
   description = "Cognito user pool ARN"
+}
+
+variable "cognito-user-pool-id" {
+  type        = string
+  description = "Cognito user pool ID"
 }
 
 variable "pgxflow-references-table-name" {

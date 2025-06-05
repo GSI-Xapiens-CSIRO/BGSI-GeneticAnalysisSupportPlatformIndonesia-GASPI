@@ -16,6 +16,7 @@ module "pipeline_pharmcat" {
   pgxflow-reference-bucket-name        = aws_s3_bucket.pgxflow-references.bucket
   pgxflow-reference-bucket-arn         = aws_s3_bucket.pgxflow-references.arn
   cognito-user-pool-arn                = var.cognito-user-pool-arn
+  cognito-user-pool-id                 = var.cognito-user-pool-id
   pgxflow-api-gateway-id               = aws_api_gateway_rest_api.PgxApi.id
   pgxflow-api-gateway-root-resource-id = aws_api_gateway_rest_api.PgxApi.root_resource_id
   pgxflow-api-gateway-execution-arn    = aws_api_gateway_rest_api.PgxApi.execution_arn
@@ -28,6 +29,7 @@ module "pipeline_pharmcat" {
   dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
   dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
   dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
+  clinic-job-email-lambda-function-arn = var.clinic-job-email-lambda-function-arn
   ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
   ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
   python_libraries_layer               = local.python_libraries_layer
@@ -47,6 +49,7 @@ module "pipeline_lookup" {
   pgxflow-reference-bucket-name        = aws_s3_bucket.pgxflow-references.bucket
   pgxflow-reference-bucket-arn         = aws_s3_bucket.pgxflow-references.arn
   cognito-user-pool-arn                = var.cognito-user-pool-arn
+  cognito-user-pool-id                 = var.cognito-user-pool-id
   pgxflow-api-gateway-id               = aws_api_gateway_rest_api.PgxApi.id
   pgxflow-api-gateway-root-resource-id = aws_api_gateway_rest_api.PgxApi.root_resource_id
   pgxflow-api-gateway-execution-arn    = aws_api_gateway_rest_api.PgxApi.execution_arn
@@ -59,6 +62,7 @@ module "pipeline_lookup" {
   dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
   dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
   dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
+  clinic-job-email-lambda-function-arn = var.clinic-job-email-lambda-function-arn
   ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
   ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
   python_libraries_layer               = local.python_libraries_layer
