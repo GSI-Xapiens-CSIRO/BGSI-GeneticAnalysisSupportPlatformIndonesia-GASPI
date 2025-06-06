@@ -97,6 +97,7 @@ def lambda_handler(event, context):
         project_name=project,
         input_vcf=input_vcf,
         user_id=sub,
+        skip_email=True,
     )
 
     return bundle_response(
