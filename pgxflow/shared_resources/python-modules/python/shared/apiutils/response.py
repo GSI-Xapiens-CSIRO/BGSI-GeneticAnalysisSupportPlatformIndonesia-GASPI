@@ -10,6 +10,7 @@ def bad_request(data, extra_params=None):
             "errorCode": 400,
             "errorMessage": data,
         },
+        "Success": False,
     }
     if extra_params:
         response.update(extra_params)

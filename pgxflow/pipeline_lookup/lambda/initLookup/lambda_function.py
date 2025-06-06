@@ -118,5 +118,6 @@ def lambda_handler(event, context):
             "Response": "Process started",
             "RequestId": request_id,
             "ProjectName": project,
+            "Success": True,
         },
     )
