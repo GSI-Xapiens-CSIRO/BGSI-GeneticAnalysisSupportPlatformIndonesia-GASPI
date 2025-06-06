@@ -6,7 +6,6 @@ import boto3
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
-sns = boto3.client("sns")
 
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
@@ -37,7 +36,7 @@ def dynamodb_update_item(job_id, update_fields: dict):
     print(f"Calling dynamodb.update_item with kwargs: {json.dumps(kwargs)}")
     response = dynamodb_client.update_item(**kwargs)
     print(f"Received response: {json.dumps(response, default=str)}")
-
+    
 
 def send_job_email(
     job_id,
@@ -58,12 +57,11 @@ def send_job_email(
 
     print(f"[send_job_email] - payload: {payload}")
 
-    kwargs = {
-        "TopicArn": SEND_JOB_EMAIL_ARN,
-        "Message": json.dumps(payload, separators=(",", ":")),
-    }
-
-    sns.publish(**kwargs)
+    lambda_client.invoke(
+        FunctionName=SEND_JOB_EMAIL_ARN,
+        InvocationType="Event",
+        Payload=json.dumps(payload),
+    )
 
 
 def update_clinic_job(
@@ -100,15 +98,14 @@ def update_clinic_job(
     if skip_email:
         print(f"[update_clinic_job] - Skipping email for job: {job_id}")
 
-    # TODO: Implement include pgxflow email notifications
-    # send_job_email(
-    #    job_id=job_id,
-    #    job_status=job_status,
-    #    project_name=project_name,
-    #    input_vcf=input_vcf,
-    #    user_id=user_id,
-    #    is_from_failed_execution=is_from_failed_execution,
-    # )
+    send_job_email(
+       job_id=job_id,
+       job_status=job_status,
+       project_name=project_name,
+       input_vcf=input_vcf,
+       user_id=user_id,
+       is_from_failed_execution=is_from_failed_execution,
+    )
 
 
 def check_user_in_project(sub, project):

@@ -101,6 +101,11 @@ variable "dynamo-clinic-jobs-table-arn" {
   description = "Dynamo clinic jobs table ARN"
 }
 
+variable "clinic-job-email-lambda-function-arn" {
+  type        = string
+  description = "Lambda function ARN for sending Clinic Job emails"
+}
+
 variable "dynamo-references-table" {
   type        = string
   description = "Dynamo PGxFlow references table"
@@ -125,6 +130,11 @@ variable "ec2-references-instance-profile" {
 variable "cognito-user-pool-arn" {
   type        = string
   description = "Cognito user pool ARN"
+}
+
+variable "cognito-user-pool-id" {
+  type        = string
+  description = "Cognito user pool ID"
 }
 
 # lambda layer definitions

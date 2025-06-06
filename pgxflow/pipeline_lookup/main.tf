@@ -34,6 +34,7 @@ module "lambda-initLookup" {
     END_HEADER                 = var.lookup_configuration["end_header"]
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE   = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN         = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                = "s3.${var.region}.amazonaws.com"
   }
 
@@ -75,6 +76,7 @@ module "lambda-dbsnp" {
     START_HEADER             = var.lookup_configuration["start_header"]
     END_HEADER               = var.lookup_configuration["end_header"]
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN       = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
 
@@ -116,6 +118,7 @@ module "lambda-lookup" {
     END_HEADER               = var.lookup_configuration["end_header"]
     PGXFLOW_GNOMAD_LAMBDA    = module.lambda-gnomad.lambda_function_arn
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN       = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
   }
 
@@ -151,6 +154,7 @@ module "lambda-gnomad" {
     PGXFLOW_BUCKET           = var.pgxflow-backend-bucket-name
     DPORTAL_BUCKET           = var.data-portal-bucket-name
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+    SEND_JOB_EMAIL_ARN       = module.lambda-sendJobEmail.lambda_function_arn
   }
 
   layers = [
@@ -215,6 +219,38 @@ module "lambda-updateReferenceFiles" {
     REFERENCE_LOCATION              = var.pgxflow-reference-bucket-name
     DYNAMO_PGXFLOW_REFERENCES_TABLE = var.dynamo-references-table
     EC2_IAM_INSTANCE_PROFILE        = var.ec2-references-instance-profile
+  }
+
+  layers = [
+    var.python_modules_layer,
+  ]
+}
+
+#
+# sendJobEmail Lambda Function
+#
+module "lambda-sendJobEmail" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-lookup-sendJobEmail"
+  description         = "Invokes sendJobEmail to send email to user"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-sendJobEmail.json,
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/sendJobEmail"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
   }
 
   layers = [
