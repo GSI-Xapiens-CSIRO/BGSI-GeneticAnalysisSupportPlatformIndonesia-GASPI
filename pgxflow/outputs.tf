@@ -3,12 +3,12 @@ output "api_url" {
   description = "URL used to invoke the API."
 }
 
-output "temp-bucket-name" {
+output "backend-bucket-name" {
   value       = aws_s3_bucket.pgxflow-bucket.bucket
   description = "Temporary bucket name"
 }
 
-output "temp-bucket-arn" {
+output "backend-bucket-arn" {
   value       = aws_s3_bucket.pgxflow-bucket.arn
   description = "Temporary bucket ARN"
 }
