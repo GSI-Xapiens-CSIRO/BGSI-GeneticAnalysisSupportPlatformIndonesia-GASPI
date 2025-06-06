@@ -3,7 +3,10 @@ resource "aws_dynamodb_table" "pgxflow_references" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
   name         = var.pgxflow-references-table-name
-  tags         = var.common-tags
+
+  tags = merge(var.common-tags, {
+    backup = "true"
+  })
 
   attribute {
     name = "id"
