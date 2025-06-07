@@ -1,0 +1,65 @@
+<mat-card class="mt-4" [class.hide]="annotations.length == 0">
+  <mat-card-content>
+    <h2>Clinical Annotations</h2>
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
+      <button
+        mat-mini-fab
+        color="primary"
+        class="flex items-center"
+        (click)="refresh()"
+      >
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <br />
+      @for (annot of annotations; track $index) {
+        <div>
+          <div class="cursor-pointer flex flex-row gap-2 font-normal">
+            [<span class="text-red-500" (click)="deleteAnnotation(annot.name)"
+              >X</span
+            >]
+            <div class="font-extrabold">{{ annot.annotation }}</div>
+          </div>
+          <div class="text-wrap break-words mt-1">
+            @for (info of annot.variants; track $index; let itemLast = $last) {
+              <div>
+                @for (item of info | keyvalue; track $index) {
+                  {{ item.key }}: {{ item.value }}
+                  @if (!$last) {
+                    |
+                  }
+                }
+              </div>
+              @if (!itemLast) {
+                <hr class="bg-primary-50 h-0.5 border-0" />
+              }
+            }
+          </div>
+          <span class="text-xs"
+            >Annotated by: {{ annot.user?.firstName }}
+            {{ annot.user?.lastName }} ({{ annot.user?.email }})</span
+          >
+          <br />
+          <span class="text-xs"
+            >Annotated at:
+            {{ annot.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
+          >
+          <br />
+        </div>
+        @if (!$last) {
+          <div class="w-full h-1 bg-primary-60 my-2"></div>
+        }
+      } @empty {
+        <div class="text-center">No annotations available</div>
+      }
+    </div>
+    <mat-paginator
+      #paginator
+      [pageSizeOptions]="[5, 10, 50]"
+      [pageSize]="pageSize"
+      length="9999"
+      (page)="pageChange($event)"
+    ></mat-paginator>
+  </mat-card-content>
+</mat-card>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   FormGroup,
   FormControl,
@@ -21,6 +21,7 @@ import {
   PasswordStrengthBarComponent,
 } from 'src/app/components/password-strength-bar/password-strength-bar.component';
 import { ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
 
 const passwordsValidator = (): ValidatorFn => {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -65,11 +66,10 @@ enum StateTypes {
     PasswordStrengthBarComponent,
   ],
 })
-export class LoginPageComponent {
+export class LoginPageComponent implements OnInit, OnDestroy {
   protected state = StateTypes.ORDINARY_LOGIN;
   protected StateTypes = StateTypes;
   protected loading = false;
-
   protected loginForm = new FormGroup(
     {
       email: new FormControl('', [Validators.required, Validators.email]),
@@ -90,6 +90,7 @@ export class LoginPageComponent {
     { validators: passwordsValidator() },
   );
   isStrongPassword = isStrongPassword;
+  emailFormFieldSubscription: Subscription | undefined;
 
   constructor(
     private auth: AuthService,
@@ -97,6 +98,25 @@ export class LoginPageComponent {
     private tstr: ToastrService,
     private ss: SpinnerService,
   ) {}
+
+  ngOnInit(): void {
+    this.emailFormFieldSubscription =
+      this.loginForm.controls.email?.valueChanges.subscribe(
+        (value: string | null) => {
+          if (value && value !== value.toLowerCase()) {
+            this.loginForm.controls.email?.setValue(value.toLowerCase(), {
+              emitEvent: false,
+            });
+          }
+        },
+      );
+  }
+
+  ngOnDestroy(): void {
+    if (this.emailFormFieldSubscription) {
+      this.emailFormFieldSubscription.unsubscribe();
+    }
+  }
 
   resetFormForgotPassword() {
     this.loginForm.reset({
