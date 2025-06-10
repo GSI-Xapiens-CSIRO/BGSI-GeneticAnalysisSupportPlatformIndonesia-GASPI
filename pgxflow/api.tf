@@ -10,9 +10,25 @@ resource "aws_api_gateway_rest_api" "PgxApi" {
 }
 
 locals {
+  shared_api_redeployment_hash = sha1(jsonencode([
+    # /vcfstats
+    aws_api_gateway_method.vcfstats-options,
+    aws_api_gateway_integration.vcfstats-options,
+    aws_api_gateway_integration_response.vcfstats-options,
+    aws_api_gateway_method_response.vcfstats-options,
+    aws_api_gateway_method.vcfstats-patch,
+    aws_api_gateway_integration.vcfstats-patch,
+    aws_api_gateway_integration_response.vcfstats-patch,
+    aws_api_gateway_method_response.vcfstats-patch,
+    aws_api_gateway_method.vcfstats-post,
+    aws_api_gateway_integration.vcfstats-post,
+    aws_api_gateway_integration_response.vcfstats-post,
+    aws_api_gateway_method_response.vcfstats-post,
+  ]))
   api_redeployment_hash = sha1(jsonencode(join("", compact([
     module.pipeline_pharmcat.pipeline_pharmcat_redeployment_hash,
     module.pipeline_lookup.pipeline_lookup_redeployment_hash,
+    local.shared_api_redeployment_hash,
   ]))))
 }
 

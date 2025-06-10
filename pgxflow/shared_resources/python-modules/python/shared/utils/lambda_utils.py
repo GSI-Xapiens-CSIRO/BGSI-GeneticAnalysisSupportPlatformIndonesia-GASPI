@@ -5,10 +5,18 @@ import subprocess
 import traceback
 
 import boto3
+from botocore.config import Config
 
 from shared.dynamodb import query_clinic_job, update_clinic_job
 
+REGION = os.environ.get("REGION")
 MAX_PRINT_LENGTH = 1024
+
+s3_client = boto3.client(
+    "s3",
+    region_name=REGION,
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"})
+)
 
 
 class ProcessError(Exception):
@@ -70,6 +78,20 @@ def handle_failed_execution(job_id, error_message):
         user_id=job.get("uid", {}).get("S"),
         is_from_failed_execution=True,
     )
+    
+def generate_presigned_get_url(bucket, key, expires=3600):
+    kwargs = {
+        "ClientMethod": "get_object",
+        "Params": {
+            "Bucket": bucket,
+            "Key": key,
+        },
+        "ExpiresIn": expires,
+    }
+    print(f"Calling s3.generate_presigned_url with kwargs: {json.dumps(kwargs)}")
+    response = s3_client.generate_presigned_url(**kwargs)
+    print(f"Received response: {json.dumps(response, default=str)}")
+    return response
 
 
 ### Client actions with logging

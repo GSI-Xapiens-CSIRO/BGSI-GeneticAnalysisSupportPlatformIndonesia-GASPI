@@ -4,6 +4,7 @@ locals {
   python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
   python_modules_layer   = module.python_modules_layer.lambda_layer_arn
   binaries_layer         = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
+  result_duration        = 86400
 }
 
 module "pipeline_pharmcat" {
@@ -70,4 +71,33 @@ module "pipeline_lookup" {
   binaries_layer                       = local.binaries_layer
 
   common-tags = var.common-tags
+}
+
+#
+# qcFigures Lambda Function
+#
+module "lambda-qcFigures" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "pgxflow-backend-qcFigures"
+  description            = "Running vcfstats for generating graphic."
+  create_package         = false
+  image_uri              = module.docker_image_qcFigures_lambda.image_uri
+  package_type           = "Image"
+  memory_size            = 3000
+  timeout                = 900
+  ephemeral_storage_size = 10240
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcFigures.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/qcFigures"
+  tags                   = var.common-tags
+  environment_variables = {
+    FILE_LOCATION   = var.data-portal-bucket-name
+    USER_POOL_ID    = var.cognito-user-pool-id
+    HTS_S3_HOST     = "s3.${var.region}.amazonaws.com"
+    RESULT_DURATION = local.result_duration
+  }
 }
