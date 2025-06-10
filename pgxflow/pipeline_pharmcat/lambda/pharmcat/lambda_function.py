@@ -18,6 +18,7 @@ def run_pharmcat(input_path, vcf):
     "Run PharmCAT on the preprocessed VCF"
     cmd = [
         "java",
+        "-Xmx2g",
         "-Dlogback.configurationFile=/opt/logback.xml",
         "-jar",
         "pharmcat.jar",

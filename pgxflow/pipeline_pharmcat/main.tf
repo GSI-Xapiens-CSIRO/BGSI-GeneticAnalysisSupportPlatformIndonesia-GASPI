@@ -55,7 +55,7 @@ module "lambda-preprocessor" {
   package_type           = "Image"
   memory_size            = 2048
   ephemeral_storage_size = 8192
-  timeout                = 60
+  timeout                = 600
   attach_policy_jsons    = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-preprocessor.json
@@ -84,8 +84,8 @@ module "lambda-pharmcat" {
   create_package      = false
   image_uri           = module.docker_image_pharmcat_lambda.image_uri
   package_type        = "Image"
-  memory_size         = 2048
-  timeout             = 60
+  memory_size         = 3000
+  timeout             = 600
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-pharmcat.json
