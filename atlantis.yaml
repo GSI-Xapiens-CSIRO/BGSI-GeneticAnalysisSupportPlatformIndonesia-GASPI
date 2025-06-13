@@ -86,7 +86,7 @@ projects:
 - name: gxc-uat01
   branch: /uat01/
   dir: .
-  workspace: staging
+  workspace: default
   terraform_version: *tf_version
   execution_order_group: 7
   autoplan:
