@@ -122,3 +122,13 @@ projects:
   autoplan:
     when_modified: *tf_files
   workflow: uat04-workflow
+
+- name: gxc-uat05
+  branch: /uat05/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 10
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat05-workflow

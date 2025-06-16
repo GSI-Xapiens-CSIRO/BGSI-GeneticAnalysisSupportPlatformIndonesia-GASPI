@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { API, Auth } from 'aws-amplify';
 import {
   BehaviorSubject,
+  forkJoin,
   from,
   map,
   Observable,
@@ -10,6 +11,7 @@ import {
   Subject,
   switchMap,
 } from 'rxjs';
+import { ulid } from 'ulid';
 import { environment } from 'src/environments/environment';
 
 export type SelectedVariants = Map<string, string[]>;
@@ -69,31 +71,28 @@ export class ClinicService {
     );
   }
 
-  submitSvepJob(location: string, projectName: string, jobName: string) {
-    let pathPart: string;
-    switch (environment.hub_name) {
-      case 'RSCM':
-      case 'RSSARDJITO':
-        pathPart = 'submit';
-        break;
-      case 'RSPON':
-        pathPart = 'pipeline_pharmcat/submit';
-        break;
-      case 'RSIGNG':
-        pathPart = 'pipeline_lookup/submit';
-        break;
-      default:
-        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
-    }
+  submitClinicJob(location: string, projectName: string, jobName: string) {
+    const pathMap: Record<string, string[]> = {
+      RSCM: ['submit'],
+      RSSARDJITO: ['submit'],
+      RSPON: ['pipeline_pharmcat/submit'],
+      RSIGNG: ['pipeline_lookup/submit'],
+      RSJPD: ['pipeline_pharmcat/submit', 'pipeline_lookup/submit'],
+    };
+
+    const paths = pathMap[environment.hub_name];
 
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
-        return from(
-          API.post(environment.api_endpoint_clinic.name, pathPart, {
-            body: { location, projectName, userId, jobName },
-          }),
+        const requestId = environment.hub_name === 'RSJPD' ? ulid() : null;
+        const body = { location, projectName, userId, jobName, requestId };
+
+        const requests = paths.map((path: string) =>
+          from(API.post(environment.api_endpoint_clinic.name, path, { body })),
         );
+
+        return requests.length === 1 ? requests[0] : forkJoin(requests);
       }),
     );
   }
@@ -112,28 +111,28 @@ export class ClinicService {
     chromosome: string | null = null,
     page: number | null = null,
     position: number | null = null,
+    pathPart: string | null = null,
   ): Observable<any> {
     const params = {
       ...(chromosome && { chromosome }),
       ...(page && { page }),
       ...(position && { position }),
     };
-    let pathPart: string;
-    switch (environment.hub_name) {
-      case 'RSCM':
-      case 'RSSARDJITO':
-        pathPart = 'results';
-        break;
-      case 'RSPON':
-        pathPart = 'pipeline_pharmcat/results';
-        break;
-      case 'RSIGNG':
-        pathPart = 'pipeline_lookup/results';
-        break;
-      default:
-        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
-    }
 
+    const getPathForHub = (hubName: string, customPath: string | null) => {
+      const defaultPaths: Record<string, string> = {
+        RSCM: 'results',
+        RSSARDJITO: 'results',
+        RSPON: 'pipeline_pharmcat/results',
+        RSIGNG: 'pipeline_lookup/results',
+      };
+      if (hubName === 'RSJPD' && customPath) {
+        return customPath;
+      }
+      return defaultPaths[hubName] || 'results';
+    };
+
+    pathPart = getPathForHub(environment.hub_name, pathPart);
     return from(
       API.get(environment.api_endpoint_clinic.name, pathPart, {
         queryStringParameters: {
@@ -272,7 +271,7 @@ export class ClinicService {
     return from(
       API.del(
         environment.api_endpoint_sbeacon.name,
-        `dportal/projects/${project}/clinical-workflows/delete-job/${jobId}`,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
         {},
       ),
     );

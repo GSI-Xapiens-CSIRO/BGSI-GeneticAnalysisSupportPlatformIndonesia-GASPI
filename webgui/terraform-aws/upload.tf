@@ -26,7 +26,7 @@ resource "null_resource" "s3-upload" {
   }
 
   provisioner "local-exec" {
-    command = "/bin/bash \"${path.module}/upload.sh\" \"${path.module}/${var.build-destination}\" ${aws_s3_bucket.bui-hosted-bucket.id}"
+    command = "/bin/bash \"${path.module}/upload.sh\" \"${path.module}/${var.build-destination}\" ${aws_s3_bucket.bui-hosted-bucket.id} ${aws_s3_object.version.key}"
   }
 
   depends_on = [

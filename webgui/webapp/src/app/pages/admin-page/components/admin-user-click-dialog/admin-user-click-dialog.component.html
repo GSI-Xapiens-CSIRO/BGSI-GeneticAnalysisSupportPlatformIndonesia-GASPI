@@ -98,18 +98,36 @@
           </mat-error>
         </mat-form-field>
 
-        <div class="flex space-x-2">
-          <span>Estimated Cost* : </span>
-          <span class="font font-semibold">${{ costEstimation }} / Month</span>
-        </div>
+          <div class="flex space-x-2">
+            <span>Estimated Cost* : </span>
+            <span class="font font-semibold">${{ costEstimation }} / Month</span>
+          </div>
 
-        <div class="text-red-500 text-sm flex space-x-2">
-          <span
-            >*Disclaimer : This above cost is an approximate and rounded off
-            value</span
-          >
+          <div class="text-red-500 text-sm flex space-x-2">
+            <span
+              >*Disclaimer : This above cost is an approximate and rounded off
+              value</span
+            >
+          </div>
+
+          <label>Notebook Options:</label>
+
+          <mat-radio-group formControlName="notebookRole" class="notebook-radio-group">
+            <mat-radio-button [value]="noteBookRoleValue.ADVANCED" class="notebook-radio-option">
+              <div class="label">
+                <strong>Advanced</strong>
+                <div class="text-primary-60">shows all available instance types and volume options during notebook creation.</div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button [value]="noteBookRoleValue.BASIC" class="notebook-radio-option">
+              <div class="label">
+                <strong>Basic</strong>
+                <div class="text-primary-60">shows only the ml.t3.medium instance with a 5 GB volume during notebook creation.</div>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
         </div>
-      </div>
     </div>
 
     <br />

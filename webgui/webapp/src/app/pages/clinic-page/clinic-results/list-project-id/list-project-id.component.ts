@@ -39,6 +39,9 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from 'src/app/services/auth.service';
 import { AsyncPipe } from '@angular/common';
+import dayjs from 'dayjs';
+import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
+import { clinicResort } from 'src/app/utils/clinic';
 
 interface Project {
   job_id: string;
@@ -92,6 +95,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatSelectModule,
     AsyncPipe,
+    MatSortModule,
   ],
   templateUrl: './list-project-id.component.html',
   styleUrl: './list-project-id.component.scss',
@@ -105,6 +109,7 @@ export class ListJobComponent implements OnChanges, OnInit {
     'job_status',
     'job_name',
     'job_id',
+    'created_at',
     'action',
   ];
   JobStatus = JobStatus;
@@ -112,6 +117,11 @@ export class ListJobComponent implements OnChanges, OnInit {
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild(MatSort)
+  sort!: MatSort;
+
+  snapshotSorting: Sort | null = null;
+
   private pageTokens = new Map<number, string>();
 
   // Reactive form controls for search and status
@@ -205,10 +215,10 @@ export class ListJobComponent implements OnChanges, OnInit {
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
       this.tstr.warning('No more items to show', 'Warning');
+      this.loading = false;
       return;
     }
 
-    this.loading = true;
     this.cs
       .getMyJobsID(
         this.pageSize,
@@ -243,7 +253,21 @@ export class ListJobComponent implements OnChanges, OnInit {
             return;
           }
 
-          this.dataSource.data = response.jobs;
+          this.dataSource.data = response.jobs.map((job: any) => {
+            return {
+              ...job,
+              created_at: dayjs(job.created_at).format('DD/MM/YYYY'),
+            };
+          });
+
+          // keep sorting when data is changed
+          if (this.snapshotSorting) {
+            clinicResort(
+              this.dataSource.data,
+              this.snapshotSorting,
+              (sorted) => (this.dataSource.data = sorted),
+            );
+          }
 
           // set next page token
           this.pageTokens.set(page + 1, response.last_evaluated_key);
@@ -256,6 +280,13 @@ export class ListJobComponent implements OnChanges, OnInit {
     this.pageTokens = new Map<number, string>();
     this.paginator.pageIndex = 0;
     this.pageSize = this.paginator.pageSize;
+  }
+
+  resort(sort: Sort) {
+    clinicResort(this.dataSource.data, sort, (sorted) => {
+      this.dataSource.data = sorted;
+      this.snapshotSorting = sort;
+    });
   }
 
   refresh() {
@@ -293,23 +324,40 @@ export class ListJobComponent implements OnChanges, OnInit {
     });
   }
 
-  deleteJob(projectName: string, jobID: string) {
-    this.loading = true;
-    this.cs
-      .deleteFailedJob(projectName, jobID)
-      .pipe(
-        catchError((error) => {
-          this.tstr.error('API request failed', error);
-          return of(null);
-        }),
-      )
-      .subscribe((response: any) => {
-        console.log(response);
-        if (response.success) {
-          this.tstr.success(response.message, 'Success');
-          this.list(0, '', this.jobStatusOptions[0]);
-        }
-        this.loading = false;
-      });
+  async deleteJob(projectName: string, jobID: string, jobName: string) {
+    const { ActionConfirmationDialogComponent } = await import(
+      'src/app/components/action-confirmation-dialog/action-confirmation-dialog.component'
+    );
+
+    const dialog = this.dg.open(ActionConfirmationDialogComponent, {
+      data: {
+        title: 'Delete Failed Job',
+        message: `Are you sure you want to delete ${jobName}?`,
+      },
+    });
+
+    dialog.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loading = true;
+        this.cs
+          .deleteFailedJob(projectName, jobID)
+          .pipe(
+            catchError((error) => {
+              this.tstr.error('API request failed', error);
+              this.loading = false;
+              return of(null);
+            }),
+          )
+          .subscribe((response: any) => {
+            if (response.success) {
+              this.tstr.success(response.message, 'Success');
+              this.list(0, '', this.jobStatusOptions[0]);
+            } else {
+              this.tstr.error('API request failed', response.message);
+            }
+            this.loading = false;
+          });
+      }
+    });
   }
 }

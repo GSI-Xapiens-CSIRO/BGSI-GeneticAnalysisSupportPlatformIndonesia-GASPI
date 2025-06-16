@@ -1,39 +1,41 @@
 <mat-card class="mt-2">
-  <app-component-spinner [loading]="loading" />
   <mat-card-content>
-    <div class="grid grid-cols-2 gap-4">
-      @for (item of listQC; track item.key) {
-        <div class="qc-box p-4 flex flex-col h-full justify-between">
-          <div class="title-container flex flex-col">
-            <div class="font-semibold text-primary-60 text-3xl mb-2">
-              {{ item.title }}
+    <app-component-spinner [loading]="loading" />
+    <div class="grid grid-cols-2 gap-4" style="min-height: 30vh">
+      @if (!loading) {
+        @for (item of listQC; track item.key) {
+          <div class="qc-box p-4 flex flex-col h-full justify-between">
+            <div class="title-container flex flex-col">
+              <div class="font-semibold text-primary-60 text-3xl mb-2">
+                {{ item.title }}
+              </div>
+              <div style="height: 65vh" class="flex justify-start items-start">
+                @if (item.url) {
+                  <img
+                    [src]="item.url"
+                    alt="{{ item.title }}"
+                    class="w-4/5 object-contain object-left"
+                    style="height: 100%"
+                  />
+                } @else {
+                  <img
+                    class="w-3/5 object-contain py-10"
+                    src="../../../../../assets/images/no-items.png"
+                    alt="No Items"
+                    style="height: 100%"
+                  />
+                }
+              </div>
             </div>
-            <div style="height: 65vh" class="flex justify-start items-start">
-              @if (item.url) {
-                <img
-                  [src]="item.url"
-                  alt="{{ item.title }}"
-                  class="w-4/5 object-contain object-left"
-                  style="height: 100%"
-                />
-              } @else {
-                <img
-                  class="w-3/5 object-contain py-10"
-                  src="../../../../../assets/images/no-items.png"
-                  alt="No Items"
-                  style="height: 100%"
-                />
-              }
+            <div
+              class="text-lg text-black h-full"
+              [style.color]="item.url ? 'gray' : '#950606'"
+              [style.font-weight]="item.url ? '' : '600'"
+            >
+              {{ item.desc }}
             </div>
           </div>
-          <div
-            class="text-lg text-black h-full"
-            [style.color]="item.url ? 'gray' : '#950606'"
-            [style.font-weight]="item.url ? '' : '600'"
-          >
-            {{ item.desc }}
-          </div>
-        </div>
+        }
       }
     </div>
   </mat-card-content>

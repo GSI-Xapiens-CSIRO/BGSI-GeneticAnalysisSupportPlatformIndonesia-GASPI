@@ -42,7 +42,7 @@ export class QcReportComponent {
     },
     {
       title: 'Boxplot: Genotype Quality',
-      desc: 'Here is the Boxplot: Genotype Quality, where each genomic position (POS) on the x-axis has a distribution of genotype quality (QUAL) values on the y-axis. The boxplot shows the median, quartiles, and potential outliers for each position',
+      desc: 'Here is the bar graph: Genotype Quality, where each genomic position (POS) on the x-axis has a distribution of genotype quality (QUAL) values on the y-axis. The bar shows the median, quartiles, and potential outliers for each position',
       key: 'gq',
     },
     {

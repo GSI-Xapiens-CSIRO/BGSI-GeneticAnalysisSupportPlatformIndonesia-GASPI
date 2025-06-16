@@ -9,6 +9,7 @@ import {
   SimpleChanges,
   ViewChild,
   ChangeDetectorRef,
+  OnInit,
 } from '@angular/core';
 import { CommonModule, KeyValue } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
@@ -22,6 +23,7 @@ import {
   of,
   startWith,
   Subject,
+  tap,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
@@ -35,7 +37,6 @@ import {
 } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -53,6 +54,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { environment } from 'src/environments/environment';
+import { COLUMNS } from '../hub_configs';
 type LookupResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -72,7 +75,6 @@ type LookupResult = {
     ReactiveFormsModule,
     MatSelectModule,
     MatFormFieldModule,
-    HelpTextComponent,
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -94,34 +96,15 @@ type LookupResult = {
   templateUrl: './lookup-results-viewer.component.html',
   styleUrl: './lookup-results-viewer.component.scss',
 })
-export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
+export class LookupResultsViewerComponent
+  implements OnInit, OnChanges, AfterViewInit
+{
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
   protected results: LookupResult | null = null;
-  protected columns: string[] = [
-    'selected',
-    'No',
-    'PharmGKB ID',
-    'Level',
-    'Variant',
-    'Gene',
-    'Drugs',
-    'Alleles',
-    'Allele Function',
-    'Phenotype Categories',
-    'Phenotype',
-    'Implication',
-    'Recommendation',
-    'Pediatric',
-    'chr',
-    'start',
-    'end',
-    'Overlapped Count',
-    'In FORNAS',
-    'In Top 12',
-  ];
+  protected columns: string[] = COLUMNS[environment.hub_name].lookupCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -160,6 +143,13 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
     clinicResort(snapshot, sort, (sorted) => this.dataRows.next(sorted));
   }
 
+  ngOnInit(): void {
+    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || '')),
+    );
+  }
+
   ngAfterViewInit(): void {
     this.scrollStrategy.setScrollHeight(52, 56);
     this.dataView = combineLatest([
@@ -175,10 +165,6 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
         // Update the datasource for the rendered range of data
         return value[0].slice(start, end);
       }),
-    );
-    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || '')),
     );
   }
 
@@ -205,6 +191,10 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
     } else {
       this.dataRows.next(this.originalRows);
     }
+  }
+
+  handleSelectionChange(row: any, isChecked: boolean): void {
+    this.cs.selection(row, isChecked);
   }
 
   async openAnnotateDialog() {
@@ -247,7 +237,14 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
     this.dataRows.next([]);
     this.ss.start();
     this.cs
-      .getClinicResults(requestId, projectName, chromosome, page, position)
+      .getClinicResults(
+        requestId,
+        projectName,
+        chromosome,
+        page,
+        position,
+        'pipeline_lookup/results',
+      )
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {
@@ -350,5 +347,24 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
     return this.columns.filter((option) =>
       option.toLowerCase().includes(filterValue),
     );
+  }
+
+  handleRedirectUrl(column: string, value: string) {
+    const urlMap: Record<string, string> = {
+      Variant: `https://www.ncbi.nlm.nih.gov/snp/${value}`,
+    };
+
+    const url = urlMap[column];
+    window.open(url, '_blank');
+  }
+
+  async loadPubMedIds(rsid: string) {
+    const { PubmedIdDialogComponent } = await import(
+      '../pubmed-id-dialog/pubmed-id-dialog.component'
+    );
+
+    this.dg.open(PubmedIdDialogComponent, {
+      data: { rsid },
+    });
   }
 }

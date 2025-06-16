@@ -66,7 +66,7 @@ export class SubmitQueryDialogComponent {
       this.loading = true;
 
       this.cs
-        .submitSvepJob(
+        .submitClinicJob(
           s3URI,
           this.data.projectName!,
           this.jobForm.value.jobName,
@@ -84,6 +84,19 @@ export class SubmitQueryDialogComponent {
         )
         .subscribe((response: any) => {
           if (response) {
+            const responses = Array.isArray(response) ? response : [response];
+            const allSuccessful = responses.every((res) => res && res.Success);
+            if (!allSuccessful) {
+              const failedResponse = responses.find(
+                (res) => !res || !res.Success,
+              );
+              const errorMessage =
+                failedResponse?.Response || 'Job submission failed';
+              this.tstr.error(errorMessage, 'Error');
+              this.loading = false;
+              return;
+            }
+
             this.tstr.success(
               'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
               'Success',

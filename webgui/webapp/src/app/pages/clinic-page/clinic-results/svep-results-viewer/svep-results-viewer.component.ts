@@ -5,6 +5,7 @@ import {
   Injectable,
   Input,
   OnChanges,
+  OnInit,
   signal,
   SimpleChanges,
   ViewChild,
@@ -40,7 +41,6 @@ import {
 } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -58,6 +58,9 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { BoxDataComponent } from './box-data/box-data.component';
+import { COLUMNS } from '../hub_configs';
+import { environment } from 'src/environments/environment';
 type SVEPResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -98,7 +101,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatSelectModule,
     MatFormFieldModule,
-    HelpTextComponent,
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -109,6 +111,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    BoxDataComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -121,65 +124,16 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   templateUrl: './svep-results-viewer.component.html',
   styleUrl: './svep-results-viewer.component.scss',
 })
-export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
+export class SvepResultsViewerComponent
+  implements OnInit, OnChanges, AfterViewInit
+{
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
   protected results: SVEPResult | null = null;
-  protected columns: string[] = [
-    'selected',
-    'Rank',
-    'Region',
-    'Alt Allele',
-    'Consequence',
-    'Variant Name',
-    'Gene Name',
-    'Gene ID',
-    'Feature',
-    'Transcript ID & Version',
-    'Transcript Biotype',
-    'Exon Number',
-    'Amino Acid Change',
-    'Codon Change',
-    'Strand',
-    'Transcript Support Level',
-    'ref',
-    'gt',
-    'qual',
-    'filter',
-    'variationId',
-    'rsId',
-    'omimId',
-    'classification',
-    'conditions',
-    'clinSig',
-    'reviewStatus',
-    'lastEvaluated',
-    'accession',
-    'pubmed',
-    'Allele Frequency (African)',
-    'Allele Frequency (East Asian)',
-    'Allele Frequency (Finnish)',
-    'Allele Frequency (Non-Finnish European)',
-    'Allele Frequency (South Asian)',
-    'Allele Frequency (Admixed American)',
-    'Allele Frequency (Global)',
-    'Allele Count',
-    'Allele Number',
-    'SIFT (max)',
-    'Global Allele Frequency',
-    'KHV',
-    'Mis Z',
-    'Mis o/e',
-    'Mis o/e lower CI',
-    'Mis o/e upper CI',
-    'pLI',
-    'pLOF o/e',
-    'pLOF o/e upper CI',
-    'pLOF o/e lower CI',
-  ];
+  protected columns: string[] = COLUMNS[environment.hub_name].svepCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -202,6 +156,9 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
+  rows: any[] = [];
+
+  expandedMap = new Map<string, boolean>();
 
   constructor(
     protected cs: ClinicService,
@@ -215,6 +172,13 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
   resort(sort: Sort) {
     const snapshot = [...this.currentRenderedRows];
     clinicResort(snapshot, sort, (sorted) => this.dataRows.next(sorted));
+  }
+
+  ngOnInit(): void {
+    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || '')),
+    );
   }
 
   ngAfterViewInit(): void {
@@ -238,10 +202,7 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
       // if chromosome or page change we clear position
       this.basePositionField.setValue('');
     });
-    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || '')),
-    );
+    this.dataView.subscribe((rows) => (this.rows = rows));
   }
 
   pageChange(event: PageEvent) {
@@ -278,6 +239,11 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     } else {
       this.dataRows.next(this.originalRows);
     }
+  }
+
+  clearFilter() {
+    this.filterField.reset();
+    this.dataRows.next(this.originalRows);
   }
 
   async openAnnotateDialog() {
@@ -348,7 +314,6 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
           });
         return row;
       });
-    console.log(lines);
     // this.dataRows.next(this.originalRows);
     this.setFilter();
     this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
@@ -383,9 +348,11 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     //add dinamic filter
     const filterKey = this.advancedFilter.value;
     if (this.filterValues.hasOwnProperty(filterKey) || filterKey === '') {
+      this.advancedFilter.reset(); //reset filter if the filter same
       return;
     }
     this.filterValues = { ...this.filterValues, [filterKey]: '' };
+    this.advancedFilter.reset(); //reset filed after filter selected
   }
 
   setMasterData() {
@@ -457,5 +424,9 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     return this.columns.filter((option) =>
       option.toLowerCase().includes(filterValue),
     );
+  }
+
+  onToggle(rowId: string, expanded: boolean) {
+    this.expandedMap.set(rowId, expanded);
   }
 }
