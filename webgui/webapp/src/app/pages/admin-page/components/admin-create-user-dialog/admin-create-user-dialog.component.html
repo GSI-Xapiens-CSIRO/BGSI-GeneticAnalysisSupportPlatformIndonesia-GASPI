@@ -35,6 +35,7 @@
               placeholder="user@domain.com"
               formControlName="email"
             />
+            <mat-hint>Enter the email address (case insensitive)</mat-hint>
             <mat-error>Valid email is required</mat-error>
           </mat-form-field>
         </div>
@@ -70,23 +71,60 @@
         </div>
       </div>
 
-      <div class="flex flex-row gap-2">
-        <label for="Role Group">Role Access: </label>
-        <div class="flex flex-1 flex-col">
-          <mat-checkbox formControlName="administrators" color="primary"
-            >Admin access</mat-checkbox
+      <div class="flex gap-5">
+        <div class="flex flex-col gap-2 w-1/2">
+          <label for="Role Group">Role Access: </label>
+          <div class="flex flex-1 flex-col">
+            <mat-checkbox formControlName="administrators" color="primary"
+              >Admin access</mat-checkbox
+            >
+            <mat-checkbox formControlName="managers" color="primary"
+              >Data Manager Access</mat-checkbox
+            >
+            <mat-checkbox
+              color="primary"
+              value=""
+              aria-disabled="true"
+              [disabled]="true"
+              [checked]="true"
+              >Basic User Access</mat-checkbox
+            >
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 w-1/2">
+          <label>Notebook Options:</label>
+
+          <mat-radio-group
+            formControlName="notebookRole"
+            class="notebook-radio-group"
           >
-          <mat-checkbox formControlName="managers" color="primary"
-            >Data Manager Access</mat-checkbox
-          >
-          <mat-checkbox
-            color="primary"
-            value=""
-            aria-disabled="true"
-            [disabled]="true"
-            [checked]="true"
-            >Basic User Access</mat-checkbox
-          >
+            <mat-radio-button
+              [value]="noteBookRoleValue.ADVANCED"
+              class="notebook-radio-option"
+            >
+              <div class="label">
+                <strong>Advanced</strong>
+                <div class="text-primary-60">
+                  shows all available instance types and volume options during
+                  notebook creation.
+                </div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button
+              [value]="noteBookRoleValue.BASIC"
+              class="notebook-radio-option"
+            >
+              <div class="label">
+                <strong>Basic</strong>
+                <div class="text-primary-60">
+                  shows only the ml.t3.medium instance with a 5 GB volume during
+                  notebook creation.
+                </div>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
         </div>
       </div>
     </form>

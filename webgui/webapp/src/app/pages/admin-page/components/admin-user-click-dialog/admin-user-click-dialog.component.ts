@@ -30,8 +30,15 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AwsService } from 'src/app/services/aws.service';
-import { bytesToGigabytes, gigabytesToBytes } from 'src/app/utils/file';
+import {
+  bytesToGigabytes,
+  formatBytes,
+  gigabytesToBytes,
+} from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { NotebookRole } from '../enums';
+import { MatRadioModule } from '@angular/material/radio';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-admin-user-click-dialog',
@@ -46,6 +53,7 @@ import { UserQuotaService } from 'src/app/services/userquota.service';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-user-click-dialog.component.html',
   styleUrls: ['./admin-user-click-dialog.component.scss'],
@@ -64,6 +72,8 @@ export class AdminUserClickDialogComponent implements OnInit {
   protected usageSize = 0;
   protected usageCount = 0;
   protected loadingCostEstimation: boolean = true;
+  usageSizeText = '';
+  noteBookRoleValue = NotebookRole;
 
   constructor(
     public dialogRef: MatDialogRef<AdminUserClickDialogComponent>,
@@ -72,6 +82,7 @@ export class AdminUserClickDialogComponent implements OnInit {
     private uq: UserQuotaService,
     private aws: AwsService,
     private dg: MatDialog,
+    private tstr: ToastrService,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.form = this.fb.group({
@@ -79,6 +90,7 @@ export class AdminUserClickDialogComponent implements OnInit {
       managers: [false],
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
     });
   }
 
@@ -96,6 +108,31 @@ export class AdminUserClickDialogComponent implements OnInit {
       .pipe(debounceTime(400), distinctUntilChanged())
       .subscribe((values) => {
         this.loadingCostEstimation = true;
+
+        const queryCountCtrl = this.form.get('quotaQueryCount');
+        const quotaSizeCtrl = this.form.get('quotaSize');
+
+        this.usageSizeText = formatBytes(this.usageSize);
+
+        if (gigabytesToBytes(values.quotaSize) < this.usageSize) {
+          quotaSizeCtrl?.setErrors({ quotaExceeded: true });
+          return;
+        }
+
+        if (values.quotaQueryCount < this.usageCount) {
+          queryCountCtrl?.setErrors({ quotaExceeded: true });
+          return;
+        }
+
+        // Clear error if condition no longer applies
+        if (queryCountCtrl?.hasError('quotaExceeded')) {
+          queryCountCtrl.setErrors(null);
+        }
+
+        if (quotaSizeCtrl?.hasError('quotaExceeded')) {
+          quotaSizeCtrl.setErrors(null);
+        }
+
         if (values.quotaQueryCount && values.quotaSize) {
           this.aws
             .calculateQuotaEstimationPerMonth(
@@ -159,6 +196,7 @@ export class AdminUserClickDialogComponent implements OnInit {
           this.form.patchValue({
             quotaSize: bytesToGigabytes(data.Usage.quotaSize),
             quotaQueryCount: data.Usage.quotaQueryCount,
+            notebookRole: data.Usage.notebookRole || '',
           });
         }
 
@@ -210,7 +248,18 @@ export class AdminUserClickDialogComponent implements OnInit {
         this.as
           .deleteUser(this.data.email)
           .pipe(catchError(() => of(null)))
-          .subscribe(() => {
+          .subscribe((res: null | { success: boolean; message: string }) => {
+            let deleted = false;
+            if (!res) {
+              this.tstr.error(
+                'Operation failed, please try again later',
+                'Error',
+              );
+            } else if (!res.success) {
+              this.tstr.error(res.message, 'Error');
+            } else {
+              this.tstr.success('User deleted successfully', 'Success');
+            }
             this.loading = false;
             this.dialogRef.close({ reload: true });
           });
@@ -229,6 +278,7 @@ export class AdminUserClickDialogComponent implements OnInit {
         quotaQueryCount: this.form.value.quotaQueryCount,
         usageSize: this.usageSize, // bytes
         usageCount: this.usageCount,
+        notebookRole: this.form.value.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }

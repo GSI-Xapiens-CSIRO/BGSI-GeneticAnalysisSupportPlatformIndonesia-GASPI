@@ -45,21 +45,7 @@ export class UserFileListComponent implements OnInit {
   }
 
   loadList() {
-    this.currentUsage();
-
-    timer(500).subscribe(() => this.list());
-  }
-
-  generateTotalSize(files: any[]) {
-    const bytesTotal = getTotalStorageSize(files);
-
-    this.totalSize = bytesTotal;
-    this.totalSizeFormatted = formatBytes(bytesTotal, 2);
-
-    this.totalSizeRemainingText = formatBytes(
-      Math.floor(this.quotaSize - this.totalSize),
-      2,
-    );
+    this.list();
   }
 
   async list() {
@@ -69,17 +55,31 @@ export class UserFileListComponent implements OnInit {
     });
 
     this.myFiles = res.results;
-    this.generateTotalSize(this.myFiles);
+    this.currentUsage(this.myFiles);
   }
 
-  async currentUsage() {
+  generateTotalSize(files: any[], quotaSize: number = 0) {
+    const bytesTotal = getTotalStorageSize(files);
+
+    this.totalSize = bytesTotal;
+    this.totalSizeFormatted = formatBytes(bytesTotal, 2);
+
+    this.totalSizeRemainingText = formatBytes(
+      Math.floor(quotaSize - this.totalSize),
+      2,
+    );
+  }
+
+  async currentUsage(files: any[]) {
     this.loadingUsage = true;
+
     const { quotaSize, costEstimation } = await firstValueFrom(
       this.uq.getCurrentUsage(),
     );
 
-    this.quotaSize = quotaSize;
-    this.quotaSizeFormatted = formatBytes(this.quotaSize, 2);
+    this.generateTotalSize(files, quotaSize);
+
+    this.quotaSizeFormatted = formatBytes(quotaSize, 2);
     this.costEstimation = costEstimation;
 
     this.loadingUsage = false;

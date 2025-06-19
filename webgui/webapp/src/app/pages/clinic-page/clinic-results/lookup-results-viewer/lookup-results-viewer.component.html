@@ -1,0 +1,192 @@
+<mat-card class="mt-4">
+  <mat-card-content>
+    <h2>Results Table</h2>
+    <div class="flex flex-row space-x-1 items-center mb-2">
+      <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+        <mat-label>Filter term</mat-label>
+        <input matInput [formControl]="filterField" />
+      </mat-form-field>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="filter()"
+        class="w-[110px]"
+      >
+        Filter
+      </button>
+      @if ((cs.selectedVariants | async)!.size > 0) {
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="openAnnotateDialog()"
+          class="w-[110px]"
+        >
+          Annotate
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="openSaveForReportingDialog()"
+          class="w-[175px]"
+        >
+          Save for Reporting
+        </button>
+      }
+    </div>
+
+    <!-- advanced filter  -->
+    <div class="mb-2">
+      <mat-accordion>
+        <mat-expansion-panel
+          (opened)="panelOpenState.set(true)"
+          (closed)="panelOpenState.set(false)"
+        >
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <span class="text-lg text-primary-50 font-semibold"
+                >Advanced Filter Term</span
+              >
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="flex flex-col">
+            <div class="flex flex-row space-x-1 items-center gap-2">
+              <mat-form-field class="w-[200px] self-center">
+                <mat-label>Filter</mat-label>
+                <input
+                  type="text"
+                  placeholder="Pick Filter"
+                  aria-label="Search Filter"
+                  matInput
+                  [formControl]="advancedFilter"
+                  [matAutocomplete]="auto"
+                />
+                <mat-autocomplete #auto="matAutocomplete">
+                  @for (option of filteredColumns | async; track option) {
+                    @if (option !== "selected") {
+                      <mat-option [value]="option">
+                        {{ option }}
+                      </mat-option>
+                    }
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+              <div class="mb-5">
+                <button mat-raised-button color="primary" (click)="addFilter()">
+                  Add Filter
+                </button>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+              @for (
+                item of filterValues | keyvalue: compareFn;
+                track item.key
+              ) {
+                <auto-complete-component
+                  [label]="item.key"
+                  [options]="filterMasterData[item.key]"
+                  (optionSelected)="onSelectChange($event, item.key)"
+                  (deleteFilter)="removeFilter(item.key)"
+                />
+              }
+            </div>
+
+            <div class="gap-2 flex flex-row">
+              <button
+                mat-raised-button
+                style="background: #ffa705"
+                (click)="resetFilter()"
+              >
+                Reset Filter
+              </button>
+              <button mat-raised-button color="primary" (click)="setFilter()">
+                Filter
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+    <!-- @if (dataRows.value.length > 0) { -->
+    <div class="mb-2">
+      <strong>Click on table headers to sort</strong>
+    </div>
+    <div
+      class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
+    >
+      <cdk-virtual-scroll-viewport [style.height.px]="700">
+        <table
+          mat-table
+          [dataSource]="dataView"
+          matSort
+          (matSortChange)="resort($event)"
+        >
+          <ng-container matColumnDef="selected">
+            <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="flex flex-row items-center">
+                <mat-checkbox
+                  (change)="handleSelectionChange(row, $event.checked)"
+                  [checked]="
+                    (cs.selectedVariants | async)!.has(cs.hashRow(row))
+                  "
+                >
+                </mat-checkbox>
+              </div>
+            </td>
+          </ng-container>
+          @for (column of columns; track $index) {
+            @if (column !== "selected") {
+              <ng-container [matColumnDef]="column">
+                <th
+                  mat-header-cell
+                  *matHeaderCellDef
+                  class="whitespace-nowrap"
+                  mat-sort-header
+                >
+                  {{ column }}
+                </th>
+                <td
+                  mat-cell
+                  *matCellDef="let element"
+                  class="whitespace-nowrap"
+                >
+                  <div class="flex flex-row justify-between space-x-2">
+                    @if (column === "Variant") {
+                      <div
+                        (click)="handleRedirectUrl('Variant', element[column])"
+                        class="link-click"
+                      >
+                        {{ element[column] }}
+                      </div>
+                      <mat-icon
+                        matTooltip="Click to view PubMed identifiers"
+                        class="block cursor-pointer"
+                        color="primary"
+                        (click)="loadPubMedIds(element[column])"
+                        >help</mat-icon
+                      >
+                    } @else {
+                      <div>{{ element[column] }}</div>
+                    }
+                  </div>
+                </td>
+              </ng-container>
+            }
+          }
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <ng-template
+            let-row
+            matRowDef
+            cdkVirtualFor
+            [matRowDefColumns]="columns"
+            [cdkVirtualForOf]="dataRows"
+          >
+            <tr mat-row></tr>
+          </ng-template>
+        </table>
+      </cdk-virtual-scroll-viewport>
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -26,6 +26,7 @@ import {
 import { ToastrService } from 'ngx-toastr';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-project-updates',
@@ -62,6 +63,7 @@ export class ProjectUpdateDialogComponent {
     private dps: DportalService,
     private tstr: ToastrService,
     private dg: MatDialog,
+    private auth: AuthService,
     public dialogRef: MatDialogRef<ProjectUpdateDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: Project },
   ) {
@@ -187,11 +189,16 @@ export class ProjectUpdateDialogComponent {
   async uploadFile(path: string, file: File): Promise<string> {
     this.fileProgress.set(file.name, 0);
     try {
+      const user = this.auth.user.getValue();
       await Storage.put(
         `staging/projects/${path}/project-files/${file.name}`,
         file,
         {
           customPrefix: { public: '' },
+          metadata: {
+            usersub: user.attributes.sub,
+            username: user.attributes.email,
+          },
           progressCallback: (progress: { loaded: number; total: number }) => {
             this.fileProgress.set(file.name, progress.loaded);
             this.progress = Array.from(this.fileProgress.values()).reduce(
