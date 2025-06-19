@@ -76,6 +76,15 @@
               Generate Report
             </button>
           }
+          @case ("RSJPD") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSJPD()"
+            >
+              Generate Report
+            </button>
+          }
           @case ("RSIGNG") {
             <button
               mat-raised-button
@@ -162,13 +171,13 @@
 <mat-card class="mt-4" [class.hide]="variants.length !== 0">
   <mat-card-content>
     <h2>No variants selected for reporting</h2>
-    <p>
-      Generating report will create the negative findings report for the
-      individual.
-    </p>
     @if (hub) {
       @switch (hub) {
         @case ("RSCM") {
+          <p>
+            Generating report will create the negative findings report for the
+            individual.
+          </p>
           <button
             mat-raised-button
             color="primary"
@@ -178,6 +187,10 @@
           </button>
         }
         @case ("RSSARDJITO") {
+          <p>
+            Generating report will create the negative findings report for the
+            individual.
+          </p>
           <div class="flex flex-col space-y-1">
             <div class="flex flex-row space-x-1">
               <button
@@ -240,6 +253,9 @@
         }
         @case ("RSIGNG") {
           <p>RSIGNG Lab does not support negative reporting.</p>
+        }
+        @case ("RSJPD") {
+          <p>RSJPD Lab does not support negative reporting.</p>
         }
       }
     } @else {

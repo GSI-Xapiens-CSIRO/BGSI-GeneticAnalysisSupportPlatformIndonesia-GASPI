@@ -24,7 +24,7 @@ import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { environment } from 'src/environments/environment';
-import { CONFIGS } from '../hub_configs';
+import { REPORTING_CONFIGS } from '../hub_configs';
 import { ToastrService } from 'ngx-toastr';
 
 type SavedVariants = {
@@ -83,7 +83,8 @@ export class SavedForReportingViewerComponent
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
   protected variants: SavedVariants[] = [];
   protected pageSize = 5;
-  protected hub = environment.hub_name in CONFIGS ? environment.hub_name : null;
+  protected hub =
+    environment.hub_name in REPORTING_CONFIGS ? environment.hub_name : null;
   private pageTokens = new Map<number, any>();
   private savedVariantsChangedSubscription: Subscription | null = null;
 
@@ -167,6 +168,29 @@ export class SavedForReportingViewerComponent
   }
 
   generateReportRSCM() {
+    this.ss.start();
+    this.cs
+      .generateReport(this.projectName, this.requestId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((res: any) => {
+        if (res && res.success) {
+          console.log(res);
+          const dataUrl = `data:application/pdf;base64,${res.content}`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${
+            this.requestId
+          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.href = dataUrl;
+          this.downloadLink.nativeElement.click();
+        } else if (res && !res.success) {
+          this.tstr.error(res.message, 'Error');
+        } else {
+          this.tstr.error('Failed to generate report', 'Error');
+        }
+        this.ss.end();
+      });
+  }
+
+  generateReportRSJPD() {
     this.ss.start();
     this.cs
       .generateReport(this.projectName, this.requestId)

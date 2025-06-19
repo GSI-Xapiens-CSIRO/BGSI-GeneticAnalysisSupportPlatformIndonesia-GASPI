@@ -1,0 +1,56 @@
+.title-accordion {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.row-content {
+  display: flex;
+  flex-direction: row;
+  justify-items: center;
+  align-content: space-between;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+.row-content > div:first-child {
+  flex-shrink: 0; /* label fixed width */
+  width: 120px; /* or something fixed */
+}
+
+.row-value {
+  display: flex;
+  justify-content: flex-end;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #dadada;
+}
+
+.pub-med {
+  background: #e1fbfa;
+}
+
+.link-click {
+  color: blue;
+  cursor: pointer;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.bgCard {
+  background: #f3f5f8;
+}

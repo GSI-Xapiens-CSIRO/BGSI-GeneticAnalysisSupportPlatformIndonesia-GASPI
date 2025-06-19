@@ -18,7 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { catchError, of } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { CONFIGS } from '../hub_configs';
+import { REPORTING_CONFIGS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { ToastrService } from 'ngx-toastr';
 
@@ -52,8 +52,8 @@ export class SaveForReportingDialogComponent {
   ) {}
 
   filterCols(row: { [key: string]: string }): { [key: string]: string } {
-    if (environment.hub_name in CONFIGS) {
-      const { cols } = CONFIGS[environment.hub_name];
+    if (environment.hub_name in REPORTING_CONFIGS) {
+      const { cols } = REPORTING_CONFIGS[environment.hub_name];
       const filteredRow: { [key: string]: string } = {};
       for (const col of cols) {
         if (row[col]) {

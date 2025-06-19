@@ -15,21 +15,27 @@
       <br />
       @for (annot of annotations; track $index) {
         <div>
-          <strong class="cursor-pointer"
-            >[<span class="text-red-500" (click)="deleteAnnotation(annot.name)"
+          <div class="cursor-pointer flex flex-row gap-2 font-normal">
+            [<span class="text-red-500" (click)="deleteAnnotation(annot.name)"
               >X</span
-            >] {{ annot.annotation }}</strong
-          >
-          <br />
-          @for (info of annot.variants; track $index) {
-            @for (item of info | keyvalue; track $index) {
-              {{ item.key }}: {{ item.value }}
-              @if (!$last) {
-                |
+            >]
+            <div class="font-extrabold">{{ annot.annotation }}</div>
+          </div>
+          <div class="text-wrap break-words mt-1">
+            @for (info of annot.variants; track $index; let itemLast = $last) {
+              <div>
+                @for (item of info | keyvalue; track $index) {
+                  {{ item.key }}: {{ item.value }}
+                  @if (!$last) {
+                    |
+                  }
+                }
+              </div>
+              @if (!itemLast) {
+                <hr class="bg-primary-50 h-0.5 border-0" />
               }
             }
-            <br />
-          }
+          </div>
           <span class="text-xs"
             >Annotated by: {{ annot.user?.firstName }}
             {{ annot.user?.lastName }} ({{ annot.user?.email }})</span
@@ -42,7 +48,7 @@
           <br />
         </div>
         @if (!$last) {
-          <div class="w-full h-1 bg-primary-60 my-1"></div>
+          <div class="w-full h-1 bg-primary-60 my-2"></div>
         }
       } @empty {
         <div class="text-center">No annotations available</div>

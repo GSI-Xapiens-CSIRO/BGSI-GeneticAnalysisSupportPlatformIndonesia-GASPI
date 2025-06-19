@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -17,7 +17,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { AdminService } from 'src/app/pages/admin-page/services/admin.service';
-import { catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  of,
+  Subscription,
+} from 'rxjs';
 import * as _ from 'lodash';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,6 +33,8 @@ import { AwsService } from 'src/app/services/aws.service';
 import { gigabytesToBytes } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 import { ToastrService } from 'ngx-toastr';
+import { MatRadioModule } from '@angular/material/radio';
+import { NotebookRole } from '../enums'; // adjust the path if needed
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -41,15 +49,18 @@ import { ToastrService } from 'ngx-toastr';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-create-user-dialog.component.html',
   styleUrls: ['./admin-create-user-dialog.component.scss'],
   providers: [AdminService],
 })
-export class AdminCreateUserComponent implements OnInit {
+export class AdminCreateUserComponent implements OnInit, OnDestroy {
   protected loading = false;
   protected newUserForm: FormGroup;
   protected costEstimation: number | null = 0;
+  noteBookRoleValue = NotebookRole;
+  emailFormFieldSubscription: Subscription | undefined;
 
   constructor(
     public dialogRef: MatDialogRef<AdminCreateUserComponent>,
@@ -71,11 +82,27 @@ export class AdminCreateUserComponent implements OnInit {
       // Quota
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
     });
   }
 
   ngOnInit(): void {
     this.onChangeCalculateCost();
+    this.emailFormFieldSubscription = this.newUserForm.controls[
+      'email'
+    ]?.valueChanges.subscribe((value: string | null) => {
+      if (value && value !== value.toLowerCase()) {
+        this.newUserForm.controls['email']?.setValue(value.toLowerCase(), {
+          emitEvent: false,
+        });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.emailFormFieldSubscription) {
+      this.emailFormFieldSubscription.unsubscribe();
+    }
   }
 
   onChangeCalculateCost() {
@@ -139,6 +166,7 @@ export class AdminCreateUserComponent implements OnInit {
         quotaQueryCount: this.newUserForm.value.quotaQueryCount,
         usageSize: 0,
         usageCount: 0,
+        notebookRole: this.newUserForm.value.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }

@@ -41,7 +41,6 @@ import {
 } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -59,7 +58,9 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { has } from 'lodash';
+import { COLUMNS } from '../hub_configs';
+import { environment } from 'src/environments/environment';
+import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 type PharmcatResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -99,7 +100,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatSelectModule,
     MatFormFieldModule,
-    HelpTextComponent,
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -109,6 +109,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    RsponBoxDataViewComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -127,32 +128,12 @@ export class PharmcatResultsViewerComponent {
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   protected results: PharmcatResult | null = null;
-  protected diplotypeColumns: string[] = [
-    'selected',
-    'Organisation',
-    'Gene',
-    'Drug',
-    'Alleles',
-    'Phenotypes',
-    'Variants',
-    'Related Variants',
-    'PubMed IDs',
-    'Implications',
-    'Recommendation',
-    'Dosing Information',
-    'Alternate Drug Available',
-    'Other Prescribing Guidance',
-  ];
-  protected variantColumns: string[] = [
-    'Organisation',
-    'Gene',
-    'Position',
-    'RSID',
-    'Call',
-    'Alleles',
-    'Related Diplotypes',
-    'Zygosity',
-  ];
+  protected diplotypeColumns: string[] =
+    COLUMNS[environment.hub_name].pharmcatCols.diplotypeCols;
+  protected variantColumns: string =
+    COLUMNS[environment.hub_name].pharmcatCols.variantCols;
+  protected warningColumns: string[] =
+    COLUMNS[environment.hub_name].pharmcatCols.warningCols;
   protected diplotypeOriginalRows: any[] = [];
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
@@ -167,6 +148,10 @@ export class PharmcatResultsViewerComponent {
   protected variantCurrentRenderedRows: any[] = [];
   protected variantFilterField: FormControl = new FormControl('');
   protected variantScopeReduced: boolean = false;
+  protected warningOriginalRows: any[] = [];
+  protected warningDataRows = new BehaviorSubject<any[]>([]);
+  protected warningDataView = new Observable<any[]>();
+  protected warningCurrentRenderedRows: any[] = [];
   protected annotationForm: FormGroup = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -178,6 +163,7 @@ export class PharmcatResultsViewerComponent {
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
+  rows: any[] = [];
 
   constructor(
     protected cs: ClinicService,
@@ -232,6 +218,21 @@ export class PharmcatResultsViewerComponent {
         return value[0].slice(start, end);
       }),
     );
+    this.warningDataView = combineLatest([
+      this.warningDataRows,
+      this.scrollStrategy.scrolledIndexChange,
+    ]).pipe(
+      map((value: any) => {
+        // Determine the start and end rendered range
+        const start = Math.max(0, value[1] - 10);
+        const end = Math.min(value[0].length, value[1] + 100);
+        this.warningCurrentRenderedRows = [...value[0].slice(start, end)];
+
+        // Update the datasource for the rendered range of data
+        return value[0].slice(start, end);
+      }),
+    );
+    this.diplotypeDataView.subscribe((rows) => (this.rows = rows));
   }
 
   pageChange(event: PageEvent) {
@@ -276,7 +277,8 @@ export class PharmcatResultsViewerComponent {
     this.cdr.detectChanges();
   }
 
-  filterRelatedVariants(mappingIds: string[]) {
+  filterRelatedVariants = (mappingIds: string[]) => {
+    console.log('filterRelatedVariants', mappingIds);
     this.variantScopeReduced = true;
     this.variantFilterField.setValue('');
     const terms = mappingIds;
@@ -284,7 +286,7 @@ export class PharmcatResultsViewerComponent {
       this.variantDataRows.next(filtered);
     });
     this.cdr.detectChanges();
-  }
+  };
 
   resetRelatedVariants() {
     this.resetVariants();
@@ -294,14 +296,18 @@ export class PharmcatResultsViewerComponent {
   handleSelectionChange(row: any, isChecked: boolean): void {
     // Absorb all related variants in a checked diplotype row for annotation/reporting
     let diplotypeRow: any = { ...row };
-    if (isChecked && row['Related Variants']) {
+    if (row['Related Variants']) {
       const relatedVariants = this.variantOriginalRows.filter((variant) => {
         return (
           variant['Related Diplotypes'] &&
           row['Related Variants'].includes(variant['Related Diplotypes'])
         );
       });
-      diplotypeRow['Related Variants'] = relatedVariants;
+      if (!diplotypeRow['Zygosity'] && relatedVariants.length > 0) {
+        diplotypeRow['Zygosity'] = relatedVariants.map(
+          (variant) => variant['Zygosity'],
+        );
+      }
     }
     this.cs.selection(diplotypeRow, isChecked);
   }
@@ -338,11 +344,20 @@ export class PharmcatResultsViewerComponent {
   refetch(requestId: string, projectName: string, page: number | null = null) {
     this.diplotypeOriginalRows = [];
     this.variantOriginalRows = [];
+    this.warningOriginalRows = [];
     this.diplotypeDataRows.next([]);
     this.variantDataRows.next([]);
+    this.warningDataRows.next([]);
     this.ss.start();
     this.cs
-      .getClinicResults(requestId, projectName, null, page, null)
+      .getClinicResults(
+        requestId,
+        projectName,
+        null,
+        page,
+        null,
+        'pipeline_pharmcat/results',
+      )
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {
@@ -379,17 +394,17 @@ export class PharmcatResultsViewerComponent {
       return variantRow;
     });
 
+    const warnings = resultJson.messages;
+    this.warningOriginalRows = warnings.map((warning: any) => {
+      const messageRow: any = {};
+      Object.values(warning).forEach((v, i) => {
+        messageRow[this.warningColumns[i]] = v;
+      });
+      return messageRow;
+    });
+
     this.diplotypeDataRows.next(this.diplotypeOriginalRows);
     this.variantDataRows.next(this.variantOriginalRows);
-  }
-
-  handleRedirectUrl(column: string, value: string) {
-    const urlMap: Record<string, string> = {
-      'PubMed IDs': `https://pubmed.ncbi.nlm.nih.gov/${value}/`,
-      Variants: `https://www.ncbi.nlm.nih.gov/snp/${value}`,
-    };
-
-    const url = urlMap[column];
-    window.open(url, '_blank');
+    this.warningDataRows.next(this.warningOriginalRows);
   }
 }
