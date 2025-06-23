@@ -20,6 +20,13 @@
       >
         Filter
       </button>
+      <button
+        mat-raised-button
+        style="background: #ffa705"
+        (click)="resetFilter()"
+      >
+        Clear Filter
+      </button>
       @if ((cs.selectedVariants | async)!.size > 0) {
         <button
           mat-raised-button
@@ -121,70 +128,13 @@
       class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
     >
       <cdk-virtual-scroll-viewport [style.height.px]="700">
-        <table
-          mat-table
-          [dataSource]="dataView"
-          matSort
-          (matSortChange)="resort($event)"
-        >
-          <ng-container matColumnDef="selected">
-            <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
-            <td mat-cell *matCellDef="let row">
-              <div class="flex flex-row items-center">
-                <mat-checkbox
-                  (change)="handleSelectionChange(row, $event.checked)"
-                  [checked]="
-                    (cs.selectedVariants | async)!.has(cs.hashRow(row))
-                  "
-                >
-                </mat-checkbox>
-              </div>
-            </td>
-          </ng-container>
-          @for (column of columns; track $index) {
-            @if (column !== "selected") {
-              <ng-container [matColumnDef]="column">
-                <th
-                  mat-header-cell
-                  *matHeaderCellDef
-                  class="whitespace-nowrap"
-                  mat-sort-header
-                >
-                  {{ column }}
-                </th>
-                <td
-                  mat-cell
-                  *matCellDef="let element"
-                  class="whitespace-nowrap"
-                >
-                  <div class="flex flex-row justify-between space-x-2">
-                    <div>{{ element[column] }}</div>
-                    @if (column === "Variant") {
-                      <mat-icon
-                        matTooltip="Click to view PubMed identifiers"
-                        class="block cursor-pointer"
-                        color="primary"
-                        (click)="loadPubMedIds(element[column])"
-                        >help</mat-icon
-                      >
-                    }
-                  </div>
-                </td>
-              </ng-container>
+        @if (rows.length > 0) {
+          <div class="flex flex-col gap-2 py-4">
+            @for (row of rows; track row) {
+              <box-data-component-rsigng [row]="row" />
             }
-          }
-
-          <tr mat-header-row *matHeaderRowDef="columns"></tr>
-          <ng-template
-            let-row
-            matRowDef
-            cdkVirtualFor
-            [matRowDefColumns]="columns"
-            [cdkVirtualForOf]="dataRows"
-          >
-            <tr mat-row></tr>
-          </ng-template>
-        </table>
+          </div>
+        }
       </cdk-virtual-scroll-viewport>
     </div>
   </mat-card-content>

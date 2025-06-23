@@ -55,6 +55,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
+import { BoxDataComponent } from './box-data/box-data.component';
 type LookupResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -85,6 +86,7 @@ type LookupResult = {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    BoxDataComponent,
   ],
   providers: [
     {
@@ -125,6 +127,7 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
+  rows: any[] = [];
 
   constructor(
     protected cs: ClinicService,
@@ -161,6 +164,7 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
       startWith(''),
       map((value) => this._filter(value || '')),
     );
+    this.dataView.subscribe((rows) => (this.rows = rows));
   }
 
   search() {
@@ -342,15 +346,5 @@ export class LookupResultsViewerComponent implements OnChanges, AfterViewInit {
     return this.columns.filter((option) =>
       option.toLowerCase().includes(filterValue),
     );
-  }
-
-  async loadPubMedIds(rsid: string) {
-    const { PubmedIdDialogComponent } = await import(
-      '../pubmed-id-dialog/pubmed-id-dialog.component'
-    );
-
-    this.dg.open(PubmedIdDialogComponent, {
-      data: { rsid },
-    });
   }
 }
