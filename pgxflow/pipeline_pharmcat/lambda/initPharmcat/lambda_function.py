@@ -53,15 +53,20 @@ def lambda_handler(event, context):
     try:
         body_dict = json.loads(event_body)
         request_id = body_dict.get("requestId")
-        request_id = f"{request_id}" if request_id is not None else event["requestContext"]["requestId"]
+        request_id = (
+            f"{request_id}"
+            if request_id is not None
+            else event["requestContext"]["requestId"]
+        )
         project = body_dict["projectName"]
         source_vcf_key = body_dict["location"]
         job_name = body_dict["jobName"]
+        missing_to_ref = body_dict["missingToRef"]
 
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
-    
+
     passed, error_message = check_pgxflow_configuration()
     if not passed:
         return bad_request(error_message)
@@ -86,6 +91,7 @@ def lambda_handler(event, context):
                 "requestId": request_id,
                 "projectName": project,
                 "sourceVcfKey": input_vcf_key,
+                "missingToRef": missing_to_ref,
             }
         ),
     )

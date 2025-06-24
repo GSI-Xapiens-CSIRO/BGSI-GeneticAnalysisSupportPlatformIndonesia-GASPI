@@ -24,7 +24,7 @@ PHARMCAT_REFERENCES = [
 ]
 
 
-def run_preprocessor(input_path, vcf, reference_fna, reference_vcf):
+def run_preprocessor(input_path, vcf, reference_fna, reference_vcf, missing_to_ref):
     """Run the PharmCAT VCF preprocessor."""
     cmd = [
         "python3",
@@ -40,6 +40,8 @@ def run_preprocessor(input_path, vcf, reference_fna, reference_vcf):
         "-refVcf",
         reference_vcf,
     ]
+    if missing_to_ref:
+        cmd.append("--missing-to-ref")
     subprocess.run(cmd, check=True)
 
 
@@ -48,6 +50,7 @@ def lambda_handler(event, context):
     request_id = event["requestId"]
     source_vcf_key = event["sourceVcfKey"]
     project = event["projectName"]
+    missing_to_ref = event["missingToRef"]
 
     try:
         vcf = f"{request_id}.vcf.gz"
@@ -85,15 +88,45 @@ def lambda_handler(event, context):
         reference_vcf = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[0])
         reference_fna = os.path.join(local_reference_dir, PHARMCAT_REFERENCES[4])
 
-        run_preprocessor(local_input_path, request_id, reference_fna, reference_vcf)
-        preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
+        if missing_to_ref:
+            preprocessor_configs = [
+                {
+                    "flag": "",
+                    "key": f"{request_id}.preprocessed.nonref.vcf.bgz",
+                },
+                {
+                    "flag": "--missing-to-ref",
+                    "key": f"{request_id}.preprocessed.ref.vcf.bgz",
+                },
+            ]
+        else:
+            preprocessor_configs = [
+                {
+                    "flag": "",
+                    "key": f"{request_id}.preprocessed.vcf.bgz",
+                }
+            ]
 
-        s3_output_key = f"preprocessed_{request_id}.vcf.gz"
-        s3_client.upload_file(
-            Bucket=PGXFLOW_BUCKET,
-            Key=s3_output_key,
-            Filename=os.path.join(LOCAL_DIR, preprocessed_vcf),
-        )
+        s3_output_keys = []
+
+        for config in preprocessor_configs:
+            flag = config["flag"]
+            run_preprocessor(
+                local_input_path,
+                request_id,
+                reference_fna,
+                reference_vcf,
+                missing_to_ref=flag,
+            )
+            preprocessed_vcf = f"{request_id}.preprocessed.vcf.bgz"
+
+            s3_output_key = config["key"]
+            s3_client.upload_file(
+                Bucket=PGXFLOW_BUCKET,
+                Key=s3_output_key,
+                Filename=os.path.join(LOCAL_DIR, preprocessed_vcf),
+            )
+            s3_output_keys.append(s3_output_key)
 
         lambda_client.invoke(
             FunctionName=PGXFLOW_PHARMCAT_LAMBDA,
@@ -102,8 +135,9 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project,
-                    "s3Key": s3_output_key,
+                    "s3Keys": s3_output_keys,
                     "sourceVcfKey": source_vcf_key,
+                    "missingToRef": missing_to_ref,
                 }
             ),
         )

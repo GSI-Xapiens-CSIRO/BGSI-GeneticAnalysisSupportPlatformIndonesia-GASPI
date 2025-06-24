@@ -38,35 +38,65 @@ def run_pharmcat(input_path, vcf):
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
-    s3_input_key = event["s3Key"]
+    s3_input_keys = event["s3Keys"]
     project = event["projectName"]
     source_vcf_key = event["sourceVcfKey"]
+    missing_to_ref = event["missingToRef"]
+
+    pharmcat_configs = []
+    for key in s3_input_keys:
+        if ".ref." in key:
+            pharmcat_configs.append(
+                {
+                    "inputKey": key,
+                    "outputKey": f"{request_id}.pharmcat.ref.json",
+                }
+            )
+        elif ".nonref." in key:
+            pharmcat_configs.append(
+                {
+                    "inputKey": key,
+                    "outputKey": f"{request_id}.pharmcat.nonref.json",
+                }
+            )
+        else:
+            pharmcat_configs.append(
+                {
+                    "inputKey": key,
+                    "outputKey": f"{request_id}.pharmcat.json",
+                }
+            )
+    s3_output_keys = []
 
     try:
-        preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
+        for config in pharmcat_configs:
+            preprocessed_vcf = f"{request_id}.preprocessed.vcf.gz"
 
-        local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
-        s3_client.download_file(
-            Bucket=PGXFLOW_BUCKET,
-            Key=s3_input_key,
-            Filename=local_input_path,
-        )
+            local_input_path = os.path.join(LOCAL_DIR, preprocessed_vcf)
+            s3_input_key = config["inputKey"]
+            s3_client.download_file(
+                Bucket=PGXFLOW_BUCKET,
+                Key=s3_input_key,
+                Filename=local_input_path,
+            )
 
-        run_pharmcat(local_input_path, request_id)
-        processed_json = f"{request_id}.report.json"
-        local_output_path = os.path.join(LOCAL_DIR, processed_json)
+            run_pharmcat(local_input_path, request_id)
+            processed_json = f"{request_id}.report.json"
+            local_output_path = os.path.join(LOCAL_DIR, processed_json)
 
-        s3_output_key = f"pharmcat_{request_id}.json"
-        s3_client.upload_file(
-            Bucket=PGXFLOW_BUCKET,
-            Key=s3_output_key,
-            Filename=local_output_path,
-        )
+            s3_output_key = config["outputKey"]
+            s3_client.upload_file(
+                Bucket=PGXFLOW_BUCKET,
+                Key=s3_output_key,
+                Filename=local_output_path,
+            )
 
-        s3_client.delete_object(
-            Bucket=PGXFLOW_BUCKET,
-            Key=s3_input_key,
-        )
+            s3_client.delete_object(
+                Bucket=PGXFLOW_BUCKET,
+                Key=s3_input_key,
+            )
+
+            s3_output_keys.append(s3_output_key)
 
         lambda_client.invoke(
             FunctionName=PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA,
@@ -75,8 +105,9 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project,
-                    "s3Key": s3_output_key,
+                    "s3Keys": s3_output_keys,
                     "sourceVcfKey": source_vcf_key,
+                    "missingToRef": missing_to_ref,
                 }
             ),
         )

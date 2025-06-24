@@ -33,6 +33,14 @@ def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
     ]
     query_process = CheckedProcess(args)
     query_output = query_process.check()
+    if not query_output:
+        return {
+            "chromRef": chrom_mapping[chrom],
+            "posVcf": int(pos),
+            "refVcf": ".",
+            "altsVcf": ".",
+            "zygosity": "0|0",
+        }
     pos_vcf, ref_vcf, alt_vcf, gt = query_output.strip().split("\t")
     alts = [ref_vcf] + alt_vcf.split(",")
     alts_vcf = [alts[int(i)] if i.isdigit() else "." for i in re.split(r"[|/]", gt)]
@@ -42,15 +50,6 @@ def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
         "refVcf": ref_vcf,
         "altsVcf": alts_vcf,
         "zygosity": gt,
-    }
-    
-
-def create_message(current_org, current_gene):
-    return {
-        "org": current_org,
-        "gene": current_gene,
-        "name": "",
-        "message": "",
     }
 
 
@@ -97,7 +96,6 @@ def yield_genes(pharmcat_output_json, source_vcf):
         GENE_ORGS = {entry["gene"] for entry in ORGANISATIONS}
         current_org = None
         current_gene = None
-        in_messages_array = False
         in_diplotype_array = False
         in_variant_array = False
 
@@ -111,42 +109,19 @@ def yield_genes(pharmcat_output_json, source_vcf):
             # Filter by gene and reset the list of diplotypes for each new gene
             if prefix == f"genes.{current_org}" and event == "map_key":
                 current_gene = value
-                messages = []
                 diplotypes = []
                 diplotype_ids = []
                 variants = []
             if current_gene not in GENES:
                 continue
-            
-            # Check whether processing messages
-            messages_array_prefix = f"genes.{current_org}.{current_gene}.messages"
-            if is_entering_array(in_messages_array, prefix, event, messages_array_prefix):
-                in_messages_array = True
-                
-            # Message processing
-            if in_messages_array: 
-                # Reset message object at new occurence
-                message_prefix = f"{messages_array_prefix}.item" 
-                if is_entering_map(prefix, event, message_prefix):
-                    message = create_message(current_org, current_gene)
-                    
-                if prefix == f"{message_prefix}.rule_name" and event == "string":
-                    message["name"] = value
-                    
-                if prefix == f"{message_prefix}.message" and event == "string":
-                    message["message"] = value
-                    
-                if is_exiting_map(prefix, event, message_prefix):
-                    messages.append(message)
-                    
-                if is_exiting_array(prefix, event, messages_array_prefix):
-                    in_messages_array = False
 
             # Check whether processing diplotypes
             diplotype_array_prefix = (
                 f"genes.{current_org}.{current_gene}.sourceDiplotypes"
             )
-            if is_entering_array(in_diplotype_array, prefix, event, diplotype_array_prefix):
+            if is_entering_array(
+                in_diplotype_array, prefix, event, diplotype_array_prefix
+            ):
                 in_diplotype_array = True
 
             # Diplotype preocessing
@@ -209,14 +184,15 @@ def yield_genes(pharmcat_output_json, source_vcf):
                     and variant["call"] is not None
                 ):
                     # Add zygosity and pos/ref/alt using the source VCF
-                    variant.update(
-                        query_variant_zygosity(
-                            chrom_mapping,
-                            input_vcf_s3_uri,
-                            variant["chr"],
-                            variant["pos"],
-                        )
+                    zygosity = query_variant_zygosity(
+                        chrom_mapping,
+                        input_vcf_s3_uri,
+                        variant["chr"],
+                        variant["pos"],
                     )
+                    if not zygosity:
+                        continue
+                    variant.update(zygosity)
 
                     # Create an ID to uniquely identify variants - eliminiates duplicate variants
                     variant_b64_id = create_b64_id(
@@ -237,7 +213,7 @@ def yield_genes(pharmcat_output_json, source_vcf):
 
                 # Yield the diplotype and associated variants at the end of the chunk
                 if is_exiting_array(prefix, event, variant_array_prefix):
-                    yield (diplotypes, diplotype_ids, variants, messages)
+                    yield (diplotypes, diplotype_ids, variants)
                     in_variant_array = False
 
             else:
