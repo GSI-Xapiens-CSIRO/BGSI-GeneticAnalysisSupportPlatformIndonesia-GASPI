@@ -66,3 +66,21 @@ data "aws_iam_policy_document" "lambda-qcFigures" {
     ]
   }
 }
+
+#
+# qcNotes Lambda Function
+#
+data "aws_iam_policy_document" "lambda-qcNotes" {
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}",
+      "${var.data-portal-bucket-arn}/*",
+    ]
+  }
+}
