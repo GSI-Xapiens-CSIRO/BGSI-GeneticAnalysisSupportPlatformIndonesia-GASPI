@@ -113,7 +113,7 @@ module "lambda-qcNotes" {
   description            = "Running qcNotes API."
   runtime                = "python3.12"
   handler                = "lambda_function.lambda_handler"
-  memory_size            = 3000
+  memory_size            = 128
   timeout                = 60
   source_path            = "${path.module}/lambda/qcNotes"
   attach_policy_jsons    = true
