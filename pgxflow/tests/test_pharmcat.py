@@ -13,7 +13,7 @@ orig = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call(self, operation_name, kwarg):
-    
+
     return orig(self, operation_name, kwarg)
 
 
@@ -29,9 +29,9 @@ def test_pharmcat(resources_dict):
             {
                 "requestId": "01JWWAZ668XYVCTYW0ZNKN26CN",
                 "projectName": "ci_cd_project",
-                "s3Key": "preprocessed_01JWWAZ668XYVCTYW0ZNKN26CN.vcf.gz",
+                "s3Keys": ["preprocessed_01JWWAZ668XYVCTYW0ZNKN26CN.vcf.gz"],
                 "sourceVcfKey": "projects/testintegration/project-files/integration_test.vcf.gz",
+                "missingToRef": False,
             },
             {},
         )
-    
