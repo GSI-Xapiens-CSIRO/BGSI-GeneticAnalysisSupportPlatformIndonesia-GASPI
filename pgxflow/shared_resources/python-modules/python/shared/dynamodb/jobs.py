@@ -36,7 +36,7 @@ def dynamodb_update_item(job_id, update_fields: dict):
     print(f"Calling dynamodb.update_item with kwargs: {json.dumps(kwargs)}")
     response = dynamodb_client.update_item(**kwargs)
     print(f"Received response: {json.dumps(response, default=str)}")
-    
+
 
 def send_job_email(
     job_id,
@@ -82,6 +82,7 @@ def update_clinic_job(
         update_fields["project_name"] = {"S": project_name}
     if job_name is not None:
         update_fields["job_name"] = {"S": job_name}
+        update_fields["job_name_lower"] = {"S": job_name.lower()}
         now = datetime.now(timezone.utc)
         update_fields["created_at"] = {"S": now.strftime("%Y-%m-%dT%H:%M:%S.%f+0000")}
     if input_vcf is not None:
@@ -100,12 +101,12 @@ def update_clinic_job(
         return
 
     send_job_email(
-       job_id=job_id,
-       job_status=job_status,
-       project_name=project_name,
-       input_vcf=input_vcf,
-       user_id=user_id,
-       is_from_failed_execution=is_from_failed_execution,
+        job_id=job_id,
+        job_status=job_status,
+        project_name=project_name,
+        input_vcf=input_vcf,
+        user_id=user_id,
+        is_from_failed_execution=is_from_failed_execution,
     )
 
 
