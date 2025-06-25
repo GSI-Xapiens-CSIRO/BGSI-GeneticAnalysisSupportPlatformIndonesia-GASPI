@@ -74,7 +74,7 @@ aws s3 cp --recursive ./ s3://$REFERENCE_LOCATION/pharmcat-preprocessor/ \
     --include "*.fna.bgz" \
     --include "*.vcf.bgz.csi" \
     --include "*.fna.bgz.fai" \
-    --include "*.fna.bgz.csi" \
+    --include "*.fna.bgz.gzi" \
     --include "*.bed"
 
 aws dynamodb update-item \
