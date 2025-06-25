@@ -60,7 +60,7 @@ def lambda_handler(event, context):
             case "POST":
                 project_name = event["queryStringParameters"]["projectName"]
                 file_name = event["queryStringParameters"]["fileName"]
-                notes = json.loads(event["body"])
+                notes = json.loads(event["body"] or "\"\"")
                 return update_notes(project_name, file_name, notes)
 
     except Exception as e:
