@@ -52,6 +52,7 @@ def lambda_handler(event, _):
 
     payload = {
         "body": {
+            "job_id": job_id,
             "email": user_info["email"],
             "first_name": user_info["first_name"],
             "last_name": user_info["last_name"],
@@ -77,4 +78,3 @@ def lambda_handler(event, _):
     email_sent = body.get("success", False)
 
     print(f"[send_job_email] Email sent: {email_sent}")
-
