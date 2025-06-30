@@ -162,6 +162,8 @@ def lambda_handler(event, context):
         )
         os.remove(local_annotated_vcf_index_path)
 
+        annotated_vcf_location = f"s3://{PGXFLOW_BUCKET}/{annotated_vcf_key}"
+
         lambda_client.invoke(
             FunctionName=PGXFLOW_LOOKUP_LAMBDA,
             InvocationType="Event",
@@ -169,7 +171,7 @@ def lambda_handler(event, context):
                 {
                     "requestId": request_id,
                     "projectName": project_name,
-                    "dbsnpAnnotatedVcfKey": annotated_vcf_key,
+                    "dbsnpAnnotatedVcfLocation": annotated_vcf_location,
                 }
             ),
         )

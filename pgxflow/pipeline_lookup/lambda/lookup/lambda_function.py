@@ -2,10 +2,11 @@ import csv
 import io
 import json
 import os
+from urllib.parse import urlparse
 
 from shared.utils import CheckedProcess, handle_failed_execution, LoggingClient
 
-LOCAL_DIR = "/tmp"
+LOCAL_DIR = os.environ.get("LOCAL_DIR", "/tmp")
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 REFERENCE_BUCKET = os.environ["REFERENCE_BUCKET"]
@@ -39,9 +40,9 @@ def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     request_id = event["requestId"]
     project_name = event["projectName"]
-    dbsnp_annotated_vcf_key = event["dbsnpAnnotatedVcfKey"]
-
-    annotated_vcf_s3_uri = f"s3://{PGXFLOW_BUCKET}/{dbsnp_annotated_vcf_key}"
+    dbsnp_annotated_vcf_location = event["dbsnpAnnotatedVcfLocation"]
+    dbsnp_annotated_vcf_parsed = urlparse(dbsnp_annotated_vcf_location)
+    dbsnp_annotated_vcf_key = dbsnp_annotated_vcf_parsed.path.lstrip("/")
 
     try:
         query_rsid_args = [
@@ -49,9 +50,9 @@ def lambda_handler(event, context):
             "query",
             "-f",
             "%ID\t%CHROM\t%POS\t%REF\t%ALT\n",
-            annotated_vcf_s3_uri,
+            dbsnp_annotated_vcf_location,
         ]
-        query_rsid_process = CheckedProcess(query_rsid_args)
+        query_rsid_process = CheckedProcess(query_rsid_args, cwd=LOCAL_DIR)
         lookup_table = load_lookup()
         lookup_results = []
         for line in query_rsid_process.stdout:

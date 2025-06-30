@@ -7,7 +7,7 @@ from shared.utils import handle_failed_execution, LoggingClient
 lambda_client = LoggingClient("lambda")
 s3_client = LoggingClient("s3")
 
-LOCAL_DIR = "/tmp"
+LOCAL_DIR = os.environ.get("LOCAL_DIR", "/tmp")
 PGXFLOW_BUCKET = os.environ["PGXFLOW_BUCKET"]
 PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA = os.environ[
     "PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA"
