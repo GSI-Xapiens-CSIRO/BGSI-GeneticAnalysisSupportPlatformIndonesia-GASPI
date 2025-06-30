@@ -11,14 +11,16 @@ from test_utils.mock_resources import setup_resources
 
 sys.path.append(
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../pipeline_pharmcat/lambda/pharmcat")
+        os.path.join(
+            os.path.dirname(__file__), "../../pipeline_pharmcat/lambda/pharmcat"
+        )
     )
 )
 sys.path.append(
     os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
-            "../pgxflow/shared_resources/python-modules/python",
+            "../../shared_resources/python-modules/python",
         )
     )
 )
@@ -52,7 +54,7 @@ def resources_dict():
             },
         )
         s3_client.upload_file(
-            "./preprocessed_01JWWAZ668XYVCTYW0ZNKN26CN.vcf.gz",
+            "./test_pharmcat/preprocessed_01JWWAZ668XYVCTYW0ZNKN26CN.vcf.gz",
             os.environ["PGXFLOW_BUCKET"],
             "preprocessed_01JWWAZ668XYVCTYW0ZNKN26CN.vcf.gz",
         )
@@ -72,7 +74,7 @@ def resources_dict():
         lambda_client.create_function(
             FunctionName=os.environ["PGXFLOW_PHARMCAT_POSTPROCESSOR_LAMBDA"],
             Runtime="python3.11",
-            Role=role_response['Role']['Arn'],
+            Role=role_response["Role"]["Arn"],
             Handler="lambda_function.lambda_handler",
             Code={"ZipFile": create_lambda_zip()},
             Description="Mock lambda function for testing",
