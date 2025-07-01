@@ -1,6 +1,7 @@
 # build files
 *.zip
 libraries
+.hash.txt
 
 # python lambda layers
 layers/python_libraries/python
