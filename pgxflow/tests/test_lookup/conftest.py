@@ -22,6 +22,10 @@ sys.path.append(
         )
     )
 )
+binaries_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../layers/binaries/bin")
+)
+os.environ["PATH"] = binaries_path + os.pathsep + os.environ.get("PATH", "")
 
 
 def create_lambda_zip():
