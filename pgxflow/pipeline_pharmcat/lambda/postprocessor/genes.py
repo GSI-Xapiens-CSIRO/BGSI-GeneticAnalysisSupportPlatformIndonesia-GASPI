@@ -37,8 +37,8 @@ def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
         return {
             "chromRef": chrom_mapping[chrom],
             "posVcf": int(pos),
-            "refVcf": "./.",
-            "altsVcf": "./.",
+            "refVcf": ".",
+            "altsVcf": [".", "."],
             "zygosity": "0|0",
         }
     pos_vcf, ref_vcf, alt_vcf, gt = query_output.strip().split("\t")
