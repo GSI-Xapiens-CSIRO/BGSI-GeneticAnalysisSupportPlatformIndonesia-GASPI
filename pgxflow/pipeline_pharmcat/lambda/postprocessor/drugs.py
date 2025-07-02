@@ -9,6 +9,7 @@ from utils import is_entering_array, is_exiting_array, is_entering_map, is_exiti
 
 
 DRUGS = os.environ["DRUGS"].strip().split(",")
+GENES = os.environ["GENES"].strip().split(",")
 ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
 
@@ -158,7 +159,7 @@ def yield_drugs(pharmcat_output_json):
                         ):
                             annotation["alleles"].append(value)
                             
-                    if is_exiting_map(prefix, event, annotation_diplotype_prefix):
+                    if is_exiting_map(prefix, event, annotation_diplotype_prefix) and annotation.get("gene") in GENES:
                         annotations.append(annotation)
 
                     if (
