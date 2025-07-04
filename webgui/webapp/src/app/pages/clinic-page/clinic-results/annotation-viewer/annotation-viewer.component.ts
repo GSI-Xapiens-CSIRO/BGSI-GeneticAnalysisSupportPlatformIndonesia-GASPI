@@ -25,7 +25,8 @@ import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { ToastrService } from 'ngx-toastr';
-import { SvepResultsViewerComponent } from '../svep-results-viewer/svep-results-viewer.component';
+import { environment } from 'src/environments/environment';
+import { MatTooltip } from '@angular/material/tooltip';
 
 type ClinicalAnnotation = {
   name: string;
@@ -69,6 +70,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatButtonModule,
     MatIconModule,
     MatCardModule,
+    MatTooltip,
   ],
   templateUrl: './annotation-viewer.component.html',
   styleUrl: './annotation-viewer.component.scss',
@@ -84,6 +86,7 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
   private pageTokens = new Map<number, any>();
   private annotationChangedSubscription: Subscription | null = null;
   @Output() selectAnotation = new EventEmitter<any>();
+  protected hubName: string = environment.hub_name;
 
   constructor(
     private cs: ClinicService,

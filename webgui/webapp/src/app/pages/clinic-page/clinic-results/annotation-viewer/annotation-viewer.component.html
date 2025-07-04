@@ -18,14 +18,28 @@
         <div>
           <div class="flex flex-row justify-between items-center">
             <h3>{{ annot.annotation }}</h3>
-            <button
-              mat-mini-fab
-              color="primary"
-              class="flex items-center"
-              (click)="deleteAnnotation(annot.name)"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
+            <div class="flex flex-row items-center gap-2">
+              @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
+                <button
+                  matTooltip="View detail variants"
+                  mat-mini-fab
+                  color="primary"
+                  class="flex items-center"
+                  (click)="handleSelectAnotation(annot)"
+                >
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              }
+              <button
+                mat-mini-fab
+                matTooltip="Delete annotations"
+                color="primary"
+                class="flex items-center"
+                (click)="deleteAnnotation(annot.name)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="text-wrap break-words mt-1">
             @for (info of annot.variants; track $index; let itemLast = $last) {
@@ -52,16 +66,6 @@
             {{ annot.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
           >
           <br />
-        </div>
-        <div>
-          <button
-            mat-raised-button
-            color="primary"
-            class="flex items-center"
-            (click)="handleSelectAnotation(annot)"
-          >
-            Select
-          </button>
         </div>
         @if (!$last) {
           <div class="w-full h-1 bg-primary-60 my-2"></div>
