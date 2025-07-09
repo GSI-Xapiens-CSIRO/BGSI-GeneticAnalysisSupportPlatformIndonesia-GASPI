@@ -32,6 +32,7 @@ module "lambda-initPharmcat" {
     DRUGS                                = join(",", var.pharmcat_configuration.DRUGS)
     DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    DYNAMO_PGXFLOW_REFERENCES_TABLE      = var.dynamo-references-table
     SEND_JOB_EMAIL_ARN                   = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                          = "s3.${var.region}.amazonaws.com"
   }

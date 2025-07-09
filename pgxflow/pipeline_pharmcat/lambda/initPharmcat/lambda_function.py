@@ -4,9 +4,11 @@ import os
 import subprocess
 from urllib.parse import urlparse
 
+from botocore.client import ClientError
+
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, update_clinic_job
-from shared.utils import LoggingClient
+from shared.utils import LoggingClient, query_references_table
 
 PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
     "PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA"
@@ -14,6 +16,7 @@ PGXFLOW_PHARMCAT_PREPROCESSOR_LAMBDA = os.environ[
 ORGANISATIONS = json.loads(os.environ.get("ORGANISATIONS"))
 GENES = os.environ.get("GENES")
 DRUGS = os.environ.get("DRUGS")
+REFERENCE_IDS = ["pharmcat_version", "pharmgkb_version"]
 
 lambda_client = LoggingClient("lambda")
 
@@ -24,7 +27,7 @@ def get_sample_count(location):
     return int(result.stdout.strip())
 
 
-def check_pgxflow_configuration():
+def check_pharmcat_configuration():
     if not ORGANISATIONS:
         return (
             False,
@@ -67,7 +70,7 @@ def lambda_handler(event, context):
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
 
-    passed, error_message = check_pgxflow_configuration()
+    passed, error_message = check_pharmcat_configuration()
     if not passed:
         return bad_request(error_message)
 
@@ -78,6 +81,20 @@ def lambda_handler(event, context):
 
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
+
+    reference_versions = {}
+    try:
+        for reference_id in REFERENCE_IDS:
+            reference_versions[reference_id] = query_references_table(reference_id)
+    except ClientError as e:
+        return bad_request(
+            "Unable to retrieve reference versions. Please contact an AWS administrator."
+        )
+
+    if any(version is None for version in reference_versions.values()):
+        return bad_request(
+            "Some reference versions are missing. Please contact an AWS administrator."
+        )
 
     parsed_location = urlparse(source_vcf_key)
     input_vcf_key = parsed_location.path.lstrip("/")
@@ -103,6 +120,7 @@ def lambda_handler(event, context):
         project_name=project,
         input_vcf=input_vcf,
         user_id=sub,
+        reference_versions=reference_versions,
         skip_email=True,
     )
 
