@@ -29,6 +29,7 @@ data "aws_iam_policy_document" "lambda-initLookup" {
     ]
     resources = [
       var.dynamo-project-users-table-arn,
+      var.dynamo-references-table-arn,
     ]
   }
   statement {
