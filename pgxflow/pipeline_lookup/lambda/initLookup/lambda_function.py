@@ -19,7 +19,7 @@ LOOKUP_REFERENCE = os.environ["LOOKUP_REFERENCE"]
 CHR_HEADER = os.environ["CHR_HEADER"]
 START_HEADER = os.environ["START_HEADER"]
 END_HEADER = os.environ["END_HEADER"]
-REFERENCE_IDS = ["dbsnp_version"]
+REFERENCE_IDS = ["dbsnp_version", "lookup_version"]
 
 lambda_client = LoggingClient("lambda")
 s3_client = LoggingClient("s3")
