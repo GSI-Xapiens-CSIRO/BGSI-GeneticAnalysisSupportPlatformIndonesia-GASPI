@@ -5,7 +5,7 @@ trap 'shutdown -h now' EXIT
 REGION="__REGION__"
 TABLE="__TABLE__"
 DBSNP_ID="__DBSNP_ID__"
-DBSNP_HASH="__DBSNP_HASH__"
+DBSNP_VERSION="__DBSNP_VERSION__"
 REFERENCE_LOCATION="__REFERENCE_LOCATION__"
 
 dnf install -y \
@@ -44,4 +44,4 @@ aws dynamodb update-item \
     --table-name "${TABLE}" \
     --key '{"id": {"S": "'"${DBSNP_ID}"'"}}' \
     --update-expression "SET version = :version" \
-    --expression-attribute-values '{":version": {"S": "'"${DBSNP_HASH}"'"}}'
+    --expression-attribute-values '{":version": {"S": "'"${DBSNP_VERSION}"'"}}'
