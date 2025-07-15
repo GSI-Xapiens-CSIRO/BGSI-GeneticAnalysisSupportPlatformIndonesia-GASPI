@@ -41,49 +41,65 @@ def generate_target_region_files(source_chromosome_mapping):
     local_regions_path = os.path.join(LOCAL_DIR, "regions.txt")
     local_norm_regions_path = os.path.join(LOCAL_DIR, "norm_regions.txt")
     reversed_chromosome_mapping = {v: k for k, v in source_chromosome_mapping.items()}
+    regions_exists = False
     with open(local_regions_path, "w") as f, open(local_norm_regions_path, "w") as n_f:
         for row in reader:
             normalised_chr = match_chromosome_name(row[CHR_HEADER])
             if normalised_chr not in reversed_chromosome_mapping:
                 continue
+            regions_exists = True
             chr = reversed_chromosome_mapping[normalised_chr]
             start = row[START_HEADER]
             end = row[END_HEADER]
             f.write(f"{chr}\t{start}\t{end}\n")
             n_f.write(f"{normalised_chr}\t{start}\t{end}\n")
 
-    return local_regions_path, local_norm_regions_path
+    return local_regions_path, local_norm_regions_path, regions_exists
 
 
 def filter_and_rename_chrs(
-    source_vcf_s3_uri, source_chromosome_mapping, local_regions_path
+    source_vcf_s3_uri, source_chromosome_mapping, local_regions_path, regions_exists
 ):
     local_chrs_path = os.path.join(LOCAL_DIR, "rename_chrs.txt")
     with open(local_chrs_path, "w") as f:
         for orig, normalised in source_chromosome_mapping.items():
             f.write(f"{orig}\t{normalised}\n")
     try:
-        local_vcf_path = os.path.join(LOCAL_DIR, "renamed.vcf.gz")
-        rename_vcf_args = [
-            "bcftools",
-            "annotate",
-            "--rename-chrs",
-            local_chrs_path,
-            "-R",
-            local_regions_path,
-            source_vcf_s3_uri,
-            "-Oz",
-            "-o",
-            local_vcf_path,
-        ]
+        local_renamed_vcf_path = os.path.join(LOCAL_DIR, "renamed.vcf.gz")
+        if regions_exists:
+            rename_vcf_args = [
+                "bcftools",
+                "annotate",
+                "--rename-chrs",
+                local_chrs_path,
+                "-R",
+                local_regions_path,
+                source_vcf_s3_uri,
+                "-Oz",
+                "-o",
+                local_renamed_vcf_path,
+            ]
+        else:
+            rename_vcf_args = [
+                "bcftools",
+                "annotate",
+                "--rename-chrs",
+                local_chrs_path,
+                "-i", "0",
+                source_vcf_s3_uri,
+                "-Oz",
+                "-o",
+                local_renamed_vcf_path,
+            ]
         rename_vcf_process = CheckedProcess(rename_vcf_args)
         rename_vcf_process.check()
 
-        index_renamed_vcf_args = ["bcftools", "index", local_vcf_path]
+        local_renamed_vcf_index_path = f"{local_renamed_vcf_path}.csi"
+        index_renamed_vcf_args = ["bcftools", "index", local_renamed_vcf_path]
         index_renamed_vcf_process = CheckedProcess(index_renamed_vcf_args)
         index_renamed_vcf_process.check()
 
-        return local_vcf_path
+        return local_renamed_vcf_path, local_renamed_vcf_index_path 
     except subprocess.CalledProcessError as e:
         print(
             f"cmd {e.cmd} returned non-zero error code {e.returncode}. stderr:\n{e.stderr}"
@@ -134,18 +150,22 @@ def lambda_handler(event, context):
     try:
         source_chromosome_mapping = get_chromosome_mapping(source_vcf_s3_uri)
 
-        local_regions_path, local_norm_regions_path = generate_target_region_files(
+        local_regions_path, local_norm_regions_path, regions_exists = generate_target_region_files(
             source_chromosome_mapping
         )
 
-        local_renamed_vcf_path = filter_and_rename_chrs(
-            source_vcf_s3_uri, source_chromosome_mapping, local_regions_path
+        local_renamed_vcf_path, local_renamed_vcf_index_path = filter_and_rename_chrs(
+            source_vcf_s3_uri, source_chromosome_mapping, local_regions_path, regions_exists
         )
 
-        local_annotated_vcf_path, local_annotated_vcf_index_path = annotate_rsids(
-            local_renamed_vcf_path, dbsnp_vcf_s3_uri, local_norm_regions_path
-        )
-        os.remove(local_renamed_vcf_path)
+        if regions_exists:
+            local_annotated_vcf_path, local_annotated_vcf_index_path = annotate_rsids(
+                local_renamed_vcf_path, dbsnp_vcf_s3_uri, local_norm_regions_path
+            )
+            os.remove(local_renamed_vcf_path)
+        else:
+            local_annotated_vcf_path = local_renamed_vcf_path
+            local_annotated_vcf_index_path = local_renamed_vcf_index_path
 
         annotated_vcf_key = f"annotated_{request_id}.vcf.gz"
         s3_client.upload_file(
