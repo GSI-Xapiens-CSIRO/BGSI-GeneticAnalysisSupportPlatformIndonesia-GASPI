@@ -25,6 +25,7 @@ import { PopOverComponent } from '../../svep-results-viewer/box-data/pop-over/po
 export class RsponBoxDataViewComponent {
   @Input({ required: true }) row: any = null;
   @Input({ required: true }) selected: boolean = false;
+  @Input({ required: true }) variantHasRows: boolean = false;
   @Output() change = new EventEmitter<boolean>();
   @Output() filter = new EventEmitter<string[]>();
   togglePanel = false;

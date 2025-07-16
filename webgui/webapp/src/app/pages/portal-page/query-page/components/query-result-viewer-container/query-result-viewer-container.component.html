@@ -59,25 +59,9 @@
     </mat-tab>
     <mat-tab>
       <ng-template mat-tab-label>
-        <h2>Download</h2>
+        <h2>Actions</h2>
       </ng-template>
       <mat-card-content class="flex flex-row space-x-2.5 mb-2.5">
-        <button
-          (click)="download(query)"
-          mat-raised-button
-          color="primary"
-          class="w-[110px]"
-        >
-          Query
-        </button>
-        <button
-          (click)="download(results)"
-          mat-raised-button
-          color="primary"
-          class="w-[110px]"
-        >
-          Result
-        </button>
         <button
           (click)="save({ endpoint, query, results })"
           mat-raised-button

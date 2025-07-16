@@ -16,6 +16,7 @@ def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     try:
         body_dict = event.get("body")
+        job_id = body_dict["job_id"]
         email = body_dict["email"]
         first_name = body_dict["first_name"]
         last_name = body_dict["last_name"]
@@ -25,7 +26,7 @@ def lambda_handler(event, context):
 
         response = ssm_client.get_parameter(Name=BUI_SSM_PARAM_NAME)
         beacon_ui_url = response.get("Parameter", {}).get("Value", "")
-        clinic_ui_url = f"{beacon_ui_url}/clinic/clinic-results"
+        clinic_ui_url = f"{beacon_ui_url}/clinic/clinic-results?jobId={job_id}&projectName={project_name}&vcf_file={input_vcf}"
         beacon_img_url = f"{beacon_ui_url}/assets/images/sbeacon.png"
 
         subject = "Clinical Result of"
@@ -41,7 +42,7 @@ def lambda_handler(event, context):
             body_message += "<p><b>We are sorry that the result generated failed</b>, please check your VCF file again.</p>"
         elif job_status == "pending":
             subject += f" {project_name} pending and job deleted"
-        
+
             body_message += "<p>We apologize that the generated result failed, please double check your VCF file. We have also removed the job from the list.</p>"
 
         body_html = f"""

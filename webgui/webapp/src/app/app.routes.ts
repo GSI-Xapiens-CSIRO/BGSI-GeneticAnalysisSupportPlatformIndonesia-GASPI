@@ -76,10 +76,22 @@ export const routes: Routes = [
       },
       {
         path: 'clinic-submit',
-        loadComponent: () =>
-          import(
-            './pages/clinic-page/clinic-submit/clinic-submit.component'
-          ).then((c) => c.ClinicSubmitComponent),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import(
+                './pages/clinic-page/clinic-submit/projects-list/projects-list.component'
+              ).then((c) => c.ProjectsListComponent),
+          },
+          {
+            path: 'qc-report',
+            loadComponent: () =>
+              import(
+                './pages/clinic-page/clinic-submit/qc-report/qc-report.component'
+              ).then((c) => c.QcReportComponent),
+          },
+        ],
       },
       {
         path: 'clinic-results',

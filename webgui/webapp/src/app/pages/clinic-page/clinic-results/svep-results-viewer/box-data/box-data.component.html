@@ -8,6 +8,8 @@
     <mat-expansion-panel
       (opened)="togglePanel(true)"
       (closed)="togglePanel(false)"
+      [expanded]="isSingleData()"
+      [style.border]="isSelected ? '2px solid green' : 'none'"
     >
       <mat-expansion-panel-header style="padding: 1rem">
         <mat-panel-title>
@@ -198,7 +200,7 @@
               <div>Allele Frequency</div>
               <div class="flex flex-row text-sm text-primary-50 mb-2 gap-4">
                 <div class="flex-1">gnomAD</div>
-                <div class="flex-1">1000 Genomes</div>
+                <div class="flex-1">1KG+HGDP</div>
               </div>
             </div>
             <div class="flex flex-row gap-4">
@@ -261,18 +263,6 @@
               <div class="flex flex-col gap-1 flex-1">
                 <div class="row-content">
                   <div>AF</div>
-                  <div class="row-value">
-                    {{ row["Global Allele Frequency"] }}
-                  </div>
-                </div>
-                <div class="row-content">
-                  <div>AC</div>
-                  <div class="row-value">
-                    {{ row["Allele Count"] }}
-                  </div>
-                </div>
-                <div class="row-content">
-                  <div>AN</div>
                   <div class="row-value">
                     {{ row["Allele Number"] }}
                   </div>

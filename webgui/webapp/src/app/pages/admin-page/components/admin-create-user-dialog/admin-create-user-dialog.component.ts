@@ -32,9 +32,11 @@ import { SpinnerService } from 'src/app/services/spinner.service';
 import { AwsService } from 'src/app/services/aws.service';
 import { gigabytesToBytes } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { UserInfoService } from 'src/app/services/userinfo.service';
+
 import { ToastrService } from 'ngx-toastr';
 import { MatRadioModule } from '@angular/material/radio';
-import { NotebookRole } from '../enums'; // adjust the path if needed
+import { NotebookRole, UserInstitutionType } from '../enums'; // adjust the path if needed
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -60,6 +62,7 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
   protected newUserForm: FormGroup;
   protected costEstimation: number | null = 0;
   noteBookRoleValue = NotebookRole;
+  institutionTypeValue = UserInstitutionType;
   emailFormFieldSubscription: Subscription | undefined;
 
   constructor(
@@ -72,6 +75,7 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
     private tstr: ToastrService,
     private aws: AwsService,
     private uq: UserQuotaService,
+    private ui: UserInfoService,
   ) {
     this.newUserForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -83,6 +87,8 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
       notebookRole: [NotebookRole.BASIC, Validators.required], // default role
+      institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
+      institutionName: ['', Validators.required],
     });
   }
 
@@ -152,11 +158,22 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
         this.ss.end();
         if (response) {
           this.addUserQuota(response?.uid ?? form.email);
+          this.addUserInstitution(response?.uid ?? form.email);
           this.newUserForm.reset();
           this.dialogRef.close({ reload: true });
           this.tstr.success('User created successfully!', 'Success');
         }
       });
+  }
+
+  addUserInstitution(sub: string): void {
+    this.ui
+      .storeUserInfo(
+        sub,
+        this.newUserForm.value.institutionType,
+        this.newUserForm.value.institutionName,
+      )
+      .pipe(catchError(() => of(null)));
   }
 
   addUserQuota(sub: string): void {

@@ -15,6 +15,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
@@ -31,6 +32,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     ComponentSpinnerComponent,
   ],
@@ -45,8 +47,10 @@ export class SubmitQueryDialogComponent {
       Validators.maxLength(20),
       Validators.pattern(/^[a-zA-Z0-9 ]+$/), // Allow alphanumeric and space
     ]),
+    missingToRef: new FormControl(false),
   });
   protected loading = false;
+  protected showMissingToRefOption = false;
 
   constructor(
     protected cs: ClinicService,
@@ -58,7 +62,10 @@ export class SubmitQueryDialogComponent {
       file: string;
       list: () => void;
     },
-  ) {}
+  ) {
+    this.showMissingToRefOption =
+      environment.hub_name === 'RSPON' || environment.hub_name === 'RSJPD';
+  }
 
   submit() {
     if (this.data.file) {
@@ -70,6 +77,7 @@ export class SubmitQueryDialogComponent {
           s3URI,
           this.data.projectName!,
           this.jobForm.value.jobName,
+          this.jobForm.value.missingToRef,
         )
         .pipe(
           catchError((e) => {

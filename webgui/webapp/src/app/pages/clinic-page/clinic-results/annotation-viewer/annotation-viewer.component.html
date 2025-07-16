@@ -1,9 +1,7 @@
 <mat-card class="mt-4" [class.hide]="annotations.length == 0">
   <mat-card-content>
-    <h2>Clinical Annotations</h2>
-    <div
-      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
-    >
+    <div class="flex flex-row justify-between items-center">
+      <h2>Clinical Annotations</h2>
       <button
         mat-mini-fab
         color="primary"
@@ -12,14 +10,45 @@
       >
         <mat-icon>refresh</mat-icon>
       </button>
-      <br />
+    </div>
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
       @for (annot of annotations; track $index) {
         <div>
-          <div class="cursor-pointer flex flex-row gap-2 font-normal">
-            [<span class="text-red-500" (click)="deleteAnnotation(annot.name)"
-              >X</span
-            >]
-            <div class="font-extrabold">{{ annot.annotation }}</div>
+          <div class="flex flex-row justify-between items-center">
+            <h3>{{ annot.annotation }}</h3>
+            <div class="flex flex-row items-center gap-2">
+              @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
+                <button
+                  matTooltip="View detail variants"
+                  mat-mini-fab
+                  color="primary"
+                  class="flex items-center"
+                  (click)="handleSelectAnotation(annot)"
+                >
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              }
+              <button
+                mat-mini-fab
+                matTooltip="Add to reporting"
+                color="primary"
+                class="flex items-center"
+                (click)="openAddToReportingDialog(annot.variants)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+              <button
+                mat-mini-fab
+                matTooltip="Delete annotations"
+                color="primary"
+                class="flex items-center"
+                (click)="deleteAnnotation(annot.name)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
           <div class="text-wrap break-words mt-1">
             @for (info of annot.variants; track $index; let itemLast = $last) {

@@ -135,6 +135,7 @@ export class PharmcatResultsViewerComponent {
   protected warningColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.warningCols;
   protected diplotypeOriginalRows: any[] = [];
+  protected diplotypeHasRows: boolean = false;
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
   protected diplotypeDataView = new Observable<any[]>();
@@ -142,6 +143,7 @@ export class PharmcatResultsViewerComponent {
   protected diplotypeFilterField: FormControl = new FormControl('');
   protected diplotypeScopeReduced: boolean = false;
   protected variantOriginalRows: any[] = [];
+  protected variantHasRows: boolean = false;
   protected variantDataRows = new BehaviorSubject<any[]>([]);
   protected variantToDiplotypeMap: Map<string, string[]> = new Map();
   protected variantDataView = new Observable<any[]>();
@@ -383,6 +385,8 @@ export class PharmcatResultsViewerComponent {
       });
       return diplotypeRow;
     });
+    this.diplotypeHasRows =
+      this.diplotypeOriginalRows.length > 0 ? true : false;
 
     const variants = resultJson.variants;
     this.variantOriginalRows = variants;
@@ -393,6 +397,7 @@ export class PharmcatResultsViewerComponent {
       });
       return variantRow;
     });
+    this.variantHasRows = this.variantOriginalRows.length > 0 ? true : false;
 
     const warnings = resultJson.messages;
     this.warningOriginalRows = warnings.map((warning: any) => {
