@@ -70,6 +70,11 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
   private paramSubscription: Subscription | null = null;
   filteredOptions: Observable<Project[]> | undefined;
   @ViewChild(ListJobComponent) jobListViewer!: ListJobComponent;
+  @ViewChild(SvepResultsViewerComponent)
+  SvepResultsViewerComponent!: SvepResultsViewerComponent;
+
+  receivedData: any = [];
+  selectedData: any = [];
 
   constructor(
     private fb: FormBuilder,
@@ -165,5 +170,13 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
       this.requestIdFormControl.setValue(this.requestId ?? '');
       this.projectNameFormControl.setValue(this.projectName ?? '');
     });
+  }
+
+  handleChildData(data: any) {
+    this.receivedData = data;
+  }
+
+  handleSelectedAnotation(data: any) {
+    this.SvepResultsViewerComponent.filterByAnotation(data);
   }
 }

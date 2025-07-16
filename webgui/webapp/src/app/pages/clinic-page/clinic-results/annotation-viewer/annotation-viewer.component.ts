@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  EventEmitter,
   Injectable,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -23,6 +25,8 @@ import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from 'src/environments/environment';
+import { MatTooltip } from '@angular/material/tooltip';
 
 type ClinicalAnnotation = {
   name: string;
@@ -66,11 +70,13 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatButtonModule,
     MatIconModule,
     MatCardModule,
+    MatTooltip,
   ],
   templateUrl: './annotation-viewer.component.html',
   styleUrl: './annotation-viewer.component.scss',
 })
 export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
+  @Output() dataSent = new EventEmitter<any>(); // array of objects
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator')
@@ -79,6 +85,8 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
   protected pageSize = 5;
   private pageTokens = new Map<number, any>();
   private annotationChangedSubscription: Subscription | null = null;
+  @Output() selectAnotation = new EventEmitter<any>();
+  protected hubName: string = environment.hub_name;
 
   constructor(
     private cs: ClinicService,
@@ -126,6 +134,24 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
     } else {
       this.list(event.pageIndex);
     }
+  }
+
+  handleSelectAnotation(data: any) {
+    this.selectAnotation.emit(data.variants);
+  }
+
+  async openAddToReportingDialog(variants: any[]) {
+    const { AddToReportingDialogComponent } = await import(
+      '../add-to-reporting-dialog/add-to-reporting-dialog.component'
+    );
+
+    this.dg.open(AddToReportingDialogComponent, {
+      data: {
+        projectName: this.projectName,
+        requestId: this.requestId,
+        variants: [...variants], // sending a copy so that the dialog can modify it if needed
+      },
+    });
   }
 
   async deleteAnnotation(name: string) {
@@ -187,9 +213,18 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
             return;
           }
           this.annotations = res.annotations;
+          this.handleListVariants(res);
           // set next page token
           this.pageTokens.set(page + 1, res.last_evaluated_key);
         }
       });
+  }
+
+  handleListVariants(data: any) {
+    const allVariants: any[] = [];
+    data.annotations.map((e: any) => {
+      allVariants.push(...e?.variants);
+    });
+    this.dataSent.emit(allVariants);
   }
 }

@@ -1,6 +1,12 @@
 <mat-card>
   <mat-card-content>
-    <h2 class="text-primary-60 text-center uppercase">Login</h2>
+    <h2 class="text-primary-60 text-center uppercase">
+      @if (state === StateTypes.FIRST_LOGIN) {
+        <div>Set New Password</div>
+      } @else {
+        <div>Login</div>
+      }
+    </h2>
     <form [formGroup]="loginForm" (ngSubmit)="login()" class="bui-login-form">
       <mat-form-field class="bui-login-input-field">
         <mat-label>Email</mat-label>
@@ -78,6 +84,21 @@
             [password]="loginForm.value.newPassword || ''"
           />
         </div>
+        <mat-form-field class="bui-login-input-field" required>
+          <mat-label>Re-enter your password</mat-label>
+          <input
+            formControlName="confirmationPassword"
+            matInput
+            placeholder="Re-enter your password"
+            type="password"
+          />
+          <mat-hint>Please Re-enter your password</mat-hint>
+          @if (loginForm.controls.confirmationPassword.invalid) {
+            <mat-error>
+              {{ loginForm.controls.confirmationPassword.errors!["error"] }}
+            </mat-error>
+          }
+        </mat-form-field>
       }
       @if (state == StateTypes.ORDINARY_LOGIN) {
         <a
@@ -105,7 +126,13 @@
         color="primary"
         class="bui-login-input-field"
       >
-        {{ state === StateTypes.PASSWORD_RESET ? "Change Password" : "Login" }}
+        {{
+          state === StateTypes.PASSWORD_RESET
+            ? "Change Password"
+            : state === StateTypes.FIRST_LOGIN
+              ? "Submit"
+              : "Login"
+        }}
       </button>
     </form>
   </mat-card-content>

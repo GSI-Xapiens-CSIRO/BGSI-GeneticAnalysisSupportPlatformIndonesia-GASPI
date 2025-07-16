@@ -27,11 +27,21 @@ const passwordsValidator = (): ValidatorFn => {
   return (control: AbstractControl): ValidationErrors | null => {
     const start = control.get('password')!.value;
     const end = control.get('newPassword')!.value;
+    const retypePassword = control.get('confirmationPassword')!.value;
 
     if (control.get('newPassword')?.enabled && start === end) {
       control
         .get('newPassword')
         ?.setErrors({ error: 'Password must be different' });
+    }
+
+    if (
+      control.get('confirmationPassword')?.enabled &&
+      end !== retypePassword
+    ) {
+      control.get('confirmationPassword')?.setErrors({
+        error: 'The new password and confirmation password do not match.',
+      });
     }
 
     return null;
@@ -78,6 +88,10 @@ export class LoginPageComponent implements OnInit, OnDestroy {
         { value: '', disabled: this.state !== StateTypes.FIRST_LOGIN },
         [Validators.required, Validators.minLength(8)],
       ),
+      confirmationPassword: new FormControl(
+        { value: '', disabled: this.state !== StateTypes.FIRST_LOGIN },
+        [Validators.required],
+      ),
       resetCode: new FormControl(
         { value: '', disabled: this.state !== StateTypes.PASSWORD_RESET },
         [Validators.required],
@@ -123,10 +137,12 @@ export class LoginPageComponent implements OnInit, OnDestroy {
       email: this.loginForm.value.email,
       password: '',
       newPassword: '',
+      confirmationPassword: '',
       resetCode: '',
     });
 
     this.loginForm.controls.newPassword.disable();
+    this.loginForm.controls.confirmationPassword.disable();
     this.loginForm.controls.resetCode.disable();
   }
 
@@ -192,6 +208,11 @@ export class LoginPageComponent implements OnInit, OnDestroy {
           case 'NEW_PASSWORD_REQUIRED':
             this.state = StateTypes.FIRST_LOGIN;
             this.loginForm.controls.newPassword.enable();
+            this.loginForm.controls.confirmationPassword.enable();
+            this.tstr.warning(
+              'Please Set Your New Password.',
+              'First Time Login',
+            );
             break;
           case 'SOFTWARE_TOKEN_MFA':
             this.state = StateTypes.TOTP_LOGIN;
@@ -245,12 +266,16 @@ export class LoginPageComponent implements OnInit, OnDestroy {
     const email = this.loginForm.controls.email.value;
     const password = this.loginForm.controls.password.value;
     const newPassword = this.loginForm.controls.newPassword.value;
+    const confirmationPassword =
+      this.loginForm.controls.confirmationPassword.value;
     const resetCode = this.loginForm.controls.resetCode.value;
 
     // Disable button if using first login and no new password or new password is weak
     if (
       this.state === StateTypes.FIRST_LOGIN &&
-      (!newPassword || (newPassword && !isStrongPassword(newPassword)))
+      (!newPassword ||
+        (newPassword && !isStrongPassword(newPassword)) ||
+        newPassword !== confirmationPassword)
     ) {
       return true;
     }

@@ -33,6 +33,8 @@ import {
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
+import { ToastrService } from 'ngx-toastr';
+import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 
 export interface InstanceInfo {
   instanceName: string;
@@ -79,15 +81,14 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatInputModule,
     MatPaginatorModule,
+    ComponentSpinnerComponent,
   ],
   templateUrl: './admin-notebooks-list.component.html',
   styleUrl: './admin-notebooks-list.component.scss',
 })
 export class NotebooksComponent {
   @ViewChildren('notebook') notebookItems?: AdminNotebookItemComponent[];
-  notebooks: InstanceInfo[] = [];
   notebooksDataSource: InstanceInfo[] = [];
-  notebookCount = 0;
   loading = false;
 
   searchControl = new FormControl('');
@@ -96,15 +97,17 @@ export class NotebooksComponent {
   protected pageSize = 3;
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  private pageTokens = new Map<number, number>();
 
   constructor(
     private dps: DportalService,
     private aws: AwsService,
     private cd: ChangeDetectorRef,
+    private tstr: ToastrService,
   ) {}
 
   ngOnInit(): void {
-    this.list(0, this.pageSize);
+    this.list(0, '');
     this.cd.detectChanges();
 
     this.paginator.page.subscribe((event: PageEvent) => {
@@ -112,12 +115,7 @@ export class NotebooksComponent {
         this.resetPagination();
         this.refresh();
       } else {
-        this.notebooks = this.filterNotebooks(
-          this.notebooksDataSource,
-          this.searchSubject.value,
-          event.pageIndex,
-          event.pageSize,
-        );
+        this.list(event.pageIndex, this.searchSubject.value);
       }
     });
 
@@ -125,21 +123,20 @@ export class NotebooksComponent {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
+        this.resetPagination();
         this.setSearchInput(value as string);
-        this.notebooks = this.filterNotebooks(
-          this.notebooksDataSource,
-          value as string,
-        );
+        this.list(this.paginator.pageIndex, value as string);
       });
   }
 
   refresh() {
-    this.list(0, this.pageSize);
+    this.list(0, '');
     this.searchSubject.next('');
     this.searchControl.setValue('');
   }
 
   resetPagination() {
+    this.pageTokens = new Map<number, number>();
     this.paginator.pageIndex = 0;
     this.pageSize = this.paginator.pageSize;
   }
@@ -148,61 +145,55 @@ export class NotebooksComponent {
     this.searchSubject.next(query);
   }
 
-  sliceNotebooks(
-    notebooks: InstanceInfo[],
-    pageIndex: number,
-    pageSize: number,
-  ) {
-    return notebooks.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
-  }
-
-  filterNotebooks(
-    notebooks: InstanceInfo[],
-    query: string = '',
-    pageIndex: number = 0,
-    pageSize: number = this.pageSize,
-  ): InstanceInfo[] {
-    if (!query) {
-      this.notebookCount = this.notebooksDataSource.length;
-      return this.sliceNotebooks(notebooks, pageIndex, pageSize);
+  list(page: number, search: string) {
+    if (!this.pageTokens.has(page) && page > 0) {
+      this.paginator.pageIndex--;
+      this.tstr.warning('No more items to show', 'Warning');
+      return;
     }
-
-    const lowerCaseQuery = query.toLowerCase();
-    const filteredNotebooks = notebooks.filter((n) => {
-      return (
-        n.instanceName.toLowerCase().includes(lowerCaseQuery) ||
-        n.userFirstName.toLowerCase().includes(lowerCaseQuery) ||
-        n.userLastName.toLowerCase().includes(lowerCaseQuery) ||
-        n.userEmail.toLowerCase().includes(lowerCaseQuery) ||
-        n.status.toLowerCase().includes(lowerCaseQuery) ||
-        n.instanceType.toLowerCase().includes(lowerCaseQuery) ||
-        n.costEstimation.toString().includes(lowerCaseQuery)
-      );
-    });
-
-    this.notebookCount = filteredNotebooks.length;
-
-    return this.sliceNotebooks(filteredNotebooks, pageIndex, pageSize);
-  }
-
-  list(pageIndex: number, pageSize: number) {
-    this.loading = true;
+    // Only show spinner if there are notebooks already populating the screen
+    if (this.notebooksDataSource.length > 0) {
+      this.loading = true;
+    }
     this.dps
-      .getAdminNotebooks()
+      .getAdminNotebooks(this.pageSize, this.pageTokens.get(page), search)
       .pipe(
-        catchError(() => of([])),
-        switchMap((notebooks) =>
-          this.constructListWithCostEstimation(notebooks),
-        ),
+        catchError(() => of(null)),
+        switchMap((data: any) => {
+          if (!data || !data.notebooks) {
+            this.tstr.error('API returned invalid response', 'Error');
+            return of([]);
+          }
+
+          if (data.notebooks.length <= 0 && this.paginator.pageIndex > 0) {
+            this.paginator.pageIndex--;
+            this.tstr.warning('No more items to show', 'Warning');
+            return of([]);
+          }
+
+          if (data.notebooks.length <= 0) {
+            return of([]);
+          }
+
+          // Save next page token
+          if (data.lastEvaluatedIndex != null) {
+            this.pageTokens.set(page + 1, data.lastEvaluatedIndex);
+          }
+
+          return this.constructListWithCostEstimation(data.notebooks);
+        }),
       )
       .subscribe((notebooksWithCost) => {
-        this.notebookCount = notebooksWithCost.length;
-        this.notebooksDataSource = notebooksWithCost; // Store original list
-        this.notebooks = this.sliceNotebooks(
-          notebooksWithCost,
-          pageIndex,
-          pageSize,
-        );
+        this.notebooksDataSource = notebooksWithCost.map((notebook: any) => ({
+          instanceName: notebook.instanceName,
+          userFirstName: notebook.userFirstName,
+          userLastName: notebook.userLastName,
+          userEmail: notebook.userEmail,
+          status: notebook.status,
+          volumeSize: notebook.volumeSize,
+          instanceType: notebook.instanceType,
+          costEstimation: notebook.costEstimation,
+        }));
         this.loading = false;
       });
   }
@@ -231,6 +222,8 @@ export class NotebooksComponent {
   }
 
   remove(notebook: string) {
-    this.notebooks = this.notebooks.filter((n) => n.instanceName !== notebook);
+    this.notebooksDataSource = this.notebooksDataSource.filter(
+      (n) => n.instanceName !== notebook,
+    );
   }
 }

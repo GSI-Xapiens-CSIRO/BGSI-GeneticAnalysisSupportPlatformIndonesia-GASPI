@@ -159,3 +159,21 @@ module "webgui" {
   })
 }
 
+provider "aws" {
+  region = var.region
+  alias  = "error-catcher"
+  default_tags {
+    tags = merge(var.common-tags, {
+      "NAME" = "error-catcher"
+    })
+  }
+}
+
+module "error-catcher" {
+  source           = "./error_catcher"
+  ses-source-email = var.ses-source-email
+  ses-target-email = var.gaspi-admin-email
+  providers = {
+    aws = aws.error-catcher
+  }
+}

@@ -71,7 +71,12 @@ export class ClinicService {
     );
   }
 
-  submitClinicJob(location: string, projectName: string, jobName: string) {
+  submitClinicJob(
+    location: string,
+    projectName: string,
+    jobName: string,
+    missingToRef: boolean,
+  ) {
     const pathMap: Record<string, string[]> = {
       RSCM: ['submit'],
       RSSARDJITO: ['submit'],
@@ -86,7 +91,14 @@ export class ClinicService {
       switchMap((credentials) => {
         const userId = credentials.identityId;
         const requestId = environment.hub_name === 'RSJPD' ? ulid() : null;
-        const body = { location, projectName, userId, jobName, requestId };
+        const body = {
+          location,
+          projectName,
+          userId,
+          jobName,
+          requestId,
+          missingToRef,
+        };
 
         const requests = paths.map((path: string) =>
           from(API.post(environment.api_endpoint_clinic.name, path, { body })),
@@ -101,6 +113,23 @@ export class ClinicService {
     return from(
       API.post(environment.api_endpoint_clinic.name, 'vcfstats', {
         body: { projectName, fileName, key },
+      }),
+    );
+  }
+
+  getQCNotes(projectName: string, fileName: string) {
+    return from(
+      API.get(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+      }),
+    );
+  }
+
+  updateQCNotes(projectName: string, fileName: string, notes: string) {
+    return from(
+      API.post(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+        body: notes,
       }),
     );
   }

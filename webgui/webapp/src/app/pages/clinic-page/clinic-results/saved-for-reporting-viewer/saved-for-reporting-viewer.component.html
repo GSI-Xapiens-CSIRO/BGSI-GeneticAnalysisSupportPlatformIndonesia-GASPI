@@ -1,9 +1,7 @@
 <mat-card class="mt-4" [class.hide]="variants.length == 0">
   <mat-card-content>
-    <h2>Variants selected for reporting</h2>
-    <div
-      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
-    >
+    <div class="flex flex-row justify-between items-center">
+      <h2>Variants selected for reporting</h2>
       <button
         mat-mini-fab
         color="primary"
@@ -12,18 +10,24 @@
       >
         <mat-icon>refresh</mat-icon>
       </button>
-      <br />
+    </div>
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
       @for (variant of variants; track $index) {
         <div>
-          <strong class="cursor-pointer"
-            >[<span
-              class="text-red-500"
+          <div class="flex flex-row justify-between items-center">
+            <h3>{{ variant.comment }}</h3>
+            <button
+              mat-mini-fab
+              color="primary"
+              class="flex items-center"
               (click)="deleteSavedVariants(variant.name)"
-              >X</span
-            >] {{ variant.comment }}</strong
-          >
-          <br />
-          @for (info of variant.variants; track $index) {
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          @for (info of variant.variants; track $index; let itemLast = $last) {
             @for (item of info | keyvalue; track $index) {
               {{ item.key }}: {{ item.value }}
               @if (!$last) {
@@ -33,9 +37,12 @@
             <br />
             @if (variant.annotations[$index]) {
               <span class="ml-4"
-                >Annotation: {{ variant.annotations[$index] }}</span
+                >- Annotations: {{ variant.annotations[$index] }}</span
               >
               <br />
+            }
+            @if (!itemLast) {
+              <hr class="bg-primary-50 h-0.5 border-0" />
             }
           }
           <span class="text-xs"
@@ -247,15 +254,6 @@
               </button>
             </div>
           </div>
-        }
-        @case ("RSPON") {
-          <p>RSPON Lab does not support negative reporting.</p>
-        }
-        @case ("RSIGNG") {
-          <p>RSIGNG Lab does not support negative reporting.</p>
-        }
-        @case ("RSJPD") {
-          <p>RSJPD Lab does not support negative reporting.</p>
         }
       }
     } @else {

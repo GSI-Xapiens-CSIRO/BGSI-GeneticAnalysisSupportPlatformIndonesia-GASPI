@@ -263,7 +263,14 @@ export const REPORTING_CONFIGS: { [key: string]: any } = {
     cols: ['Alleles', 'Phenotypes'],
   },
   RSCM: {
-    cols: ['Gene Name', 'Variant Name', 'gt', 'clinSig', 'conditions'],
+    cols: [
+      'Gene Name',
+      'Variant Name',
+      'gt',
+      'clinSig',
+      'conditions',
+      'Transcript ID & Version',
+    ],
   },
   RSIGNG: {
     cols: [
