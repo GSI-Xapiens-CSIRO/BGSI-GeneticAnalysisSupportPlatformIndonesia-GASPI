@@ -43,23 +43,23 @@ module "lambda-sendRegistrationEmail" {
 }
 
 #
-# submit svep email Lambda function
+# submit clinic email Lambda function
 #
-module "lambda-sendSvepJobEmail" {
+module "lambda-sendClinicJobEmail" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "cognito-sendSvepJobEmail"
-  description         = "Sends svep success email on submit execution"
+  function_name       = "cognito-sendClinicJobEmail"
+  description         = "Sends clinic status emails"
   runtime             = "python3.12"
   handler             = "lambda_function.lambda_handler"
   memory_size         = 512
   timeout             = 60
   attach_policy_jsons = true
   policy_jsons = [
-    data.aws_iam_policy_document.lambda-sendSvepJobEmail.json,
+    data.aws_iam_policy_document.lambda-sendClinicJobEmail.json,
   ]
   number_of_policy_jsons = 1
-  source_path            = "${path.module}/lambda/sendSvepJobEmail"
+  source_path            = "${path.module}/lambda/sendClinicJobEmail"
 
   environment_variables = {
     BUI_SSM_PARAM_NAME  = var.bui-ssm-parameter-name

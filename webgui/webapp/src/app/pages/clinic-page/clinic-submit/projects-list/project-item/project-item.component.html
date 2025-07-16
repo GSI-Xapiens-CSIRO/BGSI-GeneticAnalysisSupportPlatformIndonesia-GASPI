@@ -1,0 +1,58 @@
+<div class="flex flex-row gap-2 mb-2 mt-2 items-center">
+    <mat-accordion style="width: 100%" class="mr-2">
+        <mat-expansion-panel
+            (opened)="togglePanel(true)"
+            (closed)="togglePanel(false)"
+        >
+            <mat-expansion-panel-header style="padding: 1rem">
+                <mat-panel-title>
+                    <div class="flex items-center w-[20vw] md:w-full lg:w-full xl:w-full font-normal">
+                        <div class="flex flex-col gap-1">
+                            <div class="title-accordion">{{ project?.["name"] }}</div>
+                            <div class="subtitle-accordion text-gray-500">{{ project?.["description"] }}</div>
+                        </div>
+                    </div>
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div>
+                <mat-form-field class="w-full">
+                    <mat-label>Search files</mat-label>
+                    <input
+                        matInput
+                        type="text"
+                        [formControl]="searchControl"
+                        placeholder="File Name"
+                    />
+                </mat-form-field>
+                <div class="mt-4 flex flex-col gap-4">
+                    @for (file of projectFiles; track $index) {
+                        <div class="flex flex-row items-center justify-between p-2 border-b">
+                            <div class="text-sm">{{ file.filename }}</div>
+                            <div class="flex flex-row gap-2">
+                            <button
+                                (click)="submitQuery.emit(file)"
+                                mat-mini-fab
+                                color="primary"
+                                matTooltip="Run Clinical Workflow"
+                                [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
+                                [style.background]="file.disabled ? 'gray' : '#16B3AC'"
+                            >
+                                <mat-icon fontSet="material-symbols-outlined" style="color: white;">genetics</mat-icon>
+                            </button>
+                            <button
+                                (click)="viewQcReport.emit(file)"
+                                mat-mini-fab
+                                matTooltip="See QC Report"
+                                [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
+                                [style.background]="file.disabled ? 'gray' : '#16B3AC'"
+                            >
+                                <mat-icon fontSet="material-symbols-outlined" style="color: white;">bar_chart</mat-icon>
+                            </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>

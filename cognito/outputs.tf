@@ -43,8 +43,8 @@ output "registration_email_lambda_function_arn" {
   description = "Lambda function ARN for sending registration emails"
 }
 
-output "svep_job_email_lambda_function_arn" {
-  value       = module.lambda-sendSvepJobEmail.lambda_function_arn
+output "clinic_job_email_lambda_function_arn" {
+  value       = module.lambda-sendClinicJobEmail.lambda_function_arn
   description = "Lambda function ARN for sending Jobs email"
 }
 
