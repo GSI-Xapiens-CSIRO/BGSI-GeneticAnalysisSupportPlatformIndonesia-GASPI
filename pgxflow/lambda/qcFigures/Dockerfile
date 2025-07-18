@@ -14,6 +14,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV RUSTUP_HOME=/root/.rustup
 ENV CARGO_HOME=/root/.cargo
+ENV MPLCONFIGDIR="/tmp/.config/matplotlib"
+RUN mkdir -p "/tmp/.config/matplotlib"
 
 RUN rustc --version && cargo --version
 
@@ -26,6 +28,7 @@ RUN pip install --upgrade pip wheel setuptools \
     && pip install -r requirements.txt --verbose
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
+COPY violin_monkey_patch.py ${LAMBDA_TASK_ROOT}/
 ADD shared ${LAMBDA_TASK_ROOT}/shared
 
 COPY ./.hash.txt ${LAMBDA_TASK_ROOT}/
