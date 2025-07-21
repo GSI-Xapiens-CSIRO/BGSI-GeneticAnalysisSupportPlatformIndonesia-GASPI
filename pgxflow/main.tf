@@ -8,69 +8,169 @@ locals {
 }
 
 module "pipeline_pharmcat" {
-  source                               = "./pipeline_pharmcat"
-  region                               = var.region
-  data-portal-bucket-name              = var.data-portal-bucket-name
-  data-portal-bucket-arn               = var.data-portal-bucket-arn
-  pgxflow-backend-bucket-name          = aws_s3_bucket.pgxflow-bucket.bucket
-  pgxflow-backend-bucket-arn           = aws_s3_bucket.pgxflow-bucket.arn
-  pgxflow-reference-bucket-name        = aws_s3_bucket.pgxflow-references.bucket
-  pgxflow-reference-bucket-arn         = aws_s3_bucket.pgxflow-references.arn
-  cognito-user-pool-arn                = var.cognito-user-pool-arn
-  cognito-user-pool-id                 = var.cognito-user-pool-id
-  pgxflow-api-gateway-id               = aws_api_gateway_rest_api.PgxApi.id
-  pgxflow-api-gateway-root-resource-id = aws_api_gateway_rest_api.PgxApi.root_resource_id
-  pgxflow-api-gateway-execution-arn    = aws_api_gateway_rest_api.PgxApi.execution_arn
-  pgxflow-user-pool-authorizer-id      = aws_api_gateway_authorizer.pgxflow_user_pool_authorizer.id
-  hub_name                             = var.hub_name
-  pharmcat_configuration               = var.pharmcat_configuration
-  dynamo-project-users-table           = var.dynamo-project-users-table
-  dynamo-project-users-table-arn       = var.dynamo-project-users-table-arn
-  dynamo-clinic-jobs-table             = var.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
-  dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
-  dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
-  clinic-job-email-lambda-function-arn = var.clinic-job-email-lambda-function-arn
-  ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
-  ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
-  python_libraries_layer               = local.python_libraries_layer
-  python_modules_layer                 = local.python_modules_layer
-  binaries_layer                       = local.binaries_layer
+  source                             = "./pipeline_pharmcat"
+  region                             = var.region
+  data-portal-bucket-name            = var.data-portal-bucket-name
+  data-portal-bucket-arn             = var.data-portal-bucket-arn
+  pgxflow-backend-bucket-name        = aws_s3_bucket.pgxflow-bucket.bucket
+  pgxflow-backend-bucket-arn         = aws_s3_bucket.pgxflow-bucket.arn
+  pgxflow-reference-bucket-name      = aws_s3_bucket.pgxflow-references.bucket
+  pgxflow-reference-bucket-arn       = aws_s3_bucket.pgxflow-references.arn
+  cognito-user-pool-arn              = var.cognito-user-pool-arn
+  cognito-user-pool-id               = var.cognito-user-pool-id
+  hub_name                           = var.hub_name
+  pharmcat_configuration             = var.pharmcat_configuration
+  dynamo-project-users-table         = var.dynamo-project-users-table
+  dynamo-project-users-table-arn     = var.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table           = var.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn       = var.dynamo-clinic-jobs-table-arn
+  dynamo-references-table            = aws_dynamodb_table.pgxflow_references.name
+  dynamo-references-table-arn        = aws_dynamodb_table.pgxflow_references.arn
+  send-job-email-lambda-function-arn = module.lambda-sendJobEmail.lambda_function_arn
+  ec2-references-instance-role-arn   = aws_iam_role.ec2_references_instance_role.arn
+  ec2-references-instance-profile    = aws_iam_instance_profile.ec2_references_instance_profile.name
+  python_libraries_layer             = local.python_libraries_layer
+  python_modules_layer               = local.python_modules_layer
+  binaries_layer                     = local.binaries_layer
 
   common-tags = var.common-tags
 }
 
 module "pipeline_lookup" {
-  source                               = "./pipeline_lookup"
-  region                               = var.region
-  data-portal-bucket-name              = var.data-portal-bucket-name
-  data-portal-bucket-arn               = var.data-portal-bucket-arn
-  pgxflow-backend-bucket-name          = aws_s3_bucket.pgxflow-bucket.bucket
-  pgxflow-backend-bucket-arn           = aws_s3_bucket.pgxflow-bucket.arn
-  pgxflow-reference-bucket-name        = aws_s3_bucket.pgxflow-references.bucket
-  pgxflow-reference-bucket-arn         = aws_s3_bucket.pgxflow-references.arn
-  cognito-user-pool-arn                = var.cognito-user-pool-arn
-  cognito-user-pool-id                 = var.cognito-user-pool-id
-  pgxflow-api-gateway-id               = aws_api_gateway_rest_api.PgxApi.id
-  pgxflow-api-gateway-root-resource-id = aws_api_gateway_rest_api.PgxApi.root_resource_id
-  pgxflow-api-gateway-execution-arn    = aws_api_gateway_rest_api.PgxApi.execution_arn
-  pgxflow-user-pool-authorizer-id      = aws_api_gateway_authorizer.pgxflow_user_pool_authorizer.id
-  hub_name                             = var.hub_name
-  lookup_configuration                 = var.lookup_configuration
-  dynamo-project-users-table           = var.dynamo-project-users-table
-  dynamo-project-users-table-arn       = var.dynamo-project-users-table-arn
-  dynamo-clinic-jobs-table             = var.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn         = var.dynamo-clinic-jobs-table-arn
-  dynamo-references-table              = aws_dynamodb_table.pgxflow_references.name
-  dynamo-references-table-arn          = aws_dynamodb_table.pgxflow_references.arn
-  clinic-job-email-lambda-function-arn = var.clinic-job-email-lambda-function-arn
-  ec2-references-instance-role-arn     = aws_iam_role.ec2_references_instance_role.arn
-  ec2-references-instance-profile      = aws_iam_instance_profile.ec2_references_instance_profile.name
-  python_libraries_layer               = local.python_libraries_layer
-  python_modules_layer                 = local.python_modules_layer
-  binaries_layer                       = local.binaries_layer
+  source                             = "./pipeline_lookup"
+  region                             = var.region
+  data-portal-bucket-name            = var.data-portal-bucket-name
+  data-portal-bucket-arn             = var.data-portal-bucket-arn
+  pgxflow-backend-bucket-name        = aws_s3_bucket.pgxflow-bucket.bucket
+  pgxflow-backend-bucket-arn         = aws_s3_bucket.pgxflow-bucket.arn
+  pgxflow-reference-bucket-name      = aws_s3_bucket.pgxflow-references.bucket
+  pgxflow-reference-bucket-arn       = aws_s3_bucket.pgxflow-references.arn
+  cognito-user-pool-arn              = var.cognito-user-pool-arn
+  cognito-user-pool-id               = var.cognito-user-pool-id
+  hub_name                           = var.hub_name
+  lookup_configuration               = var.lookup_configuration
+  dynamo-project-users-table         = var.dynamo-project-users-table
+  dynamo-project-users-table-arn     = var.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table           = var.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn       = var.dynamo-clinic-jobs-table-arn
+  dynamo-references-table            = aws_dynamodb_table.pgxflow_references.name
+  dynamo-references-table-arn        = aws_dynamodb_table.pgxflow_references.arn
+  send-job-email-lambda-function-arn = module.lambda-sendJobEmail.lambda_function_arn
+  ec2-references-instance-role-arn   = aws_iam_role.ec2_references_instance_role.arn
+  ec2-references-instance-profile    = aws_iam_instance_profile.ec2_references_instance_profile.name
+  python_libraries_layer             = local.python_libraries_layer
+  python_modules_layer               = local.python_modules_layer
+  binaries_layer                     = local.binaries_layer
 
   common-tags = var.common-tags
+}
+
+#
+# initPgxflow Lambda Function
+#
+module "lambda-initFlow" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-initFlow"
+  description         = "Initializes a PGxFlow job"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-initFlow.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/initFlow"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    REFERENCE_BUCKET                    = aws_s3_bucket.pgxflow-references.bucket
+    PHARMCAT_PREPROCESSOR_SNS_TOPIC_ARN = module.pipeline_pharmcat.preprocessor_sns_topic_arn
+    LOOKUP_DBSNP_SNS_TOPIC_ARN          = module.pipeline_lookup.dbsnp_sns_topic_arn
+    HUB_NAME                            = var.hub_name
+    PHARMCAT_ORGANISATIONS              = jsonencode(var.pharmcat_configuration.ORGANISATIONS)
+    PHARMCAT_GENES                      = join(",", var.pharmcat_configuration.GENES)
+    PHARMCAT_DRUGS                      = join(",", var.pharmcat_configuration.DRUGS)
+    LOOKUP_REFERENCE                    = var.lookup_configuration["assoc_matrix_filename"]
+    LOOKUP_CHR_HEADER                   = var.lookup_configuration["chr_header"]
+    LOOKUP_START_HEADER                 = var.lookup_configuration["start_header"]
+    LOOKUP_END_HEADER                   = var.lookup_configuration["end_header"]
+    DYNAMO_PROJECT_USERS_TABLE          = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE            = var.dynamo-clinic-jobs-table
+    DYNAMO_PGXFLOW_REFERENCES_TABLE     = aws_dynamodb_table.pgxflow_references.name
+    SEND_JOB_EMAIL_ARN                  = module.lambda-sendJobEmail.lambda_function_arn
+    HTS_S3_HOST                         = "s3.${var.region}.amazonaws.com"
+  }
+
+  layers = [
+    local.python_modules_layer,
+    local.binaries_layer,
+  ]
+}
+
+#
+# getResultsURL Lambda Function
+#
+module "lambda-getResultsURL" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-getResultsURL"
+  description         = "Returns the presigned results URL for PGxFlow results"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-getResultsURL.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/getResultsURL"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DPORTAL_BUCKET             = var.data-portal-bucket-name
+    DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+#
+# sendJobEmail Lambda Function
+#
+module "lambda-sendJobEmail" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-sendJobEmail"
+  description         = "Invokes sendJobEmail to send email to user"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-sendJobEmail.json,
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/sendJobEmail"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -125,7 +225,7 @@ module "lambda-qcNotes" {
   ]
 
   environment_variables = {
-    FILE_LOCATION   = var.data-portal-bucket-name
+    FILE_LOCATION = var.data-portal-bucket-name
   }
 
   layers = [

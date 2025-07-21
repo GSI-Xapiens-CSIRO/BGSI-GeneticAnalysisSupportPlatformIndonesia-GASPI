@@ -47,10 +47,11 @@ def run_preprocessor(input_path, vcf, reference_fna, reference_vcf, missing_to_r
 
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
-    request_id = event["requestId"]
-    source_vcf_key = event["sourceVcfKey"]
-    project = event["projectName"]
-    missing_to_ref = event["missingToRef"]
+    message = json.loads(event["Records"][0]["Sns"]["Message"])
+    request_id = message["requestId"]
+    source_vcf_key = message["sourceVcfKey"]
+    project = message["projectName"]
+    missing_to_ref = message["missingToRef"]
 
     try:
         vcf = f"{request_id}.vcf.gz"
