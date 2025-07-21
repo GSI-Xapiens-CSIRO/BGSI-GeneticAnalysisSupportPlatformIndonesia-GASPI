@@ -41,27 +41,6 @@ variable "pgxflow-reference-bucket-arn" {
   description = "ARN of the S3 bucket where PGxFlow reference files are stored"
 }
 
-# API Configuration
-variable "pgxflow-api-gateway-id" {
-  type        = string
-  description = "ID of the PGxFlow API"
-}
-
-variable "pgxflow-api-gateway-root-resource-id" {
-  type        = string
-  description = "Root Resource ID of the PGxFlow API"
-}
-
-variable "pgxflow-api-gateway-execution-arn" {
-  type        = string
-  description = "Execution ARN of the PGxFlow API"
-}
-
-variable "pgxflow-user-pool-authorizer-id" {
-  type        = string
-  description = "ID of the user pool authorizer for the PGxFlow API"
-}
-
 # PGxFlow Configuration
 variable "hub_name" {
   type        = string
@@ -78,6 +57,11 @@ variable "pharmcat_configuration" {
     DRUGS = list(string)
   })
   description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
+}
+
+variable "send-job-email-lambda-function-arn" {
+  type        = string
+  description = "ARN for the sendJobEmail lambda function"
 }
 
 # external dynamodb tables
@@ -99,11 +83,6 @@ variable "dynamo-clinic-jobs-table" {
 variable "dynamo-clinic-jobs-table-arn" {
   type        = string
   description = "Dynamo clinic jobs table ARN"
-}
-
-variable "clinic-job-email-lambda-function-arn" {
-  type        = string
-  description = "Lambda function ARN for sending Clinic Job emails"
 }
 
 variable "dynamo-references-table" {

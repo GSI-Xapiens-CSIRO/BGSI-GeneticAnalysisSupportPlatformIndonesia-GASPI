@@ -50,6 +50,137 @@ data "aws_iam_policy_document" "ec2_references_policy" {
 }
 
 #
+# initFlow Lambda Function
+#
+data "aws_iam_policy_document" "lambda-initFlow" {
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.data-portal-bucket-arn,
+    ]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "projects/*/project-files/*",
+      ]
+    }
+  }
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/project-files/*",
+      "${aws_s3_bucket.pgxflow-references.arn}/*",
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+      aws_dynamodb_table.pgxflow_references.arn,
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "sns:Publish"
+    ]
+    resources = [
+      module.pipeline_lookup.dbsnp_sns_topic_arn,
+      module.pipeline_pharmcat.preprocessor_sns_topic_arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      module.lambda-sendJobEmail.lambda_function_arn,
+    ]
+  }
+}
+
+
+#
+# getResultsURL Lambda Function
+#
+data "aws_iam_policy_document" "lambda-getResultsURL" {
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
+    ]
+  }
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      var.data-portal-bucket-arn
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
+}
+
+#
+# sendJobEmail Lambda Function
+#
+data "aws_iam_policy_document" "lambda-sendJobEmail" {
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.clinic-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+}
+
+#
 # vcfstatsGraphic Lambda Function
 #
 data "aws_iam_policy_document" "lambda-qcFigures" {

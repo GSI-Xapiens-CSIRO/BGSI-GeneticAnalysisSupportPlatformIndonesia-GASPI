@@ -140,9 +140,10 @@ def annotate_rsids(local_renamed_vcf_path, dbsnp_vcf_s3_uri, local_norm_regions_
 
 def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
-    request_id = event["requestId"]
-    project_name = event["projectName"]
-    source_vcf_key = event["sourceVcfKey"]
+    message = json.loads(event["Records"][0]["Sns"]["Message"])
+    request_id = message["requestId"]
+    source_vcf_key = message["sourceVcfKey"]
+    project = message["projectName"]
 
     source_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{source_vcf_key}"
     dbsnp_vcf_s3_uri = f"s3://{REFERENCE_BUCKET}/{DBSNP_REFERENCE}"
@@ -190,7 +191,7 @@ def lambda_handler(event, context):
             Payload=json.dumps(
                 {
                     "requestId": request_id,
-                    "projectName": project_name,
+                    "projectName": project,
                     "dbsnpAnnotatedVcfLocation": annotated_vcf_location,
                 }
             ),

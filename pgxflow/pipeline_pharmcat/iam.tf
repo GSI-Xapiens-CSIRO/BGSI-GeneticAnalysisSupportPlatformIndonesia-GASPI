@@ -1,57 +1,3 @@
-data "aws_iam_policy_document" "lambda-initPharmcat" {
-  statement {
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      var.data-portal-bucket-arn,
-    ]
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values = [
-        "projects/*/project-files/*",
-      ]
-    }
-  }
-  statement {
-    actions = [
-      "s3:GetObject",
-    ]
-    resources = [
-      "${var.data-portal-bucket-arn}/projects/*/project-files/*",
-    ]
-  }
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-    ]
-    resources = [
-      var.dynamo-project-users-table-arn,
-      var.dynamo-references-table-arn,
-    ]
-  }
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-    ]
-    resources = [
-      var.dynamo-clinic-jobs-table-arn,
-    ]
-  }
-  statement {
-    actions = [
-      "lambda:InvokeFunction"
-    ]
-    resources = [
-      module.lambda-preprocessor.lambda_function_arn,
-      module.lambda-sendJobEmail.lambda_function_arn,
-    ]
-  }
-}
-
 data "aws_iam_policy_document" "lambda-preprocessor" {
   statement {
     actions = [
@@ -101,7 +47,7 @@ data "aws_iam_policy_document" "lambda-preprocessor" {
     ]
     resources = [
       module.lambda-pharmcat.lambda_function_arn,
-      module.lambda-sendJobEmail.lambda_function_arn,
+      var.send-job-email-lambda-function-arn,
     ]
   }
 }
@@ -140,7 +86,7 @@ data "aws_iam_policy_document" "lambda-pharmcat" {
     ]
     resources = [
       module.lambda-postprocessor.lambda_function_arn,
-      module.lambda-sendJobEmail.lambda_function_arn,
+      var.send-job-email-lambda-function-arn,
     ]
   }
 }
@@ -178,7 +124,7 @@ data "aws_iam_policy_document" "lambda-postprocessor" {
     ]
     resources = [
       module.lambda-gnomad.lambda_function_arn,
-      module.lambda-sendJobEmail.lambda_function_arn,
+      var.send-job-email-lambda-function-arn,
     ]
   }
   statement {
@@ -224,34 +170,7 @@ data "aws_iam_policy_document" "lambda-gnomad" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      module.lambda-sendJobEmail.lambda_function_arn,
-    ]
-  }
-}
-
-data "aws_iam_policy_document" "lambda-getResultsURL" {
-  statement {
-    actions = [
-      "s3:GetObject",
-    ]
-    resources = [
-      "${var.data-portal-bucket-arn}/projects/*/clinical-workflows/*"
-    ]
-  }
-  statement {
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      var.data-portal-bucket-arn
-    ]
-  }
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-    ]
-    resources = [
-      var.dynamo-project-users-table-arn,
+      var.send-job-email-lambda-function-arn,
     ]
   }
 }
@@ -309,37 +228,6 @@ data "aws_iam_policy_document" "lambda-updateReferenceFiles" {
     ]
     resources = [
       var.ec2-references-instance-role-arn,
-    ]
-  }
-}
-
-data "aws_iam_policy_document" "lambda-sendJobEmail" {
-  statement {
-    actions = [
-      "lambda:InvokeFunction",
-    ]
-    resources = [
-      var.clinic-job-email-lambda-function-arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-    ]
-    resources = [
-      var.dynamo-clinic-jobs-table-arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "cognito-idp:ListUsers",
-    ]
-    resources = [
-      var.cognito-user-pool-arn,
     ]
   }
 }
