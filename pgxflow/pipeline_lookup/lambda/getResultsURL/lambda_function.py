@@ -8,12 +8,14 @@ from shared.utils import LoggingClient
 
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
+LOOKUP_CONFIGURATION = os.environ["LOOKUP_CONFIGURATION"]
 
 s3_client = LoggingClient("s3")
 
 
 def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
+    print(f"[DEBUGGER]: Lookup configuration: {json.dumps(LOOKUP_CONFIGURATION)}")
 
     try:
         sub = event["requestContext"]["authorizer"]["claims"]["sub"]

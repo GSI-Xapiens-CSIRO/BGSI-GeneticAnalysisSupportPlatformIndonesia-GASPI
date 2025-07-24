@@ -188,6 +188,7 @@ module "lambda-getResultsURL" {
     RESULT_SUFFIX              = local.result_suffix
     DPORTAL_BUCKET             = var.data-portal-bucket-name
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+    LOOKUP_CONFIGURATION       = var.lookup_configuration
   }
 
   layers = [
