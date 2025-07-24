@@ -1,12 +1,12 @@
 #
-# initPharmcat -> preprocessor
+# preprocesor Lambda Function
 #
-resource "aws_lambda_permission" "LambdaPreprocessor" {
-  statement_id  = "PGxFlowBackendAllowLambdaPreprocessorInvoke"
+resource "aws_lambda_permission" "preprocessor_invoke_permission" {
+  statement_id  = "SNSPreprocessorAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-preprocessor.lambda_function_arn
-  principal     = "lambda.amazonaws.com"
-  source_arn    = module.lambda-initPharmcat.lambda_function_arn
+  function_name = module.lambda-preprocessor.lambda_function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.preprocessor.arn
 }
 
 #
