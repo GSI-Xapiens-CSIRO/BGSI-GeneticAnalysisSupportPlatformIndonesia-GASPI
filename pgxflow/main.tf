@@ -135,8 +135,8 @@ module "lambda-getResultsURL" {
   environment_variables = {
     DPORTAL_BUCKET             = var.data-portal-bucket-name
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
-    LOOKUP_CONFIGURATION       = var.lookup_configuration
-    PHARMCAT_CONFIGURATION     = var.pharmcat_configuration
+    LOOKUP_CONFIGURATION       = try(var.lookup_configuration, "")
+    PHARMCAT_CONFIGURATION     = try(var.pharmcat_configuration, "")
   }
 
   layers = [
