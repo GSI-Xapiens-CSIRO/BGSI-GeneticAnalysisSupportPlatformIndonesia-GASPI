@@ -1,5 +1,9 @@
 <h1 mat-dialog-title>View and update: {{ data.project.name }}</h1>
+
 <div mat-dialog-content>
+  <div class="p-4 my-4 font-medium text-yellow-800 rounded-lg bg-yellow-100" role="alert">
+    Multi-sampled VCF is for the Data Portal functionalities, and only single-sampled and compressed VCF works for the Clinical workflow
+  </div>
   <div class="flex flex-col space-y-1">
     @for (
       file of project.files.slice(

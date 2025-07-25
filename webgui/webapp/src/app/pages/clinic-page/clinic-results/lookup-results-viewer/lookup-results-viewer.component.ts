@@ -49,19 +49,28 @@ import {
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
-
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
+import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+
 type LookupResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
   chromosome: string;
+  config?: {
+    lookup?: {
+      chr_header: string;
+      start_header: string;
+      end_header: string;
+    };
+    pharmcat?: any;
+  };
 };
 
 @Component({
@@ -85,6 +94,7 @@ type LookupResult = {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    NoResultsAlertComponent,
   ],
   providers: [
     {
@@ -102,6 +112,7 @@ export class LookupResultsViewerComponent
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild(MatSort) sort!: MatSort;
+
   readonly panelOpenState = signal(false);
   protected results: LookupResult | null = null;
   protected columns: string[] = COLUMNS[environment.hub_name].lookupCols;
@@ -127,6 +138,7 @@ export class LookupResultsViewerComponent
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
+  protected isLoading = false;
 
   constructor(
     protected cs: ClinicService,
@@ -137,6 +149,42 @@ export class LookupResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
+
+  /**
+   * Check if lookup configuration is available and has data
+   */
+  hasLookupConfig(): boolean {
+    const config = this.results?.config?.lookup;
+    return !!(
+      config &&
+      (config.chr_header || config.start_header || config.end_header)
+    );
+  }
+
+  /**
+   * Get lookup configuration
+   */
+  getLookupConfig(): {
+    chr_header: string;
+    start_header: string;
+    end_header: string;
+  } | null {
+    return this.results?.config?.lookup || null;
+  }
+
+  /**
+   * Get header fields as array for display
+   */
+  getHeaderFields(): Array<{ label: string; value: string }> {
+    const config = this.getLookupConfig();
+    if (!config) return [];
+
+    return [
+      { label: 'Chromosome Header', value: config.chr_header || 'N/A' },
+      { label: 'Start Position Header', value: config.start_header || 'N/A' },
+      { label: 'End Position Header', value: config.end_header || 'N/A' },
+    ];
+  }
 
   resort(sort: Sort) {
     const snapshot = [...this.currentRenderedRows];
@@ -237,6 +285,7 @@ export class LookupResultsViewerComponent
     this.originalRows = [];
     this.dataRows.next([]);
     this.ss.start();
+    this.isLoading = true;
     this.cs
       .getClinicResults(
         requestId,
@@ -248,13 +297,31 @@ export class LookupResultsViewerComponent
       )
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
+        // // TODO: remove this result initialization once backend is fixed
+        // this.results = {
+        //   config: {
+        //     lookup: {
+        //       chr_header: 'chr',
+        //       start_header: 'start',
+        //       end_header: 'end',
+        //     },
+        //   },
+        //   url: '',
+        //   pages: {},
+        //   content: '',
+        //   page: 0,
+        //   chromosome: '',
+        // };
+
         if (!data) {
           this.tstr.error('Failed to load data', 'Error');
         } else {
           this.results = data;
+
           this.updateTable(data);
         }
         this.ss.end();
+        this.isLoading = false;
       });
   }
 
@@ -264,6 +331,8 @@ export class LookupResultsViewerComponent
       console.warn('updateTable ran before originalRows was initialised');
     }
     this.results = result;
+    // TODO: Remove this check once the backend is fixed to always return config
+
     const lines = result.content.split('\n');
     this.originalRows = lines
       .filter((l) => l.length > 0)

@@ -24,6 +24,7 @@ import {
   Observable,
   of,
   Subject,
+  Subscription,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import {
@@ -52,8 +53,6 @@ import {
   VIRTUAL_SCROLL_STRATEGY,
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
-// import { AutoCompleteComponent } from './auto-complete/auto-complete.component';
-
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -61,11 +60,23 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
+import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+
 type PharmcatResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
+  config: {
+    pharmcat: {
+      ORGANISATIONS: Array<{
+        gene: string;
+        drug: string;
+      }>;
+      GENES: string[];
+      DRUGS: string[];
+    };
+  };
 };
 
 @Injectable()
@@ -110,6 +121,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatTooltipModule,
     MatAutocompleteModule,
     RsponBoxDataViewComponent,
+    NoResultsAlertComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -127,13 +139,15 @@ export class PharmcatResultsViewerComponent {
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+
   protected results: PharmcatResult | null = null;
   protected diplotypeColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.diplotypeCols;
-  protected variantColumns: string =
+  protected variantColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.variantCols;
   protected warningColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.warningCols;
+
   protected diplotypeOriginalRows: any[] = [];
   protected diplotypeHasRows: boolean = false;
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
@@ -142,6 +156,7 @@ export class PharmcatResultsViewerComponent {
   protected diplotypeCurrentRenderedRows: any[] = [];
   protected diplotypeFilterField: FormControl = new FormControl('');
   protected diplotypeScopeReduced: boolean = false;
+
   protected variantOriginalRows: any[] = [];
   protected variantHasRows: boolean = false;
   protected variantDataRows = new BehaviorSubject<any[]>([]);
@@ -150,10 +165,12 @@ export class PharmcatResultsViewerComponent {
   protected variantCurrentRenderedRows: any[] = [];
   protected variantFilterField: FormControl = new FormControl('');
   protected variantScopeReduced: boolean = false;
+
   protected warningOriginalRows: any[] = [];
   protected warningDataRows = new BehaviorSubject<any[]>([]);
   protected warningDataView = new Observable<any[]>();
   protected warningCurrentRenderedRows: any[] = [];
+
   protected annotationForm: FormGroup = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -162,10 +179,12 @@ export class PharmcatResultsViewerComponent {
     ]),
     annotation: new FormControl('', [Validators.required]),
   });
+
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
   rows: any[] = [];
+  protected isLoading: boolean = false;
 
   constructor(
     protected cs: ClinicService,
@@ -176,6 +195,49 @@ export class PharmcatResultsViewerComponent {
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
+
+  /**
+   * Check if PharmCAT configuration is available and has data
+   */
+  hasPharmcatConfig(): boolean {
+    const config = this.results?.config?.pharmcat;
+    return !!(
+      config &&
+      (config.ORGANISATIONS?.length > 0 ||
+        config.GENES?.length > 0 ||
+        config.DRUGS?.length > 0)
+    );
+  }
+
+  /**
+   * Get organizations from PharmCAT configuration
+   */
+  getOrganisations(): Array<{ gene: string; drug: string }> {
+    return this.results?.config?.pharmcat?.ORGANISATIONS || [];
+  }
+
+  /**
+   * Get genes from PharmCAT configuration
+   */
+  getGenes(): string[] {
+    return this.results?.config?.pharmcat?.GENES || [];
+  }
+
+  /**
+   * Get drugs from PharmCAT configuration
+   */
+  getDrugs(): string[] {
+    return this.results?.config?.pharmcat?.DRUGS || [];
+  }
+
+  /**
+   * Get unique organization names
+   */
+  getUniqueOrganizations(): string[] {
+    const orgs = this.getOrganisations();
+    const uniqueOrgs = [...new Set(orgs.map((org) => org.gene))];
+    return uniqueOrgs;
+  }
 
   resortDiplotypes(sort: Sort) {
     const snapshot = [...this.diplotypeCurrentRenderedRows];
@@ -206,6 +268,7 @@ export class PharmcatResultsViewerComponent {
         return value[0].slice(start, end);
       }),
     );
+
     this.variantDataView = combineLatest([
       this.variantDataRows,
       this.scrollStrategy.scrolledIndexChange,
@@ -220,6 +283,7 @@ export class PharmcatResultsViewerComponent {
         return value[0].slice(start, end);
       }),
     );
+
     this.warningDataView = combineLatest([
       this.warningDataRows,
       this.scrollStrategy.scrolledIndexChange,
@@ -234,6 +298,7 @@ export class PharmcatResultsViewerComponent {
         return value[0].slice(start, end);
       }),
     );
+
     this.diplotypeDataView.subscribe((rows) => (this.rows = rows));
   }
 
@@ -352,6 +417,8 @@ export class PharmcatResultsViewerComponent {
     this.variantDataRows.next([]);
     this.warningDataRows.next([]);
     this.ss.start();
+    this.isLoading = true;
+
     this.cs
       .getClinicResults(requestId, projectName, null, page, null, pipeline)
       .pipe(catchError(() => of(null)))
@@ -362,6 +429,7 @@ export class PharmcatResultsViewerComponent {
           this.results = data;
           this.updateTable(data);
         }
+        this.isLoading = false;
         this.ss.end();
       });
   }
@@ -379,11 +447,9 @@ export class PharmcatResultsViewerComponent {
       });
       return diplotypeRow;
     });
-    this.diplotypeHasRows =
-      this.diplotypeOriginalRows.length > 0 ? true : false;
+    this.diplotypeHasRows = this.diplotypeOriginalRows.length > 0;
 
     const variants = resultJson.variants;
-    this.variantOriginalRows = variants;
     this.variantOriginalRows = variants.map((variant: any) => {
       const variantRow: any = {};
       Object.values(variant).forEach((v, i) => {
@@ -391,7 +457,7 @@ export class PharmcatResultsViewerComponent {
       });
       return variantRow;
     });
-    this.variantHasRows = this.variantOriginalRows.length > 0 ? true : false;
+    this.variantHasRows = this.variantOriginalRows.length > 0;
 
     const warnings = resultJson.messages;
     this.warningOriginalRows = warnings.map((warning: any) => {
