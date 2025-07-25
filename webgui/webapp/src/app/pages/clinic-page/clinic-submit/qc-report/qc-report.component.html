@@ -1,3 +1,26 @@
+<mat-card>
+  <mat-card-content>
+    <div class="flex flex-row gap-4 items-center">
+      <button
+        (click)="backToList()"
+        mat-mini-fab
+        color="primary"
+      >
+        <mat-icon style="color: white">keyboard_backspace</mat-icon>
+      </button>
+      <div class="text-base">
+        Statistic Graph of
+        <b class="text-primary-60 text-xl">{{
+          fileName || ""
+        }}</b>
+        file from the
+        <b class="text-primary-60 text-xl"
+          >{{ projectName }}
+        </b>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
 <mat-card class="mt-2">
   <mat-card-content>
     <app-component-spinner [loading]="loading" />
@@ -29,13 +52,53 @@
             </div>
             <div
               class="text-lg text-black h-full"
-              [style.color]="item.url ? 'gray' : '#950606'"
+              [style.color]="
+                item.status === 'failed'
+                  ? '#FACD15'
+                  : item.status === 'error'
+                    ? '#950606'
+                    : 'gray'
+              "
               [style.font-weight]="item.url ? '' : '600'"
             >
               {{ item.desc }}
             </div>
           </div>
         }
+      }
+    </div>
+    <div class="p-4">
+      <div class="font-semibold text-primary-60 text-3xl mb-2">Notes</div>
+      @if (editNotes) {
+        <textarea
+          matInput
+          [(ngModel)]="editNotesText"
+          rows="4"
+          class="w-full p-2 border border-gray-300 rounded text-lg"
+        ></textarea>
+        <div class="flex flex-row space-x-2">
+          <button
+            color="primary"
+            mat-mini-fab
+            (click)="editNotesText = ''; editNotes = !editNotes"
+          >
+            <mat-icon>cancel</mat-icon>
+          </button>
+          <button color="primary" mat-mini-fab (click)="saveNotes()">
+            <mat-icon>save</mat-icon>
+          </button>
+        </div>
+      } @else {
+        <div class="text-lg text-black">
+          {{ notes || "No notes available." }}
+        </div>
+        <button
+          color="primary"
+          mat-mini-fab
+          (click)="editNotesText = notes; editNotes = !editNotes"
+        >
+          <mat-icon>edit</mat-icon>
+        </button>
       }
     </div>
   </mat-card-content>

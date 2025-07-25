@@ -1,0 +1,57 @@
+<h1 mat-dialog-title>Add the selected variants to reporting</h1>
+<div mat-dialog-content>
+  @if (data.variants.length > 0) {
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
+      @for (selectedItem of data.variants; track $index) {
+        <div>
+          <strong
+            class="cursor-pointer"
+            (click)="removeSelectedVariant(selectedItem)"
+            >[ <span class="text-red-500">X</span> ]</strong
+          >
+          @for (item of selectedItem | keyvalue; track $index) {
+            {{ item.key }}: {{ item.value }}
+            @if (!$last) {
+              |
+            }
+          }
+        </div>
+        <div class="w-full h-1 bg-primary-60 my-1"></div>
+      }
+      <form [formGroup]="saveForm">
+        <mat-form-field class="w-full my-1">
+          <mat-label>Comments</mat-label>
+          <textarea
+            formControlName="comment"
+            matInput
+            placeholder="Enter your comments here"
+          ></textarea>
+          <mat-error>Comments are needed</mat-error>
+        </mat-form-field>
+      </form>
+    </div>
+  } @else {
+    <div class="text-red-500">No variants selected</div>
+  }
+  <div class="flex flex-row space-x-1 items-center my-2">
+    <button
+      mat-raised-button
+      mat-dialog-close
+      color="primary"
+      class="w-[110px]"
+    >
+      close
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      class="w-[110px]"
+      [disabled]="saveForm.invalid || data.variants.length === 0"
+      (click)="saveForReporting()"
+    >
+      Save
+    </button>
+  </div>
+</div>

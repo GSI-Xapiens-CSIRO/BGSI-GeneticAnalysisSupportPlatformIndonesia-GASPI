@@ -69,7 +69,7 @@ export class AdminService {
     );
   }
 
-  updateUsersGroups(email: string, groups: any) {
+  updateUsersGroups(email: string, groups: any, attributes: any) {
     return from(
       API.post(
         environment.api_endpoint_sbeacon.name,
@@ -77,6 +77,7 @@ export class AdminService {
         {
           body: {
             groups,
+            attributes,
           },
         },
       ),

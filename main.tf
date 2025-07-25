@@ -153,9 +153,28 @@ module "webgui" {
   bui-ssm-parameter-name  = var.bui-ssm-parameter-name
   web_acl_arn             = module.security.web_acl_arn
   hub_name                = var.hub_name
+  svep-warning-thresholds = var.svep-warning-thresholds
 
   common-tags = merge(var.common-tags, {
     "NAME" = "portal-frontend"
   })
 }
 
+provider "aws" {
+  region = var.region
+  alias  = "error-catcher"
+  default_tags {
+    tags = merge(var.common-tags, {
+      "NAME" = "error-catcher"
+    })
+  }
+}
+
+module "error-catcher" {
+  source           = "./error_catcher"
+  ses-source-email = var.ses-source-email
+  ses-target-email = var.gaspi-admin-email
+  providers = {
+    aws = aws.error-catcher
+  }
+}

@@ -1,12 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  EventEmitter,
-  Inject,
-  Input,
-  Output,
-  signal,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -32,7 +25,9 @@ import { PopOverComponent } from './pop-over/pop-over.component';
 })
 export class BoxDataComponent {
   @Input() row: any = null;
+  @Input() rows: any = null;
   @Input() expanded = false;
+  @Input() isSelected: boolean = false;
   @Output() panelToggled = new EventEmitter<boolean>();
 
   readonly panelOpenState = signal(false);
@@ -44,6 +39,11 @@ export class BoxDataComponent {
 
   togglePanel(opened: boolean) {
     this.panelToggled.emit(opened);
+  }
+
+  isSingleData() {
+    const isTrue = this.rows.length <= 1 ? true : false;
+    return isTrue;
   }
 
   splitPubMedArray(pubmedString: string): string[] {
@@ -73,6 +73,18 @@ export class BoxDataComponent {
     const url =
       urlMap[column] ||
       `https://asia.ensembl.org/Homo_sapiens/Location/View?r=${value}`;
+    window.open(url, '_blank');
+  }
+
+  handleRedirectGnomad(row: any, gnomadVer: 'gnomad_r4' | 'gnomad_r3') {
+    // convert region e.g chr19:11120436-11120436 to 9-11120436
+    // for redirect to gnomad params url
+    const match = row['Region'].match(/^chr(\d+):(\d+)-/);
+    const region = `${match[1]}-${match[2]}`;
+    const ref = row['ref'];
+    const alt = row['Alt Allele'];
+
+    const url = `https://gnomad.broadinstitute.org/variant/${region}-${ref}-${alt}?dataset=${gnomadVer}`;
     window.open(url, '_blank');
   }
 

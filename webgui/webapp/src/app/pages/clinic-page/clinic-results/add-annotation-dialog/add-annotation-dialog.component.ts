@@ -19,6 +19,8 @@ import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
+import { environment } from 'src/environments/environment';
+import { REPORTING_CONFIGS } from '../hub_configs';
 
 @Component({
   selector: 'app-add-annotation-dialog',
@@ -49,8 +51,24 @@ export class AddAnnotationDialogComponent {
     public data: { projectName: string; requestId: string },
   ) {}
 
+  filterCols(row: { [key: string]: string }): { [key: string]: string } {
+    if (environment.hub_name in REPORTING_CONFIGS) {
+      const { cols } = REPORTING_CONFIGS[environment.hub_name];
+      const filteredRow: { [key: string]: string } = {};
+      for (const col of cols) {
+        if (row[col]) {
+          filteredRow[col] = row[col];
+        }
+      }
+      return filteredRow;
+    }
+    return row;
+  }
+
   saveAnnotations() {
-    const variants = [...this.cs.selectedVariants.getValue().values()];
+    const variants = [...this.cs.selectedVariants.getValue().values()].map(
+      (row) => this.filterCols(row),
+    );
     this.ss.start();
     this.cs
       .saveAnnotations(

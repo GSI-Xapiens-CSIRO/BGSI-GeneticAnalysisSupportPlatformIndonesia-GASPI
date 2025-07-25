@@ -28,6 +28,7 @@ import { ProfileMenuComponent } from './components/profile-menu/profile-menu.com
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ListMenuComponent } from './components/list-menu/list-menu.component';
+import { HeartBeatComponent } from './components/heart-beat/heart-beat.component';
 
 @Component({
   selector: 'app-root',
@@ -38,13 +39,13 @@ import { ListMenuComponent } from './components/list-menu/list-menu.component';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    RouterLinkActive,
     RouterLink,
     RouterOutlet,
     AsyncPipe,
     GlobalSpinnerComponent,
     ProfileMenuComponent,
     ListMenuComponent,
+    HeartBeatComponent,
   ],
   providers: [SpinnerService],
 })
@@ -99,7 +100,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isCollapsed = true;
     this.http.get('version.txt', { responseType: 'text' }).subscribe(
       // Use empty string in case of getting full redirected xml if missing
-      version => this.buildVersion = version.length < 64 ? version : ''
+      (version) => (this.buildVersion = version.length < 64 ? version : ''),
     );
   }
   @HostListener('window:resize', ['event'])

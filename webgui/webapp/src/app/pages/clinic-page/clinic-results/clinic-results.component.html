@@ -62,6 +62,8 @@
     <app-svep-results-viewer
       [requestId]="requestId"
       [projectName]="projectName"
+      [listData]="receivedData"
+      [selectedData]="selectedData"
     />
   } @else if (["RSPON"].includes(hubName)) {
     <app-pharmcat-results-viewer
@@ -80,7 +82,12 @@
     />
   }
 
-  <app-annotation-viewer [requestId]="requestId" [projectName]="projectName" />
+  <app-annotation-viewer
+    [requestId]="requestId"
+    [projectName]="projectName"
+    (dataSent)="handleChildData($event)"
+    (selectAnotation)="handleSelectedAnotation($event)"
+  />
   <app-saved-for-reporting-viewer
     [requestId]="requestId"
     [projectName]="projectName"

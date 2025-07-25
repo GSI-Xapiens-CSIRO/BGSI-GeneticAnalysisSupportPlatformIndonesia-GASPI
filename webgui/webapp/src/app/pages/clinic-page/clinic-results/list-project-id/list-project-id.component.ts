@@ -42,6 +42,13 @@ import { AsyncPipe } from '@angular/common';
 import dayjs from 'dayjs';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { clinicResort } from 'src/app/utils/clinic';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const localTz = dayjs.tz.guess();
 
 interface Project {
   job_id: string;
@@ -256,7 +263,10 @@ export class ListJobComponent implements OnChanges, OnInit {
           this.dataSource.data = response.jobs.map((job: any) => {
             return {
               ...job,
-              created_at: dayjs(job.created_at).format('DD/MM/YYYY'),
+              created_at: dayjs
+                .utc(job.created_at)
+                .tz(localTz) // Convert to local timezone
+                .format('YYYY-MM-DD HH:mm:ss'),
             };
           });
 

@@ -8,7 +8,7 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Show warnings</mat-panel-title>
             </mat-expansion-panel-header>
-            <cdk-virtual-scroll-viewport [style.height.px]="400" itemSize="48">
+            <cdk-virtual-scroll-viewport appCustomVirtualScroll #warningViewport [style.height.px]="400" itemSize="48" class="warning-viewport">
               <table mat-table [dataSource]="warningDataView" matSort>
                 @for (column of warningColumns; track $index) {
                   <ng-container [matColumnDef]="column">
@@ -48,62 +48,62 @@
       }
     </div>
     <h2>Diplotypes Table</h2>
-    <div class="flex flex-row space-x-1 items-center mb-2">
-      @if (!diplotypeScopeReduced) {
-        <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
-          <mat-label>Filter term</mat-label>
-          <input matInput [formControl]="diplotypeFilterField" />
-        </mat-form-field>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="filterDiplotypes()"
-          class="w-[110px]"
-        >
-          Filter
-        </button>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="resetDiplotypes()"
-          class="w-[110px]"
-        >
-          Reset
-        </button>
-      } @else {
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="resetRelatedDiplotype()"
-          class="w-[200px]"
-        >
-          Clear Diplotype Filter
-        </button>
-      }
-      @if ((cs.selectedVariants | async)!.size > 0) {
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="openAnnotateDialog()"
-          class="w-[110px]"
-        >
-          Annotate
-        </button>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="openSaveForReportingDialog()"
-          class="w-[175px]"
-        >
-          Save for Reporting
-        </button>
-      }
-    </div>
-    @if (diplotypeDataRows.value.length > 0) {
+    @if (diplotypeHasRows) {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        @if (!diplotypeScopeReduced) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="diplotypeFilterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filterDiplotypes()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetDiplotypes()"
+            class="w-[110px]"
+          >
+            Reset
+          </button>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetRelatedDiplotype()"
+            class="w-[200px]"
+          >
+            Clear Diplotype Filter
+          </button>
+        }
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
       <div
         class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700 p-2"
       >
-        <cdk-virtual-scroll-viewport [style.height.px]="500">
+        <cdk-virtual-scroll-viewport appCustomVirtualScroll #diplotypeViewport [style.height.px]="500" class="diplotype-viewport">
           @if (rows.length > 0) {
             <div class="flex flex-col gap-2">
               @for (row of rows; track row) {
@@ -112,6 +112,7 @@
                   [selected]="
                     (cs.selectedVariants | async)!.has(cs.hashRow(row))
                   "
+                  [variantHasRows]="variantHasRows"
                   (change)="handleSelectionChange(row, $event)"
                   (filter)="filterRelatedVariants($event)"
                 />
@@ -119,6 +120,10 @@
             </div>
           }
         </cdk-virtual-scroll-viewport>
+      </div>
+    } @else {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <p>No results to show.</p>
       </div>
     }
   </mat-card-content>
@@ -165,7 +170,7 @@
       <div
         class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
       >
-        <cdk-virtual-scroll-viewport [style.height.px]="500">
+        <cdk-virtual-scroll-viewport appCustomVirtualScroll #variantViewport [style.height.px]="500" class="variant-viewport">
           <table
             mat-table
             [dataSource]="variantDataView"
@@ -186,6 +191,7 @@
                     <a
                       (click)="filterRelatedDiplotype(element[column])"
                       class="text-blue-500 hover:underline cursor-pointer"
+                      [ariaDisabled]="diplotypeHasRows"
                       >See related diplotypes</a
                     >
                   </td>

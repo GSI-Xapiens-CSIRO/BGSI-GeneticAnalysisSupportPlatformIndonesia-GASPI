@@ -362,7 +362,8 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
             );
           } else if (
             err?.response?.status === 403 &&
-            err?.response?.data?.code === 'QUOTA_EXCEEDED'
+            (err?.response?.data?.code === 'QUOTA_EXCEEDED' ||
+              err?.response?.data?.code === 'NO_QUOTA')
           ) {
             this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',

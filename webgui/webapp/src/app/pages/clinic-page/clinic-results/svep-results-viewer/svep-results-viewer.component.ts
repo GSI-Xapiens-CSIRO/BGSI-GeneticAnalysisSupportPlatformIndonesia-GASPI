@@ -61,6 +61,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { BoxDataComponent } from './box-data/box-data.component';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
+import { isEqual } from 'lodash';
 type SVEPResult = {
   url?: string;
   pages: { [key: string]: number };
@@ -129,6 +130,9 @@ export class SvepResultsViewerComponent
 {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Input() listData: any = []; // receive data from parent
+  @Input() selectedData: any = []; // receive data from parent
+
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
@@ -324,14 +328,43 @@ export class SvepResultsViewerComponent
 
   setFilter() {
     const filtered = this.originalRows.filter((item) => {
-      return this.columns.every((col) => {
+      // Only check columns that have filter values (AND condition)
+      return Object.keys(this.filterValues).every((col) => {
         const filterVal = this.filterValues[col];
         const itemVal = item[col]?.toString().toLowerCase() || '';
-        return filterVal ? itemVal.includes(filterVal.toLowerCase()) : true;
+
+        // If filter value exists and is not empty, check if item contains it
+        if (filterVal && filterVal.trim() !== '') {
+          return itemVal.includes(filterVal.toLowerCase());
+        }
+
+        // If no filter value, this column passes the filter
+        return true;
       });
     });
 
     this.dataRows.next(filtered);
+  }
+
+  findMatchingVariants(firstArray: any[], secondArray: any[]): any[] {
+    return firstArray.filter((item1) => {
+      return secondArray.some((item2) => {
+        return Object.keys(item2).every((key) => item1[key] === item2[key]);
+      });
+    });
+  }
+
+  filterByAnotation(data: any) {
+    //reset all filter
+    this.clearFilter();
+    this.filterValues = {};
+    const filteredByAnnot = this.findMatchingVariants(this.originalRows, data);
+
+    this.dataRows.next(filteredByAnnot);
+    const el = document.getElementById('myTarget');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   resetFilter() {
@@ -428,5 +461,17 @@ export class SvepResultsViewerComponent
 
   onToggle(rowId: string, expanded: boolean) {
     this.expandedMap.set(rowId, expanded);
+  }
+
+  //function to check is row contains in listAnotation with dynamic attributes
+  checkRow(listData: any[], row: any): boolean {
+    return listData.some((variant) =>
+      Object.keys(variant).every((key) => variant[key] === row[key]),
+    );
+  }
+
+  handleIsSelected(row: any) {
+    const result = this.checkRow(this.listData, row);
+    return result || false;
   }
 }

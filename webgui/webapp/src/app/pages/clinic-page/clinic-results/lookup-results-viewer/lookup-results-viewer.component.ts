@@ -233,6 +233,7 @@ export class LookupResultsViewerComponent
     page: number | null = null,
     position: number | null = null,
   ) {
+    const pipeline = 'lookup';
     this.originalRows = [];
     this.dataRows.next([]);
     this.ss.start();
@@ -243,7 +244,7 @@ export class LookupResultsViewerComponent
         chromosome,
         page,
         position,
-        'pipeline_lookup/results',
+        pipeline,
       )
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {

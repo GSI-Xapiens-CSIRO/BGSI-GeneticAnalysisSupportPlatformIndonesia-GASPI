@@ -84,6 +84,8 @@ export const COLUMNS: { [key: string]: any } = {
       'SIFT (max)',
       'Global Allele Frequency',
       'KHV',
+      'ac1KG',
+      'an1KG',
       'Mis Z',
       'Mis o/e',
       'Mis o/e lower CI',
@@ -92,6 +94,10 @@ export const COLUMNS: { [key: string]: any } = {
       'pLOF o/e',
       'pLOF o/e upper CI',
       'pLOF o/e lower CI',
+      'dp',
+      'gq',
+      'mq',
+      'qd',
     ],
   },
   RSIGNG: {
@@ -181,6 +187,10 @@ export const COLUMNS: { [key: string]: any } = {
       'pLOF o/e',
       'pLOF o/e upper CI',
       'pLOF o/e lower CI',
+      'dp',
+      'gq',
+      'mq',
+      'qd',
     ],
   },
   RSJPD: {
@@ -263,7 +273,14 @@ export const REPORTING_CONFIGS: { [key: string]: any } = {
     cols: ['Alleles', 'Phenotypes'],
   },
   RSCM: {
-    cols: ['Gene Name', 'Variant Name', 'gt', 'clinSig', 'conditions'],
+    cols: [
+      'Gene Name',
+      'Variant Name',
+      'gt',
+      'clinSig',
+      'conditions',
+      'Transcript ID & Version',
+    ],
   },
   RSIGNG: {
     cols: [
