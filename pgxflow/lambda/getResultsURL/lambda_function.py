@@ -7,19 +7,33 @@ from shared.dynamodb import check_user_in_project
 from shared.utils import LoggingClient
 
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
-RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
-LOOKUP_CONFIGURATION = os.environ["LOOKUP_CONFIGURATION"]
 PIPELINE_SUFFIXES = {
     "pharmcat": "_pharmcat_results.json",
     "lookup": "_lookup_results.jsonl",
 }
 
+LOOKUP_CONFIGURATION = json.loads(os.environ.get("LOOKUP_CONFIGURATION", "{}"))
+PHARMCAT_CONFIGURATION = json.loads(os.environ.get("PHARMCAT_CONFIGURATION", "{}"))
+
 s3_client = LoggingClient("s3")
+
+
+def prepare_lookup_config():
+    """Prepare lookup configuration for frontend (exclude assoc_matrix_filename)"""
+    if not LOOKUP_CONFIGURATION:
+        return {}
+
+    # Copy config and remove assoc_matrix_filename
+    filtered_config = {
+        key: value
+        for key, value in LOOKUP_CONFIGURATION.items()
+        if key != "assoc_matrix_filename"
+    }
+    return filtered_config
 
 
 def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
-    print(f"[DEBUGGER]: Lookup configuration: {json.dumps(LOOKUP_CONFIGURATION)}")
 
     try:
         sub = event["requestContext"]["authorizer"]["claims"]["sub"]
@@ -49,6 +63,10 @@ def lambda_handler(event, _):
                 "pages": {"-": 1},
                 "page": 1,
                 "content": content.decode("utf-8"),
+                "config": {
+                    "lookup": prepare_lookup_config(),  # Filtered config
+                    "pharmcat": PHARMCAT_CONFIGURATION,
+                },
             },
         )
 
