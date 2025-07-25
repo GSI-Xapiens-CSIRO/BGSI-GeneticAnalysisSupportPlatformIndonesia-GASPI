@@ -18,39 +18,63 @@ DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 GENES = os.environ["GENES"].strip().split(",")
 ORGANISATIONS = json.loads(os.environ["ORGANISATIONS"])
 
+REQUESTED_FIELDS = {
+    "posVcf": "%POS",
+    "refVcf": "%REF",
+    "_alts": "%ALT",
+    "qual": "%QUAL",
+    "filter": "%FILTER",
+}
 
-def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos):
+REQUESTED_FORMAT_TAGS = {
+    "zygosity": "GT",
+    "dp": "DP",
+    "gq": "GQ",
+    "mq": "MQ",
+    "qd": "QD",
+}
+
+
+def query_variant_zygosity(chrom_mapping, vcf_s3_location, chrom, pos, query_fields):
     reversed_chrom_mapping = {v: k for k, v in chrom_mapping.items()}
     chrom = reversed_chrom_mapping[match_chromosome_name(chrom)]
     args = [
         "bcftools",
         "query",
         "-f",
-        "%POS\t%REF\t%ALT\t[%GT]\n",
+        "\t".join(query_fields.values()) + "\n",
         vcf_s3_location,
         "-r",
         f"{chrom}:{pos}-{pos}",
     ]
     query_process = CheckedProcess(args)
     query_output = query_process.check()
+    output = {
+        "chromRef": chrom_mapping[chrom],
+    }
     if not query_output:
-        return {
-            "chromRef": chrom_mapping[chrom],
+        output |= {
+            key: "." for key in query_fields.keys() if key.startswith("_") is False
+        } | {
             "posVcf": int(pos),
-            "refVcf": ".",
             "altsVcf": [".", "."],
             "zygosity": "0|0",
         }
-    pos_vcf, ref_vcf, alt_vcf, gt = query_output.strip().split("\t")
-    alts = [ref_vcf] + alt_vcf.split(",")
-    alts_vcf = [alts[int(i)] if i.isdigit() else "." for i in re.split(r"[|/]", gt)]
-    return {
-        "chromRef": chrom_mapping[chrom],
-        "posVcf": int(pos_vcf),
-        "refVcf": ref_vcf,
-        "altsVcf": alts_vcf,
-        "zygosity": gt,
-    }
+    else:
+        output |= {
+            key: value
+            for key, value in zip(query_fields.keys(), query_output.strip().split("\t"))
+        }
+        alts = [output["refVcf"]] + output.pop("_alts").split(",")
+        alts_vcf = [
+            alts[int(i)] if i.isdigit() else "."
+            for i in re.split(r"[|/]", output["zygosity"])
+        ]
+        output |= {
+            "posVcf": int(output["posVcf"]),
+            "altsVcf": alts_vcf,
+        }
+    return output
 
 
 def create_diplotype(current_org, current_gene):
@@ -77,6 +101,34 @@ def create_variant(current_org):
     }
 
 
+def get_format_tags(location):
+    args = [
+        "bcftools",
+        "head",
+        location,
+    ]
+    process = CheckedProcess(args)
+    format_tags = {
+        line.split("ID=")[1].split(",")[0]
+        for line in process.stdout
+        if line.startswith("##FORMAT=<ID=")
+    }
+    process.check()
+    print("Found FORMAT tags:", format_tags)
+    return format_tags
+
+
+def get_query_fields(location):
+    format_tags = get_format_tags(location)
+    return {
+        **REQUESTED_FIELDS,
+        **{
+            field: f"[%{tag}]" if tag in format_tags else "."
+            for field, tag in REQUESTED_FORMAT_TAGS.items()
+        },
+    }
+
+
 def yield_genes(pharmcat_output_json, source_vcf):
     """
     Parse PharmCAT output JSON and yield gene information with diplotypes and variants.
@@ -90,6 +142,7 @@ def yield_genes(pharmcat_output_json, source_vcf):
     """
     input_vcf_s3_uri = f"s3://{DPORTAL_BUCKET}/{source_vcf}"
     chrom_mapping = get_chromosome_mapping(input_vcf_s3_uri)
+    query_fields = get_query_fields(input_vcf_s3_uri)
     with open(pharmcat_output_json, "rb") as f:
         parser = ijson.parse(f)
 
@@ -189,6 +242,7 @@ def yield_genes(pharmcat_output_json, source_vcf):
                         input_vcf_s3_uri,
                         variant["chr"],
                         variant["pos"],
+                        query_fields,
                     )
                     if not zygosity:
                         continue

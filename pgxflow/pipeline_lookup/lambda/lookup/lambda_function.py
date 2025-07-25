@@ -17,6 +17,52 @@ s3_client = LoggingClient("s3")
 lambda_client = LoggingClient("lambda")
 
 
+REQUESTED_FIELDS = {
+    "_rsid": "%ID",
+    "chromVcf": "%CHROM",
+    "posVcf": "%POS",
+    "refVcf": "%REF",
+    "_alts": "%ALT",
+    "qual": "%QUAL",
+    "filter": "%FILTER",
+}
+
+REQUESTED_FORMAT_TAGS = {
+    "dp": "DP",
+    "gq": "GQ",
+    "mq": "MQ",
+    "qd": "QD",
+}
+
+
+def get_format_tags(location):
+    args = [
+        "bcftools",
+        "head",
+        location,
+    ]
+    process = CheckedProcess(args)
+    format_tags = {
+        line.split("ID=")[1].split(",")[0]
+        for line in process.stdout
+        if line.startswith("##FORMAT=<ID=")
+    }
+    process.check()
+    print("Found FORMAT tags:", format_tags)
+    return format_tags
+
+
+def get_query_fields(location):
+    format_tags = get_format_tags(location)
+    return {
+        **REQUESTED_FIELDS,
+        **{
+            field: f"[%{tag}]" if tag in format_tags else "."
+            for field, tag in REQUESTED_FORMAT_TAGS.items()
+        },
+    }
+
+
 def load_lookup():
     response = s3_client.get_object(
         Bucket=REFERENCE_BUCKET,
@@ -43,33 +89,36 @@ def lambda_handler(event, context):
     dbsnp_annotated_vcf_location = event["dbsnpAnnotatedVcfLocation"]
     dbsnp_annotated_vcf_parsed = urlparse(dbsnp_annotated_vcf_location)
     dbsnp_annotated_vcf_key = dbsnp_annotated_vcf_parsed.path.lstrip("/")
+    fields = get_query_fields(dbsnp_annotated_vcf_location)
 
     try:
         query_rsid_args = [
             "bcftools",
             "query",
             "-f",
-            "%ID\t%CHROM\t%POS\t%REF\t%ALT\n",
+            "\t".join(fields.values()) + "\n",
             dbsnp_annotated_vcf_location,
         ]
         query_rsid_process = CheckedProcess(query_rsid_args, cwd=LOCAL_DIR)
         lookup_table = load_lookup()
         lookup_results = []
         for line in query_rsid_process.stdout:
-            rsid, chrom, pos_s, ref, alt = line.strip().split("\t")
+            line_fields = {
+                key: value
+                for key, value in zip(fields.keys(), line.strip().split("\t"))
+            }
+            rsid = line_fields.pop("_rsid")
+            alts = line_fields.pop("_alts")
+            line_fields["posVcf"] = int(line_fields["posVcf"])
             for lookup_values in lookup_table.get(rsid, []):
-                for allele in alt.split(","):
+                for allele in alts.split(","):
                     if allele == ".":
                         continue
                     lookup_results.append(
                         dict(
+                            altVcf=allele,
                             **lookup_values,
-                            **{
-                                "chromVcf": chrom,
-                                "posVcf": int(pos_s),
-                                "refVcf": ref,
-                                "altVcf": allele,
-                            },
+                            **line_fields,
                         )
                     )
         query_rsid_process.check()
