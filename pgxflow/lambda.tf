@@ -29,6 +29,17 @@ resource "aws_lambda_permission" "getresultsurl_invoke_permission" {
 }
 
 #
+# batchsubmit Lambda Function
+#
+resource "aws_lambda_permission" "batchsubmit_invoke_permission" {
+  statement_id  = "APIBatchSubmitAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchSubmit.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.PgxApi.execution_arn}/*/*/${aws_api_gateway_resource.batch-submit.path_part}"
+}
+
+#
 # vcfstatsGraphic Lambda Function
 #
 resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
