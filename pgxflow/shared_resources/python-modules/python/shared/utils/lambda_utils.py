@@ -15,7 +15,7 @@ MAX_PRINT_LENGTH = 1024
 s3_client = boto3.client(
     "s3",
     region_name=REGION,
-    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"})
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
 
 
@@ -78,7 +78,8 @@ def handle_failed_execution(job_id, error_message):
         user_id=job.get("uid", {}).get("S"),
         is_from_failed_execution=True,
     )
-    
+
+
 def generate_presigned_get_url(bucket, key, expires=3600):
     kwargs = {
         "ClientMethod": "get_object",
@@ -138,12 +139,14 @@ class LoggingClient:
         self.client_name = client
 
     def __getattr__(self, function_name):
-        return lambda **kwargs: self.aws_api_call(function_name, kwargs)
+        return lambda *args, **kwargs: self.aws_api_call(function_name, args, kwargs)
 
-    def aws_api_call(self, function_name, kwargs):
+    def aws_api_call(self, function_name, args, kwargs):
         function = getattr(self.client, function_name)
         call_name = f"{self.client_name}.{function_name}"
-        print(f"Calling {call_name} with kwargs: {short_json(kwargs)}")
-        response = function(**kwargs)
+        print(
+            f"Calling {call_name} with args: {short_json(args)} kwargs: {short_json(kwargs)}"
+        )
+        response = function(*args, **kwargs)
         print(f"Received response from {call_name}: {short_json(response)}")
         return response
