@@ -73,27 +73,6 @@ def convert_to_region_lines(input_data):
     return region_query_lines
 
 
-def convert_scientific_to_string_decimal(record):
-    fields_to_convert = [
-        "afAfr",
-        "afEas",
-        "afFin",
-        "afNfe",
-        "afSas",
-        "afAmr",
-        "af",
-    ]
-    for key in fields_to_convert:
-        val = record.get(key)
-        if isinstance(val, str) and "e-" in val:
-            try:
-                decimal_value = float(val)
-                record[key] = f"{decimal_value:.10f}"
-            except ValueError:
-                pass
-    return record
-
-
 def add_gnomad_data(input_data):
     region_queries_lines = convert_to_region_lines(input_data)
     query_processes = [
@@ -117,8 +96,6 @@ def add_gnomad_data(input_data):
                         )
                     }
                 )
-                # convert scientific notation to string decimal
-                convert_scientific_to_string_decimal(data)
                 lines_updated += 1
         query_process.check()
     print(f"Updated {lines_updated}/{len(input_data)} rows with gnomad data")

@@ -79,16 +79,6 @@ def convert_to_region_lines(input_data):
     return region_query_lines
 
 
-def convert_scientific_to_string_decimal(record):
-    for key in record:
-        val = record[key]
-        if isinstance(val, str) and "e-" in val:
-            try:
-                record[key] = f"{float(val):.10f}"
-            except ValueError:
-                pass  # skip if not convertible
-
-
 def add_gnomad_data(input_data):
     region_queries_lines = convert_to_region_lines(input_data)
     query_processes = [
@@ -96,7 +86,6 @@ def add_gnomad_data(input_data):
         for chrom, query_region in region_queries_lines
     ]
     lines_updated = 0
-
     for query_process, (_, regions_data) in zip(query_processes, region_queries_lines):
         for line in query_process.stdout:
             line = line.strip()
@@ -106,17 +95,14 @@ def add_gnomad_data(input_data):
             pos = int(pos_s)
             for data in regions_data.get((pos, ref), []):
                 if alt in data["altsVcf"]:
-                    gnomad_data = {
+                    data["per_alt"][alt] = {
                         col_name: gnomad_datum
                         for col_name, gnomad_datum in zip(
                             list(GNOMAD_COLUMNS.keys()), query_data
                         )
                     }
-                    convert_scientific_to_string_decimal(gnomad_data)
-                    data["per_alt"][alt] = gnomad_data
                 lines_updated += 1
         query_process.check()
-
     for data in input_data:
         data_per_alt = data["per_alt"]
         for col_name in GNOMAD_COLUMNS:
@@ -124,12 +110,8 @@ def add_gnomad_data(input_data):
             for alt in data["altsVcf"]:
                 vals.append(data_per_alt.get(alt, {}).get(col_name, "."))
             data[col_name] = "/".join(vals)
-
         for key in KEYS_TO_REMOVE:
-            if key in data:
-                del data[key]
-
-    print(f"Updated {lines_updated}/{len(input_data)} rows with gnomad data")
+            del data[key]
 
 
 def lambda_handler(event, context):
