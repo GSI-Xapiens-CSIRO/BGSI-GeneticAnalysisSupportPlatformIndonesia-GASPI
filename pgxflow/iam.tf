@@ -222,6 +222,47 @@ data "aws_iam_policy_document" "lambda-batchSubmit" {
     ]
   }
 }
+
+#
+# batchStarter Lambda Function
+#
+data "aws_iam_policy_document" "lambda-batchStarter" {
+  statement {
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+    ]
+    resources = [
+      aws_sqs_queue.batch_submit_queue.arn,
+    ]
+  }
+  statement {
+    actions = [
+      "sns:Publish",
+    ]
+    resources = [
+      aws_sns_topic.initFlow.arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:GetAccountSettings",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+  statement {
+    actions = [
+      "cloudwatch:GetMetricStatistics",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+}
+
 #
 # vcfstatsGraphic Lambda Function
 #

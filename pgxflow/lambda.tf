@@ -40,6 +40,17 @@ resource "aws_lambda_permission" "batchsubmit_invoke_permission" {
 }
 
 #
+# batchStarter Lambda Function
+#
+resource "aws_lambda_permission" "batchstarter_invoke_permission" {
+  statement_id  = "CloudwatchBatchStarterAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchStarter.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.batch_starter_trigger.arn
+}
+
+#
 # vcfstatsGraphic Lambda Function
 #
 resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
