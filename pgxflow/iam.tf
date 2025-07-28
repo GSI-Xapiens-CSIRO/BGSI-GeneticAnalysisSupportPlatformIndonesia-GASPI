@@ -91,9 +91,11 @@ data "aws_iam_policy_document" "lambda-initFlow" {
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
+      "dynamodb:Query",
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+      "${var.dynamo-clinic-jobs-table-arn}/index/${local.clinic_jobs_project_name_index}",
     ]
   }
   statement {

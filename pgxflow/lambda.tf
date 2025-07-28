@@ -1,12 +1,20 @@
 #
 # initFlow Lambda Function
 #
-resource "aws_lambda_permission" "initflow_invoke_permission" {
+resource "aws_lambda_permission" "initflow_invoke_permission_api" {
   statement_id  = "AllowAPIInitFlowInvoke"
   action        = "lambda:InvokeFunction"
   function_name = module.lambda-initFlow.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.PgxApi.execution_arn}/*/*/${aws_api_gateway_resource.submit.path_part}"
+}
+
+resource "aws_lambda_permission" "initflow_invoke_permission_sns" {
+  statement_id  = "AllowSNSInitFlowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-initFlow.lambda_function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.initFlow.arn
 }
 
 #

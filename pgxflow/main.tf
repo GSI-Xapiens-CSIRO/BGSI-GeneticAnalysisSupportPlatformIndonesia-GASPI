@@ -100,6 +100,7 @@ module "lambda-initFlow" {
     LOOKUP_END_HEADER                   = var.lookup_configuration["end_header"]
     DYNAMO_PROJECT_USERS_TABLE          = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE            = var.dynamo-clinic-jobs-table
+    CLINIC_JOBS_PROJECT_NAME_INDEX      = local.clinic_jobs_project_name_index
     DYNAMO_PGXFLOW_REFERENCES_TABLE     = aws_dynamodb_table.pgxflow_references.name
     SEND_JOB_EMAIL_ARN                  = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                         = "s3.${var.region}.amazonaws.com"
