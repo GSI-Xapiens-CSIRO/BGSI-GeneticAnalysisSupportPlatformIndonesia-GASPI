@@ -93,9 +93,9 @@
             type="password"
           />
           <mat-hint>Please Re-enter your password</mat-hint>
-          @if (loginForm.controls.confirmationPassword.invalid) {
+          @if (loginForm.get("confirmationPassword")?.errors?.["mismatch"]) {
             <mat-error>
-              {{ loginForm.controls.confirmationPassword.errors!["error"] }}
+              {{ loginForm.get("confirmationPassword")?.errors?.["mismatch"] }}
             </mat-error>
           }
         </mat-form-field>

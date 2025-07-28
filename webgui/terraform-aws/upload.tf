@@ -15,6 +15,12 @@ data "external" "build" {
     api_endpoint_clinic     = var.api_endpoint_clinic
     clinic_mode             = var.clinic_mode
     hub_name                = var.hub_name
+    clinic_warning_dp         = var.clinic-warning-thresholds.dp
+    clinic_warning_filter     = var.clinic-warning-thresholds.filter
+    clinic_warning_gq         = var.clinic-warning-thresholds.gq
+    clinic_warning_mq         = var.clinic-warning-thresholds.mq
+    clinic_warning_qual       = var.clinic-warning-thresholds.qual
+    clinic_warning_qd         = var.clinic-warning-thresholds.qd
   }
   working_dir = path.module
 }

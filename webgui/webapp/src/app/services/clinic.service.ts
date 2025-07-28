@@ -3,15 +3,14 @@ import { Injectable } from '@angular/core';
 import { API, Auth } from 'aws-amplify';
 import {
   BehaviorSubject,
-  forkJoin,
   from,
   map,
   Observable,
   of,
+  pipe,
   Subject,
   switchMap,
 } from 'rxjs';
-import { ulid } from 'ulid';
 import { environment } from 'src/environments/environment';
 
 export type SelectedVariants = Map<string, string[]>;
@@ -77,34 +76,20 @@ export class ClinicService {
     jobName: string,
     missingToRef: boolean,
   ) {
-    const pathMap: Record<string, string[]> = {
-      RSCM: ['submit'],
-      RSSARDJITO: ['submit'],
-      RSPON: ['pipeline_pharmcat/submit'],
-      RSIGNG: ['pipeline_lookup/submit'],
-      RSJPD: ['pipeline_pharmcat/submit', 'pipeline_lookup/submit'],
-    };
-
-    const paths = pathMap[environment.hub_name];
-
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
-        const requestId = environment.hub_name === 'RSJPD' ? ulid() : null;
-        const body = {
-          location,
-          projectName,
-          userId,
-          jobName,
-          requestId,
-          missingToRef,
-        };
-
-        const requests = paths.map((path: string) =>
-          from(API.post(environment.api_endpoint_clinic.name, path, { body })),
+        return from(
+          API.post(environment.api_endpoint_clinic.name, 'submit', {
+            body: {
+              location,
+              projectName,
+              userId,
+              jobName,
+              missingToRef,
+            },
+          }),
         );
-
-        return requests.length === 1 ? requests[0] : forkJoin(requests);
       }),
     );
   }
@@ -125,6 +110,16 @@ export class ClinicService {
     );
   }
 
+  getClinicJob(project: string, jobId: string) {
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
   updateQCNotes(projectName: string, fileName: string, notes: string) {
     return from(
       API.post(environment.api_endpoint_clinic.name, 'qcnotes', {
@@ -140,30 +135,16 @@ export class ClinicService {
     chromosome: string | null = null,
     page: number | null = null,
     position: number | null = null,
-    pathPart: string | null = null,
+    pipeline: string | null = null,
   ): Observable<any> {
     const params = {
       ...(chromosome && { chromosome }),
       ...(page && { page }),
       ...(position && { position }),
+      ...(pipeline && { pipeline }),
     };
-
-    const getPathForHub = (hubName: string, customPath: string | null) => {
-      const defaultPaths: Record<string, string> = {
-        RSCM: 'results',
-        RSSARDJITO: 'results',
-        RSPON: 'pipeline_pharmcat/results',
-        RSIGNG: 'pipeline_lookup/results',
-      };
-      if (hubName === 'RSJPD' && customPath) {
-        return customPath;
-      }
-      return defaultPaths[hubName] || 'results';
-    };
-
-    pathPart = getPathForHub(environment.hub_name, pathPart);
     return from(
-      API.get(environment.api_endpoint_clinic.name, pathPart, {
+      API.get(environment.api_endpoint_clinic.name, 'results', {
         queryStringParameters: {
           request_id: requestId,
           project_name: projectName,
@@ -301,6 +282,50 @@ export class ClinicService {
       API.del(
         environment.api_endpoint_sbeacon.name,
         `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
+  addValidation(project: string, jobId: string, name: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeValidation(project: string, jobId: string, name: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {},
+      ),
+    );
+  }
+
+  addNoVariantsValidation(project: string, jobId: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeNoVariantsValidation(project: string, jobId: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
         {},
       ),
     );

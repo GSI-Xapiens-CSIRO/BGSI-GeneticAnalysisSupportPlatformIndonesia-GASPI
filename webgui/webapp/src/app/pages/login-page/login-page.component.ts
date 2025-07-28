@@ -105,6 +105,7 @@ export class LoginPageComponent implements OnInit, OnDestroy {
   );
   isStrongPassword = isStrongPassword;
   emailFormFieldSubscription: Subscription | undefined;
+  confirmationPasswordFormFieldSubscription: Subscription | undefined;
 
   constructor(
     private auth: AuthService,
@@ -124,11 +125,39 @@ export class LoginPageComponent implements OnInit, OnDestroy {
           }
         },
       );
+
+    this.confirmationPasswordFormFieldSubscription =
+      this.loginForm.controls.confirmationPassword?.valueChanges.subscribe(
+        () => {
+          const newPassword = this.loginForm.controls.newPassword?.value;
+          const confirmationPassword =
+            this.loginForm.controls.confirmationPassword?.value;
+
+          // Only validate if both fields are filled
+          if (!newPassword || !confirmationPassword) {
+            this.loginForm.controls.confirmationPassword?.setErrors(null);
+            return;
+          }
+
+          if (newPassword !== confirmationPassword) {
+            this.loginForm.controls.confirmationPassword?.setErrors({
+              mismatch:
+                'The new password and confirmation password do not match.',
+            });
+          } else {
+            this.loginForm.controls.confirmationPassword?.setErrors(null);
+          }
+        },
+      );
   }
 
   ngOnDestroy(): void {
     if (this.emailFormFieldSubscription) {
       this.emailFormFieldSubscription.unsubscribe();
+    }
+
+    if (this.confirmationPasswordFormFieldSubscription) {
+      this.confirmationPasswordFormFieldSubscription.unsubscribe();
     }
   }
 

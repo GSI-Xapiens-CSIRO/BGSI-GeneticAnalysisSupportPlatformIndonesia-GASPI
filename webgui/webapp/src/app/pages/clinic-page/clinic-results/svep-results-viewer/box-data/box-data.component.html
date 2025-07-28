@@ -199,8 +199,17 @@
             <div class="font-semibold text-base mb-2 border-bottom">
               <div>Allele Frequency</div>
               <div class="flex flex-row text-sm text-primary-50 mb-2 gap-4">
-                <div class="flex-1">gnomAD</div>
-                <div class="flex-1">1KG+HGDP</div>
+                <div
+                  (click)="handleRedirectGnomad(row, 'gnomad_r4')"
+                  class="flex-1row-value link-click">
+                  gnomAD
+                </div>
+                <div
+                  (click)="handleRedirectGnomad(row, 'gnomad_r3')"
+                  class="flex-1 row-value link-click"
+                >
+                  1KG+HGDP
+                </div>
               </div>
             </div>
             <div class="flex flex-row gap-4">
@@ -264,13 +273,25 @@
                 <div class="row-content">
                   <div>AF</div>
                   <div class="row-value">
-                    {{ row["Allele Number"] }}
+                    {{ row["Global Allele Frequency"] }}
                   </div>
                 </div>
                 <div class="row-content">
                   <div>KHV</div>
                   <div class="row-value">
                     {{ row["KHV"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AC</div>
+                  <div class="row-value">
+                    {{ row["ac1KG"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AN</div>
+                  <div class="row-value">
+                    {{ row["an1KG"] }}
                   </div>
                 </div>
               </div>
@@ -348,8 +369,7 @@
               <div class="row-content">
                 <div>pLOF o/e</div>
                 <div class="row-value">
-                  {{ row["pLOF o/e"] }} ( {{ row["pLOF o/e upper CI"] }} -
-                  {{ row["pLOF o/e lower CI"] }})
+                  {{ row["pLOF o/e"] }} ({{ row["pLOF o/e lower CI"] }} - {{ row["pLOF o/e upper CI"] }})
                 </div>
               </div>
             </div>

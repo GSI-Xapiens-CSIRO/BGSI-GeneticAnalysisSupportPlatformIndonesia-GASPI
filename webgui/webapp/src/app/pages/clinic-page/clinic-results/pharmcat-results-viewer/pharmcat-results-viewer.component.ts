@@ -344,6 +344,7 @@ export class PharmcatResultsViewerComponent {
   }
 
   refetch(requestId: string, projectName: string, page: number | null = null) {
+    const pipeline = 'pharmcat';
     this.diplotypeOriginalRows = [];
     this.variantOriginalRows = [];
     this.warningOriginalRows = [];
@@ -352,14 +353,7 @@ export class PharmcatResultsViewerComponent {
     this.warningDataRows.next([]);
     this.ss.start();
     this.cs
-      .getClinicResults(
-        requestId,
-        projectName,
-        null,
-        page,
-        null,
-        'pipeline_pharmcat/results',
-      )
+      .getClinicResults(requestId, projectName, null, page, null, pipeline)
       .pipe(catchError(() => of(null)))
       .subscribe((data) => {
         if (!data) {

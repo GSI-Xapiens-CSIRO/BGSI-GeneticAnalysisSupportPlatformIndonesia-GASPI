@@ -18,3 +18,5 @@ pytest-dependency==0.6.0
 isort==6.0.1
 pytest-cov==6.1.0
 moto==5.1.5
+docker==7.1.0
+joserfc==1.2.2

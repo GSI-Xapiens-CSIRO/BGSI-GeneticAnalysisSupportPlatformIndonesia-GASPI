@@ -28,7 +28,7 @@ SEARCH_WINDOW_START_PADDING_MS = 30 * 1000
 # to the start of the function invocation, so the actual error could happen
 # up to 15 minutes later. Add an additional period buffer as metric timestamps
 # round down to the start of the period.
-SEARCH_WINDOW_END_PADDING_MS = (30 + 15*60 + CLOUDWATCH_PERIOD) * 1000
+SEARCH_WINDOW_END_PADDING_MS = (30 + 15 * 60 + CLOUDWATCH_PERIOD) * 1000
 SUBJECT = f"AWS Lambda Function Error Alert for Account {ACCOUNT_ID}"
 
 
@@ -135,39 +135,12 @@ class FunctionError:
         else:
             print(f"No fresh error metrics found for function {function_name}.")
 
-    def update_fresh_metrics(self, timestamp):
-        if self.latest_metric is None or timestamp > self.latest_metric:
-            self.latest_metric = timestamp
-        if self.earliest_metric is None or timestamp < self.earliest_metric:
-            self.earliest_metric = timestamp
-
     def combine_error_metrics(self, recent_error_metrics, new_error_metrics):
-        # Combine sorted lists of timestamp, errorCount tuples
-        combined_metrics = []
-        i, j = 0, 0
-        while i < len(recent_error_metrics) and j < len(new_error_metrics):
-            recent_metric = recent_error_metrics[i]
-            new_metric = new_error_metrics[j]
-            if recent_metric[0] < new_metric[0]:
-                combined_metrics.append(recent_metric)
-                i += 1
-            elif recent_metric[0] > new_metric[0]:
-                combined_metrics.append(new_metric)
-                self.update_fresh_metrics(new_metric[0])
-                j += 1
-            else:
-                # Same timestamp, take the new_value
-                combined_metrics.append(new_metric)
-                if new_metric[1] > recent_metric[1]:
-                    self.update_fresh_metrics(new_metric[0])
-                i += 1
-                j += 1
-        # Add any remaining tuples from either list
-        combined_metrics.extend(recent_error_metrics[i:])
-        for timestamp, count in new_error_metrics[j:]:
-            self.update_fresh_metrics(timestamp)
-            combined_metrics.append((timestamp, count))
-        return combined_metrics
+        brand_new_metrics = set(new_error_metrics) - set(recent_error_metrics)
+        if brand_new_metrics:
+            self.earliest_metric = min(brand_new_metrics)[0]
+            self.latest_metric = max(brand_new_metrics)[0]
+        return sorted((dict(recent_error_metrics) | dict(new_error_metrics)).items())
 
     def get_log_event_link(self, log_event):
         stream_name = quote_plus(log_event["logStreamName"])

@@ -328,10 +328,18 @@ export class SvepResultsViewerComponent
 
   setFilter() {
     const filtered = this.originalRows.filter((item) => {
-      return this.columns.every((col) => {
+      // Only check columns that have filter values (AND condition)
+      return Object.keys(this.filterValues).every((col) => {
         const filterVal = this.filterValues[col];
         const itemVal = item[col]?.toString().toLowerCase() || '';
-        return filterVal ? itemVal.includes(filterVal.toLowerCase()) : true;
+
+        // If filter value exists and is not empty, check if item contains it
+        if (filterVal && filterVal.trim() !== '') {
+          return itemVal.includes(filterVal.toLowerCase());
+        }
+
+        // If no filter value, this column passes the filter
+        return true;
       });
     });
 

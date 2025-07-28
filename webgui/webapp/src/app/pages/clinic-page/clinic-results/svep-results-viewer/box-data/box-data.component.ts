@@ -76,6 +76,18 @@ export class BoxDataComponent {
     window.open(url, '_blank');
   }
 
+  handleRedirectGnomad(row: any, gnomadVer: 'gnomad_r4' | 'gnomad_r3') {
+    // convert region e.g chr19:11120436-11120436 to 9-11120436
+    // for redirect to gnomad params url
+    const match = row['Region'].match(/^chr(\d+):(\d+)-/);
+    const region = `${match[1]}-${match[2]}`;
+    const ref = row['ref'];
+    const alt = row['Alt Allele'];
+
+    const url = `https://gnomad.broadinstitute.org/variant/${region}-${ref}-${alt}?dataset=${gnomadVer}`;
+    window.open(url, '_blank');
+  }
+
   handleColorClignsign(value: string) {
     const lowerValue = value.toLowerCase();
     if (lowerValue.includes('pathogenic')) {

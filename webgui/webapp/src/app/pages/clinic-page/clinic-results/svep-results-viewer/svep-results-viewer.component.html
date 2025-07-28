@@ -95,8 +95,8 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div class="flex flex-col">
-              <div class="flex flex-row space-x-1 items-center gap-2">
-                <mat-form-field class="w-[200px] self-center">
+              <div class="flex flex-row space-x-1 items-end gap-2 mb-4">
+                <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
                   <mat-label>Filter</mat-label>
                   <input
                     type="text"
@@ -116,15 +116,21 @@
                     }
                   </mat-autocomplete>
                 </mat-form-field>
-                <div class="mb-5">
-                  <button
-                    mat-raised-button
-                    color="primary"
-                    (click)="addFilter()"
-                  >
-                    Add Filter
-                  </button>
-                </div>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="addFilter()"
+                  [disabled]="!advancedFilter.value || advancedFilter.value.trim() === ''"
+                  class="mb-2"
+                >
+                  Add Filter
+                </button>
+                <mat-icon
+                  class="text-primary-50 mb-[1.25rem]"
+                  [matTooltip]="'The filter uses the AND logic to combine the values within the available result columns to pinpoint the variant(s) containing the specified entries.'"
+                >
+                  info
+                </mat-icon>
               </div>
 
               <div class="flex flex-wrap gap-4">

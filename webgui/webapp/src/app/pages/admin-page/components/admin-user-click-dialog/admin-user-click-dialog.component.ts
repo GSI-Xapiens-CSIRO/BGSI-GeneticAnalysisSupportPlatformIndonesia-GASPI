@@ -97,6 +97,7 @@ export class AdminUserClickDialogComponent implements OnInit {
       notebookRole: [NotebookRole.BASIC, Validators.required], // default role
       institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
       institutionName: ['', Validators.required],
+      isMedicalDirector: [false],
     });
   }
 
@@ -221,6 +222,7 @@ export class AdminUserClickDialogComponent implements OnInit {
         // Process user groups response
         if (userGroups) {
           const groups = _.get(userGroups, 'groups', []);
+          const attributes = _.get(userGroups, 'attributes', {});
           const user = _.get(userGroups, 'user', null);
           const authorizer = _.get(userGroups, 'authorizer', null);
           const groupNames = _.map(
@@ -232,6 +234,8 @@ export class AdminUserClickDialogComponent implements OnInit {
             userGroupsObj[gn] = true;
           });
           _.merge(this.initialGroups, userGroupsObj);
+          userGroupsObj['isMedicalDirector'] =
+            attributes['isMedicalDirector'] || false;
           this.form.patchValue(userGroupsObj);
 
           if (user === authorizer) {
@@ -313,8 +317,9 @@ export class AdminUserClickDialogComponent implements OnInit {
 
   updateUser() {
     const groups = _.pick(this.form.value, ['administrators', 'managers']);
+    const attributes = _.pick(this.form.value, ['isMedicalDirector']);
 
-    return this.as.updateUsersGroups(this.data.email, groups).pipe(
+    return this.as.updateUsersGroups(this.data.email, groups, attributes).pipe(
       // when update success call parent function to update data.
       tap((response) => {
         if (response) {
