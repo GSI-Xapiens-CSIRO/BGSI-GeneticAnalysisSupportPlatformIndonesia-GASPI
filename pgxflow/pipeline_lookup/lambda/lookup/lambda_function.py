@@ -41,7 +41,7 @@ def get_format_tags(location):
         "head",
         location,
     ]
-    process = CheckedProcess(args)
+    process = CheckedProcess(args, cwd=LOCAL_DIR)
     format_tags = {
         line.split("ID=")[1].split(",")[0]
         for line in process.stdout

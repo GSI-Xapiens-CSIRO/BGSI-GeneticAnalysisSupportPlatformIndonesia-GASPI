@@ -54,6 +54,12 @@ def test_lookup(resources_dict):
                 "posVcf": 44908822,
                 "refVcf": "C",
                 "altVcf": "T",
+                "qual": ".",
+                "filter": "PASS",
+                "dp": "137",
+                "gq": "15",
+                "mq": ".",
+                "qd": ".",
             },
             {
                 "Variant": "rs7412",
@@ -66,6 +72,12 @@ def test_lookup(resources_dict):
                 "posVcf": 44908822,
                 "refVcf": "C",
                 "altVcf": "T",
+                "qual": ".",
+                "filter": "PASS",
+                "dp": "137",
+                "gq": "15",
+                "mq": ".",
+                "qd": ".",
             },
             {
                 "Variant": "rs7412",
@@ -78,6 +90,12 @@ def test_lookup(resources_dict):
                 "posVcf": 44908822,
                 "refVcf": "C",
                 "altVcf": "T",
+                "qual": ".",
+                "filter": "PASS",
+                "dp": "137",
+                "gq": "15",
+                "mq": ".",
+                "qd": ".",
             },
         ]
         assert actual_output == target_output
