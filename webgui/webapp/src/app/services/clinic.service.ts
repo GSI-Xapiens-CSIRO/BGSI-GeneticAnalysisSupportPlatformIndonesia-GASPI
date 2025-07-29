@@ -94,6 +94,28 @@ export class ClinicService {
     );
   }
 
+  batchSubmitClinicJobs(
+    projectName: string,
+    jobs: Array<{ filename: string; jobName: string }>,
+    missingToRef: boolean,
+  ) {
+    return from(Auth.currentCredentials()).pipe(
+      switchMap((credentials) => {
+        const userId = credentials.identityId;
+        return from(
+          API.post(environment.api_endpoint_clinic.name, 'batch-submit', {
+            body: {
+              projectName,
+              jobs,
+              userId,
+              missingToRef,
+            },
+          }),
+        );
+      }),
+    );
+  }
+
   generateQC(projectName: string, fileName: string, key: string) {
     return from(
       API.post(environment.api_endpoint_clinic.name, 'vcfstats', {

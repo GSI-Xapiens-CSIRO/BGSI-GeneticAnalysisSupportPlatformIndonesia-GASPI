@@ -1,7 +1,5 @@
 import {
   Component,
-  Output,
-  EventEmitter,
   ViewChild,
   Injectable,
   ChangeDetectorRef,
@@ -211,6 +209,10 @@ export class ProjectsListComponent {
     this.openJobDialog(file.filename, project.name);
   }
 
+  handleBatchSubmitQuery(checkedFiles: Set<string>, project: Project) {
+    this.openBatchJobDialog(checkedFiles, project.name);
+  }
+
   handleViewQcReport(file: ProjectFile, project: Project) {
     if (file.disabled) return;
     this.router.navigate(['/clinic/clinic-submit/qc-report'], {
@@ -229,6 +231,21 @@ export class ProjectsListComponent {
     this.dg.open(SubmitQueryDialogComponent, {
       data: {
         file: file,
+        projectName: projectName,
+        list: () => this.list(0),
+      },
+    });
+  }
+
+  async openBatchJobDialog(checkedFiles: Set<string>, projectName: string) {
+    const { BatchSubmitQueryDialogComponent } = await import(
+      './batch-submit-query-dialog/batch-submit-query-dialog.component'
+    );
+
+    this.dg.open(BatchSubmitQueryDialogComponent, {
+      width: '700px',
+      data: {
+        checkedFiles: checkedFiles,
         projectName: projectName,
         list: () => this.list(0),
       },
