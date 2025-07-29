@@ -44,6 +44,15 @@ resource "aws_api_gateway_deployment" "PgxApi" {
       aws_api_gateway_integration.results-get,
       aws_api_gateway_integration_response.results-get,
       aws_api_gateway_method_response.results-get,
+      # /batch-submit
+      aws_api_gateway_method.batch-submit-options,
+      aws_api_gateway_integration.batch-submit-options,
+      aws_api_gateway_integration_response.batch-submit-options,
+      aws_api_gateway_method_response.batch-submit-options,
+      aws_api_gateway_method.batch-submit-post,
+      aws_api_gateway_integration.batch-submit-post,
+      aws_api_gateway_integration_response.batch-submit-post,
+      aws_api_gateway_method_response.batch-submit-post,
       # /vcfstats
       aws_api_gateway_method.vcfstats-options,
       aws_api_gateway_integration.vcfstats-options,
