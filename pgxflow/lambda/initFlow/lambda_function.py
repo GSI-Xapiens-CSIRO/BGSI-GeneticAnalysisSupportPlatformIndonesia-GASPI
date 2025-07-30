@@ -239,6 +239,7 @@ def lambda_handler(event, context):
         input_vcf=input_vcf,
         user_id=sub,
         reference_versions=reference_versions,
+        missing_to_ref=missing_to_ref,
         skip_email=True,
     )
 

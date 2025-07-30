@@ -75,6 +75,7 @@ def update_clinic_job(
     user_id=None,
     is_from_failed_execution=False,
     reference_versions={},
+    missing_to_ref=None,
     skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
@@ -101,6 +102,8 @@ def update_clinic_job(
                 for reference_id, reference_version in reference_versions.items()
             }
         }
+    if missing_to_ref is not None:
+        update_fields["missing_to_ref"] = {"BOOL": missing_to_ref}
 
     dynamodb_update_item(job_id, update_fields)
 
