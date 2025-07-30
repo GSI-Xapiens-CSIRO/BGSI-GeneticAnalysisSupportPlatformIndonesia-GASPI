@@ -141,9 +141,11 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
   statement {
     actions = [
       "dynamodb:GetItem",
+      "dynamodb:Query",
     ]
     resources = [
       var.dynamo-project-users-table-arn,
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
