@@ -3,7 +3,7 @@ import os
 
 
 from shared.apiutils import bad_request, bundle_response
-from shared.dynamodb import check_user_in_project
+from shared.dynamodb import check_user_in_project, query_clinic_job
 from shared.utils import LoggingClient
 
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
@@ -50,6 +50,10 @@ def lambda_handler(event, _):
 
         check_user_in_project(sub, project_name)
 
+        missing_to_ref = (
+            query_clinic_job(request_id).get("missing_to_ref", {}).get("BOOL")
+        )
+
         response = s3_client.get_object(
             Bucket=DPORTAL_BUCKET,
             Key=results_path,
@@ -67,6 +71,7 @@ def lambda_handler(event, _):
                     "lookup": prepare_lookup_config(),  # Filtered config
                     "pharmcat": PHARMCAT_CONFIGURATION,
                 },
+                "missingToRef": missing_to_ref,
             },
         )
 

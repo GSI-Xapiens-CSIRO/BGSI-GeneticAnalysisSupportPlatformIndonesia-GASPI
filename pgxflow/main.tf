@@ -100,6 +100,7 @@ module "lambda-initFlow" {
     LOOKUP_END_HEADER                   = var.lookup_configuration["end_header"]
     DYNAMO_PROJECT_USERS_TABLE          = var.dynamo-project-users-table
     DYNAMO_CLINIC_JOBS_TABLE            = var.dynamo-clinic-jobs-table
+    CLINIC_JOBS_PROJECT_NAME_INDEX      = local.clinic_jobs_project_name_index
     DYNAMO_PGXFLOW_REFERENCES_TABLE     = aws_dynamodb_table.pgxflow_references.name
     SEND_JOB_EMAIL_ARN                  = module.lambda-sendJobEmail.lambda_function_arn
     HTS_S3_HOST                         = "s3.${var.region}.amazonaws.com"
@@ -137,6 +138,7 @@ module "lambda-getResultsURL" {
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     LOOKUP_CONFIGURATION       = jsonencode(var.lookup_configuration)
     PHARMCAT_CONFIGURATION     = jsonencode(var.pharmcat_configuration)
+    DYNAMO_CLINIC_JOBS_TABLE   = var.dynamo-clinic-jobs-table
   }
 
   layers = [
@@ -232,5 +234,68 @@ module "lambda-qcNotes" {
 
   layers = [
     local.python_modules_layer,
+  ]
+}
+
+module "lambda-batchSubmit" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-batchSubmit"
+  description         = "Batch submission of PGxFlow jobs"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchSubmit.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchSubmit"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DPORTAL_BUCKET                       = var.data-portal-bucket-name
+    PGXFLOW_BATCH_SUBMIT_QUEUE_URL       = aws_sqs_queue.batch_submit_queue.url
+    DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    CLINIC_JOBS_TABLE_PROJECT_NAME_INDEX = local.clinic_jobs_project_name_index
+  }
+
+  layers = [
+    local.python_modules_layer
+  ]
+}
+
+#
+# batchStarter Lambda Function
+#
+module "lambda-batchStarter" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "pgxflow-backend-batchStarter"
+  description         = "Scheduler for PGxFlow batch submissions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchStarter.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchStarter"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    PGXFLOW_BATCH_SUBMIT_QUEUE_URL = aws_sqs_queue.batch_submit_queue.url
+    INIT_FLOW_SNS_TOPIC_ARN        = aws_sns_topic.initFlow.arn
+    LAMBDA_CONCURRENCY_MARGIN      = 200
+  }
+
+  layers = [
+    local.python_modules_layer
   ]
 }
