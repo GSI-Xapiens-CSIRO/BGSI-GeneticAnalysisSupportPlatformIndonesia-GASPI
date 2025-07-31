@@ -1,0 +1,348 @@
+<!-- SVEP Configuration Accordion -->
+@if (hasSvepConfig()) {
+  <mat-card class="mb-4">
+    <mat-card-content>
+      <mat-accordion class="w-full">
+        <!-- No Results Alert -->
+        @if (originalRows.length === 0 && !isLoading) {
+          <app-no-results-alert></app-no-results-alert>
+        }
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title class="flex items-center">
+              <mat-icon class="mr-2 text-purple-600">tune</mat-icon>
+              Disease Analysis Configuration
+            </mat-panel-title>
+            <mat-panel-description>
+              View variant filtering parameters and quality thresholds
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+            <!-- Filter Criteria -->
+            @if (getFilters()) {
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h4
+                  class="font-semibold text-purple-800 mb-3 flex items-center"
+                >
+                  <mat-icon class="mr-2 text-sm">filter_list</mat-icon>
+                  Filter Criteria
+                </h4>
+                <div class="space-y-3">
+                  @for (criteria of getFilterCriteria(); track $index) {
+                    <div class="bg-white rounded p-3 border border-purple-100">
+                      <div class="text-sm font-medium text-purple-700 mb-1">
+                        {{ criteria.label }}
+                      </div>
+                      @if (criteria.type === "array") {
+                        <div class="text-xs text-purple-600">
+                          <div class="flex flex-wrap gap-1">
+                            @for (item of criteria.value; track $index) {
+                              <span
+                                class="bg-purple-100 px-2 py-1 rounded text-xs"
+                                >{{ item }}</span
+                              >
+                            }
+                          </div>
+                        </div>
+                      } @else if (criteria.type === "count") {
+                        <div class="text-sm text-purple-600 font-mono mb-2">
+                          {{ criteria.value }} genes total
+                        </div>
+                        @if (getTargetGenesPreview().length > 0) {
+                          <div
+                            class="max-h-32 overflow-y-auto border border-purple-200 rounded p-2 bg-purple-25"
+                          >
+                            <div class="flex flex-wrap gap-1">
+                              @for (gene of getFilters()?.genes; track $index) {
+                                <span
+                                  class="inline-block px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium border border-purple-200 hover:bg-purple-200 transition-colors"
+                                >
+                                  {{ gene }}
+                                </span>
+                              }
+                            </div>
+                          </div>
+                        }
+                      } @else {
+                        <div class="text-sm text-purple-600 font-mono">
+                          {{ criteria.value }}
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Quality Thresholds -->
+            @if (getClinicThresholds()) {
+              <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <h4
+                  class="font-semibold text-indigo-800 mb-3 flex items-center"
+                >
+                  <mat-icon class="mr-2 text-sm">high_quality</mat-icon>
+                  Quality Thresholds
+                </h4>
+                <div class="space-y-3">
+                  @for (threshold of getQualityThresholds(); track $index) {
+                    <div class="bg-white rounded p-3 border border-indigo-100">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <div class="text-sm font-medium text-indigo-700">
+                            {{ threshold.label }}
+                          </div>
+                          <div class="text-xs text-indigo-500 mt-1">
+                            {{ threshold.description }}
+                          </div>
+                        </div>
+                        <div
+                          class="text-sm text-indigo-600 font-mono bg-indigo-50 px-2 py-1 rounded"
+                        >
+                          {{ threshold.value }}
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Analysis Summary -->
+          <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+              <mat-icon class="mr-2 text-sm">info</mat-icon>
+              Analysis Summary
+            </h4>
+            <div
+              class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700"
+            >
+              <div>
+                <strong>Filtering:</strong> Analysis excludes
+                {{ getFilters()?.clinvar_exclude?.length || 0 }} ClinVar
+                categories
+              </div>
+              <div>
+                <strong>Gene Panel:</strong> {{ getTotalGenesCount() }} target
+                genes analyzed
+              </div>
+              <div>
+                <strong>Quality Control:</strong>
+                {{ getQualityThresholds().length }} threshold parameters applied
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </mat-card-content>
+  </mat-card>
+}
+
+<mat-card class="mt-4">
+  <mat-card-content>
+    <h2>Results Table</h2>
+    @if (originalRows.length > 0) {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <!-- no pages -->
+        @if (
+          results &&
+          Object.keys(results.pages).length == 1 &&
+          results.pages[results.chromosome] == 1
+        ) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="filterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filter()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            style="background: #ffa705"
+            (click)="clearFilter()"
+          >
+            Clear Filter
+          </button>
+        } @else {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Chromosome</mat-label>
+            <mat-select [formControl]="chromosomeField">
+              @for (
+                chromosome of results?.pages | keyvalue;
+                track chromosome.key
+              ) {
+                <mat-option [value]="chromosome.key">
+                  {{ chromosome.key }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Base position</mat-label>
+            <input
+              matInput
+              type="number"
+              [formControl]="basePositionField"
+              min="1"
+            />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="search()"
+            class="w-[110px]"
+          >
+            Search
+          </button>
+        }
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
+
+      <!-- advanced filter  -->
+      <div class="mb-2">
+        <mat-accordion>
+          <mat-expansion-panel
+            (opened)="panelOpenState.set(true)"
+            (closed)="panelOpenState.set(false)"
+          >
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <span class="text-lg text-primary-50 font-semibold"
+                  >Advanced Filter Term</span
+                >
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="flex flex-col">
+              <div class="flex flex-row space-x-1 items-end gap-2 mb-4">
+                <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+                  <mat-label>Filter</mat-label>
+                  <input
+                    type="text"
+                    placeholder="Pick Filter"
+                    aria-label="Search Filter"
+                    matInput
+                    [formControl]="advancedFilter"
+                    [matAutocomplete]="auto"
+                  />
+                  <mat-autocomplete #auto="matAutocomplete">
+                    @for (option of filteredColumns | async; track option) {
+                      @if (option !== "selected") {
+                        <mat-option [value]="option">
+                          {{ option }}
+                        </mat-option>
+                      }
+                    }
+                  </mat-autocomplete>
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="addFilter()"
+                  [disabled]="
+                    !advancedFilter.value || advancedFilter.value.trim() === ''
+                  "
+                  class="mb-2"
+                >
+                  Add Filter
+                </button>
+                <mat-icon
+                  class="text-primary-50 mb-[1.25rem]"
+                  [matTooltip]="
+                    'The filter uses the AND logic to combine the values within the available result columns to pinpoint the variant(s) containing the specified entries.'
+                  "
+                >
+                  info
+                </mat-icon>
+              </div>
+
+              <div class="flex flex-wrap gap-4">
+                @for (
+                  item of filterValues | keyvalue: compareFn;
+                  track item.key
+                ) {
+                  <auto-complete-component
+                    [label]="item.key"
+                    [options]="filterMasterData[item.key]"
+                    (optionSelected)="onSelectChange($event, item.key)"
+                    (deleteFilter)="removeFilter(item.key)"
+                  />
+                }
+              </div>
+
+              <div class="gap-2 flex flex-row">
+                <button
+                  mat-raised-button
+                  style="background: #ffa705"
+                  (click)="resetFilter()"
+                >
+                  Reset Filter
+                </button>
+                <button mat-raised-button color="primary" (click)="setFilter()">
+                  Filter
+                </button>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+
+      <div class="w-full" id="myTarget">
+        <cdk-virtual-scroll-viewport
+          [style.height.px]="900"
+          class="no-scrollbar"
+        >
+          @if (rows.length > 0) {
+            <div class="flex flex-col gap-2">
+              @for (row of rows; track row) {
+                <box-data-component
+                  [row]="row"
+                  [rows]="rows"
+                  [expanded]="expandedMap.get(row.id) ?? false"
+                  (panelToggled)="onToggle(row.id, $event)"
+                  [isSelected]="handleIsSelected(row)"
+                />
+              }
+            </div>
+          }
+        </cdk-virtual-scroll-viewport>
+      </div>
+      <mat-paginator
+        showFirstLastButtons
+        #paginator
+        hidePageSize
+        pageSize="1"
+        [length]="resultsLength"
+        [pageIndex]="pageIndex"
+        (page)="pageChange($event)"
+      >
+      </mat-paginator>
+    } @else {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <p>No results to show.</p>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,429 @@
+<div class="mb-2 flex flex-row items-center w-full">
+  <mat-checkbox
+    (change)="cs.selection(row, $event.checked)"
+    [checked]="(cs.selectedVariants | async)!.has(cs.hashRow(row))"
+  >
+  </mat-checkbox>
+  <mat-accordion style="width: 100%" class="mr-2">
+    <mat-expansion-panel
+      (opened)="togglePanel(true)"
+      (closed)="togglePanel(false)"
+      [expanded]="isSingleData()"
+      [style.border]="isSelected ? '2px solid green' : 'none'"
+    >
+      <mat-expansion-panel-header style="padding: 1rem">
+        <mat-panel-title>
+          <div
+            class="flex items-center w-[200vw] md:w-full lg:w-full xl:w-full font-normal"
+          >
+            <div class="flex flex-1 flex-row items-center gap-2">
+              @if (shouldShowFlag()) {
+                <div
+                  class="flex justify-center items-center rounded-full"
+                  [matTooltip]="showTooltip(row['filter'], row)"
+                  style="width: 30px; height: 30px"
+                  [style.background]="getFlagColor()"
+                >
+                  <mat-icon class="text-white">priority_high</mat-icon>
+                </div>
+              }
+              <div class="flex flex-col gap-1">
+                <div class="title-accordion">{{ row["Gene Name"] }}</div>
+                <div>
+                  {{ row["Variant Name"] }}
+                </div>
+              </div>
+            </div>
+            <div class="flex-1 title-accordion">
+              {{ row["conditions"] }}
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <div>clinSign</div>
+              <div
+                class="title-accordion"
+                [style.color]="handleColorClignsign(row['clinSig'])"
+              >
+                {{ row["clinSig"] }}
+              </div>
+            </div>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div
+        class="data-row border-0 border-t-2 border-gray-300 border-dashed pt-2 flex flex-col gap-2 no-scrollbar"
+        style="height: 300px; overflow: scroll"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Card 1 -->
+          <div class="bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Variant Information
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="row-content">
+                <div>rsid</div>
+                <div
+                  (click)="handleRedirectUrl('rsId', row['rsId'])"
+                  class="row-value link-click"
+                >
+                  {{ row["rsId"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Consequence</div>
+                <div class="row-value">
+                  {{ row["Consequence"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>OMIM</div>
+                <div class="row-value">
+                  {{ row["omimId"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Exon Number</div>
+                <div class="row-value">
+                  {{ row["Exon Number"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Transcript ID & Version</div>
+                <div class="row-value">
+                  {{ row["Transcript ID & Version"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Transcript Support Level</div>
+                <div class="row-value">
+                  {{ row["Transcript Support Level"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Transcript Biotype</div>
+                <div class="row-value">
+                  {{ row["Transcript Biotype"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Feature</div>
+                <div class="row-value">
+                  {{ row["Feature"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Classification</div>
+                <div class="row-value">
+                  {{ row["classification"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Rank</div>
+                <div class="row-value">
+                  {{ row["Rank"] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Sequence Information
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="row-content">
+                <div>Region</div>
+                <div class="row-value">
+                  {{ row["Region"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Gene ID</div>
+                <div
+                  (click)="handleRedirectUrl('Gene ID', row['Gene ID'])"
+                  class="row-value link-click"
+                >
+                  {{ row["Gene ID"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>ALT/REF</div>
+                <div class="row-value">
+                  {{ row["Alt Allele"] }}/{{ row["ref"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Strand</div>
+                <div class="row-value">
+                  {{ row["Strand"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Codon Change</div>
+                <div class="row-value">
+                  {{ row["Codon Change"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Amino Acid Change</div>
+                <div class="row-value">
+                  {{ row["Amino Acid Change"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>GT</div>
+                <div class="row-value">
+                  {{ row["gt"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Qual</div>
+                <div class="row-value">
+                  {{ row["qual"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Filter</div>
+                <div class="row-value">
+                  {{ row["filter"] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              <div>Allele Frequency</div>
+              <div class="flex flex-row text-sm text-primary-50 mb-2 gap-4">
+                <div
+                  (click)="handleRedirectGnomad(row, 'gnomad_r4')"
+                  class="flex-1row-value link-click">
+                  gnomAD
+                </div>
+                <div
+                  (click)="handleRedirectGnomad(row, 'gnomad_r3')"
+                  class="flex-1 row-value link-click"
+                >
+                  1KG+HGDP
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-row gap-4">
+              <div class="flex flex-col gap-1 flex-1">
+                <div class="row-content">
+                  <div>AF</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (Global)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AC</div>
+                  <div class="row-value">
+                    {{ row["Allele Count"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AN</div>
+                  <div class="row-value">
+                    {{ row["Allele Number"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AFR</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (African)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>EAS</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (East Asian)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>FIN</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (Finnish)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>NFE</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (Non-Finnish European)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>SAS</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (South Asian)"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AMR</div>
+                  <div class="row-value">
+                    {{ row["Allele Frequency (Admixed American)"] }}
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col gap-1 flex-1">
+                <div class="row-content">
+                  <div>AF</div>
+                  <div class="row-value">
+                    {{ row["Global Allele Frequency"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>KHV</div>
+                  <div class="row-value">
+                    {{ row["KHV"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AC</div>
+                  <div class="row-value">
+                    {{ row["ac1KG"] }}
+                  </div>
+                </div>
+                <div class="row-content">
+                  <div>AN</div>
+                  <div class="row-value">
+                    {{ row["an1KG"] }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4 mb-2">
+          <!-- Card 1 -->
+          <div class="bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Resources
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="row-content">
+                <div class="text-primary-50 font-semibold">Clinvar</div>
+              </div>
+              <div class="row-content">
+                <div>Review Status</div>
+                <div class="row-value">
+                  {{ row["reviewStatus"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Last Evaluated</div>
+                <div class="row-value">
+                  {{ row["lastEvaluated"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Accession</div>
+                <div
+                  (click)="handleRedirectUrl('accession', row['accession'])"
+                  class="row-value link-click"
+                >
+                  {{ row["accession"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Variation ID</div>
+                <div
+                  (click)="handleRedirectUrl('variationId', row['variationId'])"
+                  class="row-value link-click"
+                >
+                  {{ row["variationId"] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Constraints
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="row-content">
+                <div>Missense Z</div>
+                <div class="row-value">
+                  {{ row["Mis Z"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Missense o/e</div>
+                <div class="row-value">
+                  {{ row["Mis o/e"] }} ( {{ row["Mis o/e lower CI"] }} -
+                  {{ row["Mis o/e upper CI"] }})
+                </div>
+              </div>
+              <div class="row-content">
+                <div>pLI</div>
+                <div class="row-value">
+                  {{ row["pLI"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>pLOF o/e</div>
+                <div class="row-value">
+                  {{ row["pLOF o/e"] }} ({{ row["pLOF o/e lower CI"] }} - {{ row["pLOF o/e upper CI"] }})
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bgCard p-4 rounded-xl shadow-md">
+              <div class="font-semibold text-base mb-2 border-bottom">
+                Computational Predictions
+              </div>
+              <div class="flex flex-col gap-1">
+                <div class="row-content">
+                  <div>SIFT</div>
+                  <div class="row-value">
+                    {{ row["SIFT (max)"] }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bgCard p-4 rounded-xl shadow-md">
+              <div class="font-semibold text-base mb-2 border-bottom">
+                Publication Media
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                @for (
+                  id of splitPubMedArray(row["pubmed"]).slice(0, 8);
+                  track id
+                ) {
+                  <div
+                    class="pub-med p-1 cursor-pointer rounded-md flex justify-center items-center"
+                    (click)="handleRedirectUrl('pubmed', id)"
+                  >
+                    {{ id }}
+                  </div>
+                }
+                <!-- code here  -->
+                @if (splitPubMedArray(row["pubmed"]).length > 8) {
+                  <div class="relative">
+                    <pop-over-component
+                      [data]="
+                        splitPubMedArray(row['pubmed']).slice(
+                          8,
+                          splitPubMedArray(row['pubmed']).length
+                        )
+                      "
+                    />
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>

@@ -1,6 +1,8 @@
 <div class="relative min-w-[300px] md:min-w-[800px] max-w-[800px]">
   <h1 mat-dialog-title>Create New User</h1>
-
+  <div class="flex flex-col gap-2 p-4 m-4 font-medium text-yellow-800 rounded-lg bg-yellow-100" role="alert">
+    <div>Please ensure that the person you are onboarding has the appropriate role and access permissions as required!</div>
+  </div>
   <app-component-spinner [loading]="loading"></app-component-spinner>
   <div mat-dialog-content>
     <form [formGroup]="newUserForm">
@@ -35,6 +37,7 @@
               placeholder="user@domain.com"
               formControlName="email"
             />
+            <mat-hint>Enter the email address (case insensitive)</mat-hint>
             <mat-error>Valid email is required</mat-error>
           </mat-form-field>
         </div>
@@ -70,23 +73,102 @@
         </div>
       </div>
 
-      <div class="flex flex-row gap-2">
-        <label for="Role Group">Role Access: </label>
-        <div class="flex flex-1 flex-col">
-          <mat-checkbox formControlName="administrators" color="primary"
-            >Admin access</mat-checkbox
+      <div class="flex gap-5">
+        <div class="flex flex-col gap-2 w-1/2">
+          <div class="flex flex-row gap-2">
+            <label for="Role Group" class="w-[130px]">Role Access: </label>
+            <div class="flex flex-1 flex-col">
+              <mat-checkbox formControlName="administrators" color="primary"
+                >Admin access</mat-checkbox
+              >
+              <mat-checkbox formControlName="managers" color="primary"
+                >Data Manager Access</mat-checkbox
+              >
+              <mat-checkbox
+                color="primary"
+                value=""
+                aria-disabled="true"
+                [disabled]="true"
+                [checked]="true"
+                >Basic User Access</mat-checkbox
+              >
+            </div>
+          </div>
+
+          <div class="flex flex-row gap-2">
+            <label for="Role Group" class="w-[130px]">Attributes: </label>
+            <div class="flex flex-1 flex-col">
+              <mat-checkbox
+                formControlName="isMedicalDirector"
+                color="primary"
+                value="isMedicalDirector"
+                >Medical Director</mat-checkbox
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 w-1/2">
+          <label>Notebook Options:</label>
+
+          <mat-radio-group
+            formControlName="notebookRole"
+            class="notebook-radio-group"
           >
-          <mat-checkbox formControlName="managers" color="primary"
-            >Data Manager Access</mat-checkbox
+            <mat-radio-button
+              [value]="noteBookRoleValue.ADVANCED"
+              class="notebook-radio-option"
+            >
+              <div class="label">
+                <strong>Advanced</strong>
+                <div class="text-primary-60">
+                  shows all available instance types and volume options during
+                  notebook creation.
+                </div>
+              </div>
+            </mat-radio-button>
+
+            <mat-radio-button
+              [value]="noteBookRoleValue.BASIC"
+              class="notebook-radio-option"
+            >
+              <div class="label">
+                <strong>Basic</strong>
+                <div class="text-primary-60">
+                  shows only the ml.t3.medium instance with a 5 GB volume during
+                  notebook creation.
+                </div>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="flex gap-5">
+        <div class="flex flex-col gap-3 w-1/2">
+          <label for="Institution Type">Institution: </label>
+          <mat-radio-group
+            formControlName="institutionType"
+            class="institution-radio-group"
           >
-          <mat-checkbox
-            color="primary"
-            value=""
-            aria-disabled="true"
-            [disabled]="true"
-            [checked]="true"
-            >Basic User Access</mat-checkbox
-          >
+            <mat-radio-button
+              [value]="institutionTypeValue.INTERNAL"
+              class="institution-radio-option"
+            >
+              Internal
+            </mat-radio-button>
+            <mat-radio-button
+              [value]="institutionTypeValue.EXTERNAL"
+              class="institution-radio-option"
+            >
+              External
+            </mat-radio-button>
+          </mat-radio-group>
+
+          <mat-form-field class="pb-2">
+            <mat-label>Institution Name</mat-label>
+            <input matInput type="text" formControlName="institutionName" />
+            <mat-error> Field is required </mat-error>
+          </mat-form-field>
         </div>
       </div>
     </form>
