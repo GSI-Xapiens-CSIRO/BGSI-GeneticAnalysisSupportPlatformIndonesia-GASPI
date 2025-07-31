@@ -7,6 +7,7 @@ import {
   map,
   Observable,
   of,
+  pipe,
   Subject,
   switchMap,
 } from 'rxjs';
@@ -49,6 +50,8 @@ export class ClinicService {
     limit?: number,
     last_evaluated_key?: string | null,
     project?: string,
+    search?: string,
+    job_status?: string,
   ) {
     console.log('get list jobs id');
     return from(
@@ -59,19 +62,54 @@ export class ClinicService {
           queryStringParameters: {
             ...(limit !== undefined && limit !== null ? { limit } : {}),
             ...(last_evaluated_key ? { last_evaluated_key } : {}),
+            ...(search ? { search } : {}),
+            ...(job_status !== 'all' ? { job_status } : {}),
           },
         },
       ),
     );
   }
 
-  submitSvepJob(location: string, projectName: string) {
+  submitClinicJob(
+    location: string,
+    projectName: string,
+    jobName: string,
+    missingToRef: boolean,
+  ) {
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
         return from(
-          API.post(environment.api_endpoint_svep.name, 'submit', {
-            body: { location, projectName, userId },
+          API.post(environment.api_endpoint_clinic.name, 'submit', {
+            body: {
+              location,
+              projectName,
+              userId,
+              jobName,
+              missingToRef,
+            },
+          }),
+        );
+      }),
+    );
+  }
+
+  batchSubmitClinicJobs(
+    projectName: string,
+    jobs: Array<{ filename: string; jobName: string }>,
+    missingToRef: boolean,
+  ) {
+    return from(Auth.currentCredentials()).pipe(
+      switchMap((credentials) => {
+        const userId = credentials.identityId;
+        return from(
+          API.post(environment.api_endpoint_clinic.name, 'batch-submit', {
+            body: {
+              projectName,
+              jobs,
+              userId,
+              missingToRef,
+            },
           }),
         );
       }),
@@ -80,27 +118,55 @@ export class ClinicService {
 
   generateQC(projectName: string, fileName: string, key: string) {
     return from(
-      API.post(environment.api_endpoint_svep.name, 'vcfstats', {
+      API.post(environment.api_endpoint_clinic.name, 'vcfstats', {
         body: { projectName, fileName, key },
       }),
     );
   }
 
-  getSvepResults(
+  getQCNotes(projectName: string, fileName: string) {
+    return from(
+      API.get(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+      }),
+    );
+  }
+
+  getClinicJob(project: string, jobId: string) {
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
+  updateQCNotes(projectName: string, fileName: string, notes: string) {
+    return from(
+      API.post(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+        body: notes,
+      }),
+    );
+  }
+
+  getClinicResults(
     requestId: string,
     projectName: string,
     chromosome: string | null = null,
     page: number | null = null,
     position: number | null = null,
+    pipeline: string | null = null,
   ): Observable<any> {
     const params = {
       ...(chromosome && { chromosome }),
       ...(page && { page }),
       ...(position && { position }),
+      ...(pipeline && { pipeline }),
     };
-
     return from(
-      API.get(environment.api_endpoint_svep.name, 'results', {
+      API.get(environment.api_endpoint_clinic.name, 'results', {
         queryStringParameters: {
           request_id: requestId,
           project_name: projectName,
@@ -109,10 +175,13 @@ export class ClinicService {
       }),
     ).pipe(
       switchMap((res: any) => {
+        const filters = res.filters || {};
         if (res.url) {
           return this.http
             .get(res.url, { responseType: 'text' })
-            .pipe(map((res) => ({ pages: [], content: res, page: 1 })));
+            .pipe(
+              map((res) => ({ pages: [], content: res, page: 1, filters })),
+            );
         } else {
           return of(res);
         }
@@ -218,7 +287,7 @@ export class ClinicService {
     );
   }
 
-  generateReport(project: string, jobId: string) {
+  generateReport(project: string, jobId: string, args: any = {}) {
     return from(
       API.post(
         environment.api_endpoint_sbeacon.name,
@@ -226,8 +295,63 @@ export class ClinicService {
         {
           body: {
             lab: environment.hub_name,
+            ...args,
           },
         },
+      ),
+    );
+  }
+
+  deleteFailedJob(project: string, jobId: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
+  addValidation(project: string, jobId: string, name: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeValidation(project: string, jobId: string, name: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {},
+      ),
+    );
+  }
+
+  addNoVariantsValidation(project: string, jobId: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeNoVariantsValidation(project: string, jobId: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
+        {},
       ),
     );
   }

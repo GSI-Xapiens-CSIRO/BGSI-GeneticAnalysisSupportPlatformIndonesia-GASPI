@@ -1,6 +1,7 @@
 {
   "python.analysis.extraPaths": [
     "./sbeacon/shared_resources/python-modules/python",
-    "./svep/shared_resources/python-modules/python"
+    "./svep/shared_resources/python-modules/python",
+    "./pgxflow/shared_resources/python-modules/python",
   ]
 }

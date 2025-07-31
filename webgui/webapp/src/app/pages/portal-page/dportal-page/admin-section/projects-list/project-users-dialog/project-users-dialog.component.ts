@@ -1,4 +1,11 @@
-import { Component, Inject } from '@angular/core';
+import {
+  Component,
+  Inject,
+  ViewChild,
+  OnInit,
+  AfterViewInit,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -8,6 +15,7 @@ import {
 } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, MatSort } from '@angular/material/sort';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
@@ -25,26 +33,36 @@ interface User {
     MatIconModule,
     MatButtonModule,
     MatTableModule,
-    MatDialogModule,
+    MatSortModule,
     MatDialogModule,
   ],
   templateUrl: './project-users-dialog.component.html',
   styleUrl: './project-users-dialog.component.scss',
 })
-export class ProjectUsersDialogComponent {
+export class ProjectUsersDialogComponent implements OnInit, AfterViewInit {
   project: string;
   displayedColumns: string[] = ['firstName', 'lastName', 'email', 'actions'];
-  dataSource = new MatTableDataSource<User>();
+  dataSource = new MatTableDataSource<User>([]);
+  @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private dps: DportalService,
     private tstr: ToastrService,
     private dg: MatDialog,
+    private cd: ChangeDetectorRef,
     public dialogRef: MatDialogRef<ProjectUsersDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { project: string },
   ) {
     this.project = data.project;
+  }
+
+  ngOnInit(): void {
     this.list();
+  }
+
+  ngAfterViewInit(): void {
+    this.dataSource.sort = this.sort;
+    console.log(this.sort);
   }
 
   list() {

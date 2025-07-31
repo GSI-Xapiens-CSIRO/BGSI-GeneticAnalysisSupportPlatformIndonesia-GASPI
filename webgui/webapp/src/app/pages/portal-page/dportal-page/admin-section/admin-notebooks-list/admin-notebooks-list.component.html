@@ -21,7 +21,8 @@
 </div>
 
 <div class="flex flex-col space-y-1 relative">
-  @for (notebook of notebooks; track notebook) {
+  <app-component-spinner [loading]="loading" />
+  @for (notebook of notebooksDataSource; track notebook) {
     <app-admin-notebook-item
       #notebook
       [notebook]="notebook"
@@ -37,5 +38,5 @@
   #paginator
   [pageSizeOptions]="[3, 5, 10]"
   [pageSize]="pageSize"
-  [length]="notebookCount"
+  [length]="9999"
 ></mat-paginator>

@@ -1,5 +1,13 @@
 <form [formGroup]="dataSubmissionForm">
-  <br />
+  <div class="flex flex-col gap-2 p-4 my-4 font-medium text-yellow-800 rounded-lg bg-yellow-100" role="alert">
+    <div>
+      Multi-sampled VCF is for the Data Portal functionalities, and only single-sampled and compressed VCF works for the Clinical workflow.
+    </div>
+    <div>
+      Please make sure that neither the filename nor the file content contains any sensitive personal information!
+    </div>
+  </div>
+
   <div class="flex flex-col space-y-2 w-full">
     <mat-form-field class="w-full">
       <mat-label>Project name</mat-label>
