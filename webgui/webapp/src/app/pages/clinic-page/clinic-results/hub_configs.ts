@@ -179,6 +179,8 @@ export const COLUMNS: { [key: string]: any } = {
       'SIFT (max)',
       'Global Allele Frequency',
       'KHV',
+      'ac1KG',
+      'an1KG',
       'Mis Z',
       'Mis o/e',
       'Mis o/e lower CI',

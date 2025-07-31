@@ -42,7 +42,7 @@
           (matSortChange)="resort($event)"
           [dataSource]="dataSource"
         >
-          <!-- Name Column -->
+          <!-- VCF Filename Column -->
           <ng-container matColumnDef="input_vcf">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>VCF File</th>
             <td mat-cell *matCellDef="let element">{{ element.input_vcf }}</td>
@@ -66,10 +66,14 @@
               </div>
             </td>
           </ng-container>
+
+          <!-- Job Name Column -->
           <ng-container matColumnDef="job_name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Name</th>
             <td mat-cell *matCellDef="let element">{{ element.job_name }}</td>
           </ng-container>
+
+          <!-- Job ID Column -->
           <ng-container matColumnDef="job_id">
             <th mat-header-cell *matHeaderCellDef>Job ID</th>
             <td mat-cell *matCellDef="let element">
@@ -101,12 +105,28 @@
               </div>
             </td>
           </ng-container>
+
+          <!-- Missing to Reference Column -->
+           @if (["RSPON", "RSJPD"].includes(hubName)) {
+            <ng-container matColumnDef="missing_to_ref">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Treat Missing as Ref
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ getMissingToRefDisplay(element.missing_to_ref) }}
+              </td>
+            </ng-container>
+          }
+
+          <!-- Created At Column -->
           <ng-container matColumnDef="created_at">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               Created At
             </th>
             <td mat-cell *matCellDef="let element">{{ element.created_at }}</td>
           </ng-container>
+
+          <!-- Action Column -->
           <ng-container matColumnDef="action">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let element">

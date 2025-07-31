@@ -155,7 +155,7 @@ if __name__ == "__main__":
     api_endpoint_clinic = args["api_endpoint_clinic"]
     data_portal_bucket = args["data_portal_bucket"]
     hub_name = args["hub_name"]
-    clinic_mode = args["clinic_mode"]
+    clinic_mode = args.get("clinic_mode")
     clinic_warning_dp = float(args["clinic_warning_dp"])
     clinic_warning_filter = args["clinic_warning_filter"]
     clinic_warning_gq = float(args["clinic_warning_gq"])

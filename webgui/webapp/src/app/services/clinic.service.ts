@@ -175,10 +175,13 @@ export class ClinicService {
       }),
     ).pipe(
       switchMap((res: any) => {
+        const filters = res.filters || {};
         if (res.url) {
           return this.http
             .get(res.url, { responseType: 'text' })
-            .pipe(map((res) => ({ pages: [], content: res, page: 1 })));
+            .pipe(
+              map((res) => ({ pages: [], content: res, page: 1, filters })),
+            );
         } else {
           return of(res);
         }

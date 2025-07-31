@@ -1,4 +1,4 @@
-<mat-card class="mt-4" [class.hide]="annotations.length == 0">
+<mat-card class="mt-4" [class.hide]="annotations.length == 0 && !searchTerm">
   <mat-card-content>
     <div class="flex flex-row justify-between items-center">
       <h2>Clinical Annotations</h2>
@@ -11,6 +11,35 @@
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
+
+    <!-- Search and Sort Controls -->
+    <div class="flex flex-col md:flex-row gap-4 mt-4 mb-4">
+      <mat-form-field class="flex-1" appearance="outline">
+        <mat-label>Search annotations</mat-label>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange($event)"
+          placeholder="Search by annotation, name, user, or variants..."
+        />
+        <mat-icon matSuffix>search</mat-icon>
+        @if (searchTerm) {
+          <button
+            matSuffix
+            mat-mini-fab
+            color="primary"
+            class="mr-2"
+            (click)="clearSearch()"
+            matTooltip="Clear search"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+
+    </div>
+
     <div
       class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
     >
@@ -80,7 +109,13 @@
           <div class="w-full h-1 bg-primary-60 my-2"></div>
         }
       } @empty {
-        <div class="text-center">No annotations available</div>
+        <div class="text-center">
+          @if (searchTerm) {
+            No annotations found matching "{{ searchTerm }}"
+          } @else {
+            No annotations available
+          }
+        </div>
       }
     </div>
     <mat-paginator

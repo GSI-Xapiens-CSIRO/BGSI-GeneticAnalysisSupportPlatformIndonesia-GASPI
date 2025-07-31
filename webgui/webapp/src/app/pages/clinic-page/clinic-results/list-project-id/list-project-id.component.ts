@@ -42,6 +42,7 @@ import { AsyncPipe } from '@angular/common';
 import dayjs from 'dayjs';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { clinicResort } from 'src/app/utils/clinic';
+import { environment } from 'src/environments/environment';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
@@ -56,6 +57,7 @@ interface Project {
   job_status: JobStatus;
   error_message: string;
   failed_step: string;
+  missing_to_ref?: boolean;
 }
 
 enum JobStatus {
@@ -116,11 +118,15 @@ export class ListJobComponent implements OnChanges, OnInit {
     'job_status',
     'job_name',
     'job_id',
+    ...(['RSPON', 'RSJPD'].includes(environment.hub_name)
+      ? ['missing_to_ref']
+      : []),
     'created_at',
     'action',
   ];
   JobStatus = JobStatus;
   jobStatusOptions = ['all', ...Object.values(JobStatus)];
+  protected hubName: string = environment.hub_name;
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
@@ -195,6 +201,14 @@ export class ListJobComponent implements OnChanges, OnInit {
     if (this.paginator) {
       this.refresh();
     }
+  }
+
+  getMissingToRefDisplay(missingToRef: boolean | null): string {
+    return missingToRef === null
+      ? 'Unknown'
+      : missingToRef
+        ? 'Enabled'
+        : 'Disabled';
   }
 
   async loadResult(jobID: string, vcf_file: string) {

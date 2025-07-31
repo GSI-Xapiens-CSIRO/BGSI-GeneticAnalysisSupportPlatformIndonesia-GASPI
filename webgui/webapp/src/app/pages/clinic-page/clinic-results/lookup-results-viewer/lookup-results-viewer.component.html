@@ -1,5 +1,61 @@
+
+
+
+
 <mat-card class="mt-4">
   <mat-card-content>
+    <!-- No Results Alert - Add this if needed -->
+    @if (originalRows.length === 0 && !isLoading) {
+      <app-no-results-alert></app-no-results-alert>
+    }
+    <!-- Lookup Configuration Accordion -->
+    <!-- @if (results?.config?.lookup && hasLookupConfig()) { -->
+      <mat-accordion class="w-full">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title class="flex items-center">
+              <mat-icon class="mr-2 text-green-600">search</mat-icon>
+              Lookup Analysis Configuration
+            </mat-panel-title>
+            <mat-panel-description>
+              View genomic variant lookup parameters
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="mt-4">
+            <!-- Header Configuration -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 class="font-semibold text-green-800 mb-3 flex items-center">
+                <mat-icon class="mr-2 text-sm">table_chart</mat-icon>
+                Data Header Configuration
+              </h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @for (field of getHeaderFields(); track $index) {
+                  <div class="bg-white rounded p-3 border border-green-100">
+                    <div class="text-sm font-medium text-green-700 mb-1">{{ field.label }}</div>
+                    <div class="text-sm text-green-600 font-mono bg-green-50 px-2 py-1 rounded">
+                      {{ field.value }}
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Analysis Summary -->
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                <mat-icon class="mr-2 text-sm">info</mat-icon>
+                Analysis Summary
+              </h4>
+              <p class="text-gray-700 text-sm">
+                This lookup analysis processes genomic variants by querying the chromosome ({{ results?.config?.lookup?.chr_header }}),
+                start position ({{ results?.config?.lookup?.start_header }}), and end position ({{ results?.config?.lookup?.end_header }}) within the VCF file.
+              </p>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    <!-- } -->
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
       <div class="flex flex-row space-x-1 items-center mb-2">

@@ -16,9 +16,9 @@ locals {
     "RSUP",
   ]
   clinic_mode              = contains(local.svep_hubs, var.hub_name) ? "svep" : contains(local.pgxflow_hubs, var.hub_name) ? "pgxflow" : null
-  clinic_api_url           = local.clinic_mode == "svep" ? module.svep[0].api_url : local.clinic_mode == "pgxflow" ? module.pgxflow[0].api_url : null
-  clinic_temp_bucket_names = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-name, module.svep[0].region-bucket-name] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-name] : null
-  clinic_temp_bucket_arns  = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-arn, module.svep[0].region-bucket-arn] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-arn] : null
+  clinic_api_url           = local.clinic_mode == "svep" ? module.svep[0].api_url : local.clinic_mode == "pgxflow" ? module.pgxflow[0].api_url : ""
+  clinic_temp_bucket_names = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-name, module.svep[0].region-bucket-name] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-name] : []
+  clinic_temp_bucket_arns  = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-arn, module.svep[0].region-bucket-arn] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-arn] : []
 }
 
 
@@ -140,19 +140,19 @@ moved {
 }
 
 module "webgui" {
-  source                  = "./webgui/terraform-aws"
-  region                  = var.region
-  base_range              = 5000
-  user_pool_id            = module.cognito.cognito_user_pool_id
-  identity_pool_id        = module.cognito.cognito_identity_pool_id
-  user_pool_web_client_id = module.cognito.cognito_client_id
-  data_portal_bucket      = module.sbeacon.data-portal-bucket
-  api_endpoint_sbeacon    = module.sbeacon.api_url
-  api_endpoint_clinic     = local.clinic_api_url
-  clinic_mode             = local.clinic_mode
-  bui-ssm-parameter-name  = var.bui-ssm-parameter-name
-  web_acl_arn             = module.security.web_acl_arn
-  hub_name                = var.hub_name
+  source                    = "./webgui/terraform-aws"
+  region                    = var.region
+  base_range                = 5000
+  user_pool_id              = module.cognito.cognito_user_pool_id
+  identity_pool_id          = module.cognito.cognito_identity_pool_id
+  user_pool_web_client_id   = module.cognito.cognito_client_id
+  data_portal_bucket        = module.sbeacon.data-portal-bucket
+  api_endpoint_sbeacon      = module.sbeacon.api_url
+  api_endpoint_clinic       = local.clinic_api_url
+  clinic_mode               = local.clinic_mode
+  bui-ssm-parameter-name    = var.bui-ssm-parameter-name
+  web_acl_arn               = module.security.web_acl_arn
+  hub_name                  = var.hub_name
   clinic-warning-thresholds = var.clinic-warning-thresholds
 
   common-tags = merge(var.common-tags, {
