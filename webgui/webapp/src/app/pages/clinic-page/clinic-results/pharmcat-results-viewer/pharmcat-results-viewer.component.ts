@@ -5,8 +5,10 @@ import {
   Input,
   SimpleChanges,
   ViewChild,
+  signal,
+  OnInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, KeyValue } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import {
   MatPaginator,
@@ -21,6 +23,7 @@ import {
   map,
   Observable,
   of,
+  startWith,
   Subject,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
@@ -53,6 +56,7 @@ import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
 
 type PharmcatResult = {
   url?: string;
@@ -71,6 +75,8 @@ type PharmcatResult = {
   };
   missingToRef: boolean | null;
 };
+
+type FilterType = 'variants' | 'diplotypes';
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -114,17 +120,17 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     RsponBoxDataViewComponent,
     NoResultsAlertComponent,
+    AutoCompleteComponent,
   ],
   providers: [{ provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl }],
   templateUrl: './pharmcat-results-viewer.component.html',
   styleUrl: './pharmcat-results-viewer.component.scss',
 })
-export class PharmcatResultsViewerComponent {
+export class PharmcatResultsViewerComponent implements OnInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-
   protected results: PharmcatResult | null = null;
   protected diplotypeColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.diplotypeCols;
@@ -164,6 +170,20 @@ export class PharmcatResultsViewerComponent {
   protected pageIndex = 0;
   protected isLoading: boolean = false;
 
+  readonly panelOpenState = signal(false);
+
+  //filter dyplotypes
+  protected advancedFilter: FormControl = new FormControl('');
+  filteredColumns: Observable<string[]> | undefined;
+  filterValuesDyplotypes: { [key: string]: string } = {};
+  filterMasterDataDyplotypes: { [key: string]: any[] } = {};
+
+  //filter variants
+  protected advancedFilterVariants: FormControl = new FormControl('');
+  filteredColumnsVariants: Observable<string[]> | undefined;
+  filterValuesVariants: { [key: string]: string } = {};
+  filterMasterDataVariants: { [key: string | number]: any[] } = {};
+
   constructor(
     protected cs: ClinicService,
     private ss: SpinnerService,
@@ -171,6 +191,174 @@ export class PharmcatResultsViewerComponent {
     private dg: MatDialog,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  //handle on init
+  ngOnInit(): void {
+    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || '', 'diplotypes')),
+    );
+    this.filteredColumnsVariants =
+      this.advancedFilterVariants.valueChanges.pipe(
+        startWith(''),
+        map((value) => this._filter(value || '', 'variants')),
+      );
+  }
+
+  private _filter(value: string, type: FilterType): string[] {
+    const filterValue = value.toLowerCase();
+    const source =
+      type === 'variants' ? this.variantColumns : this.diplotypeColumns;
+
+    return source.filter((option) =>
+      option.toLowerCase().includes(filterValue),
+    );
+  }
+
+  addFilter(type: FilterType) {
+    const isVariant = type === 'variants';
+
+    const filterKey = isVariant
+      ? this.advancedFilterVariants.value
+      : this.advancedFilter.value;
+
+    const currentFilterValues = isVariant
+      ? this.filterValuesVariants
+      : this.filterValuesDyplotypes;
+
+    if (currentFilterValues.hasOwnProperty(filterKey) || filterKey === '') {
+      isVariant
+        ? this.advancedFilterVariants.reset()
+        : this.advancedFilter.reset();
+      return;
+    }
+
+    const updated = {
+      ...currentFilterValues,
+      [filterKey]: '',
+    };
+
+    if (isVariant) {
+      this.filterValuesVariants = updated;
+      this.advancedFilterVariants.reset();
+    } else {
+      this.filterValuesDyplotypes = updated;
+      this.advancedFilter.reset();
+    }
+  }
+
+  //handling order autocomplete based on index
+  compareFn = (a: KeyValue<string, any>, b: KeyValue<string, any>): number => {
+    return 0;
+  };
+
+  onSelectChange(event: any, key: string, type: FilterType): void {
+    const target =
+      type === 'variants'
+        ? this.filterValuesVariants
+        : this.filterValuesDyplotypes;
+    target[key] = event;
+  }
+
+  removeFilter(key: string) {
+    const { [key]: _, ...rest } = this.filterValuesDyplotypes;
+    this.filterValuesDyplotypes = rest;
+  }
+
+  removeFilterVariants(key: string) {
+    const { [key]: _, ...rest } = this.filterValuesVariants;
+    this.filterValuesVariants = rest;
+  }
+
+  private setMasterFilterData<T extends Record<string, any>>(
+    columns: string[],
+    originalRows: T[],
+    target: { [key: string]: string[] },
+    convertToString = false,
+  ) {
+    columns.forEach((columnKey) => {
+      if (columnKey !== 'selected') {
+        const uniqueValues = new Set<string>();
+
+        originalRows.forEach((row) => {
+          const value = row[columnKey];
+
+          if (Array.isArray(value)) {
+            value.forEach((v) =>
+              uniqueValues.add(convertToString ? String(v) : v),
+            );
+          } else {
+            uniqueValues.add(convertToString ? String(value) : value);
+          }
+        });
+
+        const existing = target[columnKey] || [];
+        const merged = Array.from(new Set([...existing, ...uniqueValues]));
+
+        target[columnKey] = merged;
+      }
+    });
+  }
+
+  setMasterData() {
+    this.setMasterFilterData(
+      this.diplotypeColumns,
+      this.diplotypeOriginalRows,
+      this.filterMasterDataDyplotypes,
+      false,
+    );
+
+    this.setMasterFilterData(
+      this.variantColumns,
+      this.variantOriginalRows,
+      this.filterMasterDataVariants,
+      true,
+    );
+  }
+
+  private applyFilter<T extends Record<string, any>>(
+    originalRows: T[],
+    filterValues: { [key: string]: string },
+    updateFn: (filtered: T[]) => void,
+  ) {
+    const filtered = originalRows.filter((item) =>
+      Object.keys(filterValues).every((col) => {
+        const filterVal = filterValues[col];
+        const itemVal = item[col]?.toString().toLowerCase() || '';
+
+        return !filterVal?.trim() || itemVal.includes(filterVal.toLowerCase());
+      }),
+    );
+
+    updateFn(filtered);
+  }
+
+  setFilter() {
+    this.applyFilter(
+      this.diplotypeOriginalRows,
+      this.filterValuesDyplotypes,
+      (result) => this.diplotypeDataRows.next(result),
+    );
+    this.diplotypeFilterField.setValue('');
+  }
+
+  setFilterVariants() {
+    this.applyFilter(
+      this.variantOriginalRows,
+      this.filterValuesVariants,
+      (result) => this.variantDataRows.next(result),
+    );
+    this.variantFilterField.setValue('');
+  }
+
+  resetFilter() {
+    this.filterValuesDyplotypes = {};
+    this.setFilter();
+  }
+  resetFilterVariants() {
+    this.filterValuesVariants = {};
+    this.setFilterVariants();
+  }
 
   /**
    * Check if PharmCAT configuration is available and has data
@@ -243,17 +431,20 @@ export class PharmcatResultsViewerComponent {
     this.diplotypeFilterField.setValue(mappingId);
     this.filterDiplotypes();
     this.cdr.detectChanges();
+    this.filterValuesDyplotypes = {};
   }
 
   resetDiplotypes() {
     this.diplotypeFilterField.setValue('');
     this.filterDiplotypes();
     this.cdr.detectChanges();
+    this.filterValuesDyplotypes = {};
   }
 
   resetRelatedDiplotype() {
     this.resetDiplotypes();
     this.diplotypeScopeReduced = false;
+    this.filterValuesDyplotypes = {};
   }
 
   filterVariants() {
@@ -264,13 +455,13 @@ export class PharmcatResultsViewerComponent {
   }
 
   resetVariants() {
+    this.filterValuesVariants = {};
     this.variantFilterField.setValue('');
     this.filterVariants();
     this.cdr.detectChanges();
   }
 
   filterRelatedVariants = (mappingIds: string[]) => {
-    console.log('filterRelatedVariants', mappingIds);
     this.variantScopeReduced = true;
     this.variantFilterField.setValue('');
     const terms = mappingIds;
@@ -278,11 +469,13 @@ export class PharmcatResultsViewerComponent {
       this.variantDataRows.next(filtered);
     });
     this.cdr.detectChanges();
+    this.filterValuesVariants = {};
   };
 
   resetRelatedVariants() {
     this.resetVariants();
     this.variantScopeReduced = false;
+    this.filterValuesVariants = {};
   }
 
   handleSelectionChange(row: any, isChecked: boolean): void {
@@ -394,8 +587,11 @@ export class PharmcatResultsViewerComponent {
       return messageRow;
     });
 
-    this.diplotypeDataRows.next(this.diplotypeOriginalRows);
-    this.variantDataRows.next(this.variantOriginalRows);
+    // this.diplotypeDataRows.next(this.diplotypeOriginalRows);
+    // this.variantDataRows.next(this.variantOriginalRows);
     this.warningDataRows.next(this.warningOriginalRows);
+    this.setMasterData();
+    this.setFilter();
+    this.setFilterVariants();
   }
 }
