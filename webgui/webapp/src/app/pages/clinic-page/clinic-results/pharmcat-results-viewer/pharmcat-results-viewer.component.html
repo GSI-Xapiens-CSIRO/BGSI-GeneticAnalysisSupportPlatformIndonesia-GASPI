@@ -1,0 +1,326 @@
+<mat-card class="mt-4">
+  <mat-card-content>
+    <!-- No Result Alert -->
+    @if (!diplotypeHasRows && variantDataRows.value.length === 0 && !isLoading) {
+      <app-no-results-alert></app-no-results-alert>
+    }
+
+    <!-- PharmCAT Configuration Accordion -->
+    @if (results?.config?.pharmcat && hasPharmcatConfig()) {
+      <mat-accordion class="w-full">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title class="flex items-center">
+              <mat-icon class="mr-2 text-blue-600">settings</mat-icon>
+              PharmCAT Analysis Configuration
+            </mat-panel-title>
+            <mat-panel-description>
+              View analysis parameters and supported medications
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <!-- Organizations -->
+            @if (getOrganisations().length > 0) {
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                  <mat-icon class="mr-2 text-sm">business</mat-icon>
+                  Organizations
+                </h4>
+                <div class="space-y-2">
+                  @for (org of getOrganisations(); track $index) {
+                    <div class="bg-white rounded p-2 border border-blue-100">
+                      <div class="text-sm font-medium text-blue-700">{{ org.gene }}</div>
+                      <div class="text-xs text-blue-600">{{ org.drug }}</div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Genes -->
+            @if (getGenes().length > 0) {
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 class="font-semibold text-green-800 mb-3 flex items-center">
+                  <mat-icon class="mr-2 text-sm">biotech</mat-icon>
+                  Analyzed Genes
+                </h4>
+                <div class="space-y-2">
+                  @for (gene of getGenes(); track $index) {
+                    <div class="bg-white rounded p-2 border border-green-100">
+                      <span class="inline-block px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">
+                        {{ gene }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Drugs -->
+            @if (getDrugs().length > 0) {
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h4 class="font-semibold text-purple-800 mb-3 flex items-center">
+                  <mat-icon class="mr-2 text-sm">medication</mat-icon>
+                  Supported Drugs ({{ getDrugs().length }})
+                </h4>
+                <div class="max-h-40 overflow-y-auto space-y-1">
+                  @for (drug of getDrugs(); track $index) {
+                    <div class="bg-white rounded p-2 border border-purple-100">
+                      <span class="text-sm text-purple-700 capitalize">{{ drug }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Summary Info -->
+          <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+              <mat-icon class="mr-2 text-sm">info</mat-icon>
+              Analysis Summary
+            </h4>
+            <p class="text-gray-700 text-sm">
+              This PharmCAT analysis is filtered by <strong>{{ getGenes().length }}</strong> gene(s)
+              and <strong>{{ getDrugs().length }}</strong> medication(s) using guidelines from
+              <strong>{{ getUniqueOrganizations().length }}</strong> organization(s):
+              {{ getUniqueOrganizations().join(', ') }}
+            </p>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    }
+
+    <h2 class="text-warning-10">Warnings</h2>
+    <div class="flex flex-row space-x-1, items-center mb-2">
+      @if (warningDataRows.value.length > 0) {
+        <mat-accordion class="w-full mb-2">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Show warnings</mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="max-h-96 overflow-y-auto">
+              <table mat-table [dataSource]="warningDataRows.value" matSort>
+                @for (column of warningColumns; track $index) {
+                  <ng-container [matColumnDef]="column">
+                    <th
+                      mat-header-cell
+                      *matHeaderCellDef
+                      class="whitespace-nowrap"
+                      mat-sort-header
+                    >
+                      {{ column }}
+                    </th>
+                    <td
+                      mat-cell
+                      *matCellDef="let element"
+                      class="whitespace-nowrap"
+                    >
+                      {{ element[column] }}
+                    </td>
+                  </ng-container>
+                }
+                <tr mat-header-row *matHeaderRowDef="warningColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: warningColumns;"></tr>
+              </table>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      } @else {
+        <p>No warnings to show</p>
+      }
+    </div>
+
+    @if (missingToRef) {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <span class="font-bold">
+          Missing variants were treated as reference when interpreting results.
+        </span>
+      </div>
+    }
+
+    <h2>Diplotypes Table</h2>
+    @if (diplotypeHasRows) {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        @if (!diplotypeScopeReduced) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="diplotypeFilterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filterDiplotypes()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetDiplotypes()"
+            class="w-[110px]"
+          >
+            Reset
+          </button>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetRelatedDiplotype()"
+            class="w-[200px]"
+          >
+            Clear Diplotype Filter
+          </button>
+        }
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
+    }
+    @if (diplotypeDataRows.value.length > 0) {
+      <div
+        class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700 p-2"
+      >
+        <div class="max-h-[500px] overflow-y-auto">
+            <div class="flex flex-col gap-2">
+              @for (row of diplotypeDataRows.value; track row) {
+                <app-rspon-box-data-view
+                  [row]="row"
+                  [selected]="
+                    (cs.selectedVariants | async)!.has(cs.hashRow(row))
+                  "
+                  [variantHasRows]="variantHasRows"
+                  (change)="handleSelectionChange(row, $event)"
+                  (filter)="filterRelatedVariants($event)"
+                />
+              }
+            </div>
+          </div>
+        </div>
+    } @else {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <p>No results to show.</p>
+      </div>
+    }
+  </mat-card-content>
+
+  <mat-card-content>
+    <h2>Variants Table</h2>
+    @if (variantHasRows) {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        @if (!variantScopeReduced) {
+          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+            <mat-label>Filter term</mat-label>
+            <input matInput [formControl]="variantFilterField" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="filterVariants()"
+            class="w-[110px]"
+          >
+            Filter
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetVariants()"
+            class="w-[110px]"
+          >
+            Reset
+          </button>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="resetRelatedVariants()"
+            class="w-[200px]"
+          >
+            Clear Variant Filter
+          </button>
+        }
+      </div>
+    }
+    @if (variantDataRows.value.length > 0) {
+      <div class="mb-2">
+        <strong>Click on table headers to sort</strong>
+      </div>
+      <div
+        class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700"
+      >
+        <div class="max-h-[500px] overflow-y-auto">
+          <table
+            mat-table
+            [dataSource]="variantDataRows.value"
+            matSort
+            (matSortChange)="resortVariants($event)"
+          >
+            @for (column of variantColumns; track $index) {
+              @if (column === "Related Diplotypes") {
+                <ng-container [matColumnDef]="column">
+                  <th
+                    mat-header-cell
+                    *matHeaderCellDef
+                    class="whitespace-nowrap"
+                  >
+                    {{ column }}
+                  </th>
+                  <td mat-cell *matCellDef="let element">
+                    <a
+                      (click)="filterRelatedDiplotype(element[column])"
+                      class="text-blue-500 hover:underline cursor-pointer"
+                      [ariaDisabled]="diplotypeHasRows"
+                      >See related diplotypes</a
+                    >
+                  </td>
+                </ng-container>
+              } @else {
+                <ng-container [matColumnDef]="column">
+                  <th
+                    mat-header-cell
+                    *matHeaderCellDef
+                    class="whitespace-nowrap"
+                    mat-sort-header
+                  >
+                    {{ column }}
+                  </th>
+                  <td
+                    mat-cell
+                    *matCellDef="let element"
+                    class="whitespace-nowrap"
+                  >
+                    {{ element[column] }}
+                  </td>
+                </ng-container>
+              }
+            }
+
+            <tr mat-header-row *matHeaderRowDef="variantColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: variantColumns;"></tr>
+          </table>
+        </div>
+      </div>
+    } @else {
+      <div class="flex flex-row space-x-1 items-center mb-2">
+        <p>No results to show.</p>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

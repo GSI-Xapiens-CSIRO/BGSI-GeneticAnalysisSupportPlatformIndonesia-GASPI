@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import { HttpClient } from '@angular/common/http';
-import { mergeMap } from 'rxjs';
 
 @Injectable()
 export class OntologyService {
@@ -11,22 +10,6 @@ export class OntologyService {
 
   constructor(private http: HttpClient) {}
 
-  private fetchOntologyTermFromOLS(ontology: string, term: string) {
-    return this.http
-      .get(`${this.baseURLOLS}/${ontology}`)
-      .pipe(
-        mergeMap((data) =>
-          this.http.get(
-            `${this.baseURLOLS}/${_.toLower(
-              ontology,
-            )}/terms/${encodeURIComponent(
-              encodeURIComponent(_.get(data, 'config.baseUris.0') + term),
-            )}`,
-          ),
-        ),
-      );
-  }
-
   fetch_term_details(term: string) {
     const [ontology, code] = _.split(term, ':');
 
@@ -34,6 +17,8 @@ export class OntologyService {
       ? this.http.get(
           `${this.baseURLOntoserver}?system=http://snomed.info/sct&code=${code}`,
         )
-      : this.fetchOntologyTermFromOLS(ontology, code);
+      : this.http.get(`${this.baseURLOLS}/${ontology}/terms`, {
+          params: { short_form: `${ontology}_${code}` },
+        });
   }
 }

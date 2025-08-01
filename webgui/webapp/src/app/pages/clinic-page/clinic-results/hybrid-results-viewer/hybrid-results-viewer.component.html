@@ -1,0 +1,18 @@
+<mat-card>
+  <mat-card-content>
+    <mat-tab-group>
+      <mat-tab label="PharmCAT Results">
+        <app-pharmcat-results-viewer
+          [requestId]="requestId"
+          [projectName]="projectName"
+        ></app-pharmcat-results-viewer>
+      </mat-tab>
+      <mat-tab label="Lookup Results">
+        <app-lookup-results-viewer
+          [requestId]="requestId"
+          [projectName]="projectName"
+        ></app-lookup-results-viewer>
+      </mat-tab>
+    </mat-tab-group>  
+  </mat-card-content>
+</mat-card>

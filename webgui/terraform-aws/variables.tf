@@ -65,9 +65,14 @@ variable "api_endpoint_sbeacon" {
   description = "API endpoint for sbeacon."
 }
 
-variable "api_endpoint_svep" {
+variable "api_endpoint_clinic" {
   type        = string
-  description = "API endpoint for svep."
+  description = "API endpoint for the clinic. Connects either to sVEP of PGxFlow functionality depending on var.enable-pgxflow"
+}
+
+variable "clinic_mode" {
+  type        = string
+  description = "Specifies whether to enable sVEP or PGxFlow in the clinic"
 }
 
 variable "bui-ssm-parameter-name" {
@@ -84,4 +89,16 @@ variable "web_acl_arn" {
 variable "hub_name" {
   type        = string
   description = "Hub name"
+}
+
+variable "clinic-warning-thresholds" {
+  type = object({
+    qual   = optional(number, 0)
+    filter = optional(string, "")
+    dp     = optional(number, 0)
+    gq     = optional(number, 0)
+    mq     = optional(number, 0)
+    qd     = optional(number, 0)
+  })
+  description = "Thresholds before warnings are shown in clinic results page"
 }
