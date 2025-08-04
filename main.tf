@@ -66,6 +66,11 @@ module "pgxflow" {
   common-tags-backup = var.common-tags-backup
 }
 
+moved {
+  from = module.pgxflow
+  to   = module.pgxflow[0]
+}
+
 module "security" {
   source                     = "./security"
   region                     = var.region
