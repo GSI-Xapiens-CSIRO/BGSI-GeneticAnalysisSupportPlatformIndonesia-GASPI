@@ -16,12 +16,23 @@ export const gpuInstanceTypes = [
   { name: 'ml.g5.48xlarge', note: '', ram: 768, cpu: 192, gpu: 8, vram: 192 },
 ];
 
-export const instanceGroups = [
+export type InstanceGroups = {
+  name: string;
+  instances: typeof cpuInstanceTypes | typeof gpuInstanceTypes;
+  gpu: boolean;
+}[];
+
+export const instanceGroups: InstanceGroups = [
   { name: 'CPU Generic', instances: cpuInstanceTypes, gpu: false },
   { name: 'GPU Accelerated', instances: gpuInstanceTypes, gpu: true },
 ];
 
-export const volumeSizes = [
+export type VolumeSizes = {
+  size: number;
+  note: string;
+}[];
+
+export const volumeSizes: VolumeSizes = [
   { size: 5, note: '5 GB' },
   { size: 10, note: '10 GB' },
   { size: 20, note: '20 GB' },

@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "lambda-sendRegistrationEmail" {
   }
 }
 
-data "aws_iam_policy_document" "lambda-sendSvepJobEmail" {
+data "aws_iam_policy_document" "lambda-sendClinicJobEmail" {
   statement {
     actions = [
       "ses:SendEmail"

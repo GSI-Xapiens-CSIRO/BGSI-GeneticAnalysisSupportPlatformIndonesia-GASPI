@@ -27,14 +27,14 @@ export class ClinicPageComponent implements OnInit {
     const path = urlTree.root.children['primary'].segments.join('/');
     const queryParams = urlTree.queryParams;
 
-    if (path.startsWith('clinic/svep-submit')) {
-      this.paramChache.set('svep-submit', queryParams);
+    if (path.startsWith('clinic/clinic-submit')) {
+      this.paramChache.set('clinic-submit', queryParams);
       this.selectedIndex = 0;
-    } else if (path.startsWith('clinic/svep-igv')) {
-      this.paramChache.set('svep-igv', queryParams);
+    } else if (path.startsWith('clinic/clinic-igv')) {
+      this.paramChache.set('clinic-igv', queryParams);
       this.selectedIndex = 1;
-    } else if (path.startsWith('clinic/svep-results')) {
-      this.paramChache.set('svep-results', queryParams);
+    } else if (path.startsWith('clinic/clinic-results')) {
+      this.paramChache.set('clinic-results', queryParams);
       this.selectedIndex = 2;
     }
   }
@@ -46,7 +46,7 @@ export class ClinicPageComponent implements OnInit {
   }
 
   onTabChange(index: number) {
-    const routes = ['svep-submit', 'svep-igv', 'svep-results'];
+    const routes = ['clinic-submit', 'clinic-igv', 'clinic-results'];
     // if directed to correct tab from same page, do nothing
     const urlTree = this.router.parseUrl(this.router.url);
     const path = urlTree.root.children['primary'].segments.at(-1)?.path;

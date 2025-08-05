@@ -76,17 +76,6 @@ data "aws_iam_policy_document" "gaspi_authenticated_role_policy" {
       "arn:aws:s3:::${var.dataportal-bucket-prefix}*/private/$${cognito-identity.amazonaws.com:sub}/*",
     ]
   }
-
-  # Allow access to AWS Pricing API
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "pricing:*",
-    ]
-
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_role_policy" "gaspi_authenticated" {
