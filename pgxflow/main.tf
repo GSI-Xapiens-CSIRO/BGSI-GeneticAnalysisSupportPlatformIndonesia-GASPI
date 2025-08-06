@@ -256,6 +256,7 @@ module "lambda-batchSubmit" {
   tags = var.common-tags
 
   environment_variables = {
+    HUB_NAME                             = var.hub_name
     DPORTAL_BUCKET                       = var.data-portal-bucket-name
     PGXFLOW_BATCH_SUBMIT_QUEUE_URL       = aws_sqs_queue.batch_submit_queue.url
     DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
@@ -290,6 +291,7 @@ module "lambda-batchStarter" {
   tags = var.common-tags
 
   environment_variables = {
+    HUB_NAME                       = var.hub_name
     PGXFLOW_BATCH_SUBMIT_QUEUE_URL = aws_sqs_queue.batch_submit_queue.url
     INIT_FLOW_SNS_TOPIC_ARN        = aws_sns_topic.initFlow.arn
     LAMBDA_CONCURRENCY_MARGIN      = 200
