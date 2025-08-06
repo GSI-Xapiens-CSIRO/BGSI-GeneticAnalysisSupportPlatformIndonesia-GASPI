@@ -112,4 +112,4 @@ def lambda_handler(event, context):
             ),
         )
     except Exception as e:
-        handle_failed_execution(request_id, e)
+        handle_failed_execution(request_id, e, ["pharmcat"])

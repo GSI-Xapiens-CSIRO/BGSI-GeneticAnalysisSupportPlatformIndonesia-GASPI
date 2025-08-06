@@ -134,6 +134,6 @@ def lambda_handler(event, context):
             Key=input_data_key,
         )
 
-        update_clinic_job(request_id, job_status="completed")
+        update_clinic_job(request_id, job_status="completed", pipeline_names=["lookup"])
     except Exception as e:
-        handle_failed_execution(request_id, e)
+        handle_failed_execution(request_id, e, ["lookup"])

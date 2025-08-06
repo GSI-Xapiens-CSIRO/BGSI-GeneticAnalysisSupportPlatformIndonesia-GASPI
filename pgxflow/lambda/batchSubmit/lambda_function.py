@@ -11,10 +11,22 @@ from shared.utils import LoggingClient
 from dynamodb import batch_check_duplicate_job_name
 
 
+HUB_NAME = os.environ["HUB_NAME"]
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PGXFLOW_BATCH_SUBMIT_QUEUE_URL = os.environ["PGXFLOW_BATCH_SUBMIT_QUEUE_URL"]
 DYNAMO_CLINIC_JOBS_TABLE = os.environ["DYNAMO_CLINIC_JOBS_TABLE"]
 MAX_JOBS_PER_SUBMISSION = 100
+HUB_CONFIGS = {
+    "RSPON": {
+        "pipeline_names": ["pharmcat"],
+    },
+    "RSIGNG": {
+        "pipeline_names": ["lookup"],
+    },
+    "RSJPD": {
+        "pipeline_names": ["pharmcat", "lookup"],
+    },
+}
 
 sqs_client = LoggingClient("sqs")
 dynamodb_client = LoggingClient("dynamodb")
@@ -50,6 +62,8 @@ def create_job_entries(jobs, project, sub, missing_to_ref):
 def batch_submit(job_entries, sub):
     successful_jobs = []
     failed_jobs = []
+
+    pipeline_names = HUB_CONFIGS.get(HUB_NAME, {}).get("pipeline_names", [])
 
     for i in range(0, len(job_entries), 10):
         message_batch = job_entries[i : i + 10]
@@ -92,6 +106,8 @@ def batch_submit(job_entries, sub):
                         project_name=job["projectName"],
                         input_vcf=job["filename"],
                         user_id=sub,
+                        pipeline_names=pipeline_names,
+                        missing_to_ref=job.get("missingToRef", False),
                         skip_email=True,
                     )
 

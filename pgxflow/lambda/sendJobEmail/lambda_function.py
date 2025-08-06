@@ -19,12 +19,12 @@ def lambda_handler(event, _):
     input_vcf = event.get("input_vcf", None)
     user_id = event.get("user_id", None)
     is_from_failed_execution = event.get("is_from_failed_execution", False)
+    pipeline_names = event.get("pipeline_names")
 
     # prevent re querying the job if it's already queried from handle_failed_execution
     # in handle_failed_execution already queried the job using query_clinic_job
     job = (
         {
-            "job_status": {"S": job_status},
             "project_name": {"S": project_name},
             "input_vcf": {"S": input_vcf},
         }
@@ -33,7 +33,6 @@ def lambda_handler(event, _):
     )
 
     if job:
-        job_status = job.get("job_status", {}).get("S", job_status)
         project_name = job.get("project_name", {}).get("S", project_name)
         input_vcf = job.get("input_vcf", {}).get("S", input_vcf)
 
@@ -59,6 +58,7 @@ def lambda_handler(event, _):
             "job_status": job_status,
             "project_name": project_name,
             "input_vcf": input_vcf,
+            "pipeline_names": pipeline_names,
         }
     }
 

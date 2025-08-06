@@ -85,7 +85,8 @@ def filter_and_rename_chrs(
                 "annotate",
                 "--rename-chrs",
                 local_chrs_path,
-                "-i", "0",
+                "-i",
+                "0",
                 source_vcf_s3_uri,
                 "-Oz",
                 "-o",
@@ -99,7 +100,7 @@ def filter_and_rename_chrs(
         index_renamed_vcf_process = CheckedProcess(index_renamed_vcf_args)
         index_renamed_vcf_process.check()
 
-        return local_renamed_vcf_path, local_renamed_vcf_index_path 
+        return local_renamed_vcf_path, local_renamed_vcf_index_path
     except subprocess.CalledProcessError as e:
         print(
             f"cmd {e.cmd} returned non-zero error code {e.returncode}. stderr:\n{e.stderr}"
@@ -151,12 +152,15 @@ def lambda_handler(event, context):
     try:
         source_chromosome_mapping = get_chromosome_mapping(source_vcf_s3_uri)
 
-        local_regions_path, local_norm_regions_path, regions_exists = generate_target_region_files(
-            source_chromosome_mapping
+        local_regions_path, local_norm_regions_path, regions_exists = (
+            generate_target_region_files(source_chromosome_mapping)
         )
 
         local_renamed_vcf_path, local_renamed_vcf_index_path = filter_and_rename_chrs(
-            source_vcf_s3_uri, source_chromosome_mapping, local_regions_path, regions_exists
+            source_vcf_s3_uri,
+            source_chromosome_mapping,
+            local_regions_path,
+            regions_exists,
         )
 
         if regions_exists:
@@ -197,4 +201,4 @@ def lambda_handler(event, context):
             ),
         )
     except Exception as e:
-        handle_failed_execution(request_id, e)
+        handle_failed_execution(request_id, e, ["lookup"])

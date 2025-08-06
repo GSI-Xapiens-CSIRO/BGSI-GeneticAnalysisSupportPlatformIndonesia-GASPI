@@ -6,8 +6,20 @@ from shared.utils import LoggingClient, handle_failed_execution
 
 
 PGXFLOW_BATCH_SUBMIT_QUEUE_URL = os.environ["PGXFLOW_BATCH_SUBMIT_QUEUE_URL"]
+HUB_NAME = os.environ["HUB_NAME"]
 INIT_FLOW_SNS_TOPIC_ARN = os.environ["INIT_FLOW_SNS_TOPIC_ARN"]
 LAMBDA_CONCURRENCY_MARGIN = os.environ["LAMBDA_CONCURRENCY_MARGIN"]
+HUB_CONFIGS = {
+    "RSPON": {
+        "pipeline_names": ["pharmcat"],
+    },
+    "RSIGNG": {
+        "pipeline_names": ["lookup"],
+    },
+    "RSJPD": {
+        "pipeline_names": ["pharmcat", "lookup"],
+    },
+}
 
 cloudwatch_client = LoggingClient("cloudwatch")
 lambda_client = LoggingClient("lambda")
@@ -56,6 +68,7 @@ def should_process_more_jobs(concurrent_execs):
 def lambda_handler(event, context):
     if event["source"] == "aws.events":
         print(f"Event received: {json.dumps(event)}")
+        pipeline_names = HUB_CONFIGS.get(HUB_NAME, {}).get("pipeline_names", [])
 
         response = sqs_client.receive_message(
             QueueUrl=PGXFLOW_BATCH_SUBMIT_QUEUE_URL,
@@ -103,6 +116,7 @@ def lambda_handler(event, context):
                     handle_failed_execution(
                         request_id,
                         error_message=f"Failed to publish message to SNS topic: {str(e)}",
+                        pipeline_names=pipeline_names,
                     )
 
             else:

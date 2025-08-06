@@ -45,6 +45,7 @@ def send_job_email(
     input_vcf=None,
     user_id=None,
     is_from_failed_execution=False,
+    pipeline_names=[],
 ):
     payload = {
         "job_id": job_id,
@@ -53,6 +54,7 @@ def send_job_email(
         "input_vcf": input_vcf,
         "user_id": user_id,
         "is_from_failed_execution": is_from_failed_execution,
+        "pipeline_names": pipeline_names,
     }
 
     print(f"[send_job_email] - payload: {payload}")
@@ -66,20 +68,40 @@ def send_job_email(
 
 def update_clinic_job(
     job_id,
-    job_status,
+    job_status=None,
     job_name=None,
     project_name=None,
     input_vcf=None,
     failed_step=None,
     error_message=None,
     user_id=None,
+    pipeline_names=[],
     is_from_failed_execution=False,
     reference_versions={},
     missing_to_ref=None,
     skip_email=False,
 ):
-    job_status = job_status if job_status is not None else "unknown"
-    update_fields = {"job_status": {"S": job_status}}
+    update_fields = {}
+    if job_status is not None:
+        pipeline_names = (
+            ["pharmcat_status", "lookup_status"]
+            if not pipeline_names
+            else pipeline_names
+        )
+        for name in pipeline_names:
+            update_fields[f"{name}_status"] = {"S": job_status}
+    if failed_step is not None:
+        if not pipeline_names:
+            update_fields["failed_step"] = {"S": failed_step}
+        else:
+            for name in pipeline_names:
+                update_fields[f"{name}_failed_step"] = {"S": failed_step}
+    if error_message is not None:
+        if not pipeline_names:
+            update_fields["error_message"] = {"S": error_message}
+        else:
+            for name in pipeline_names:
+                update_fields[f"{name}_error_message"] = {"S": error_message}
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
     if job_name is not None:
@@ -89,10 +111,6 @@ def update_clinic_job(
         update_fields["created_at"] = {"S": now.strftime("%Y-%m-%dT%H:%M:%S.%f+0000")}
     if input_vcf is not None:
         update_fields["input_vcf"] = {"S": input_vcf}
-    if failed_step is not None:
-        update_fields["failed_step"] = {"S": failed_step}
-    if error_message is not None:
-        update_fields["error_message"] = {"S": error_message}
     if user_id is not None:
         update_fields["uid"] = {"S": user_id}
     if reference_versions:
@@ -117,6 +135,7 @@ def update_clinic_job(
         project_name=project_name,
         input_vcf=input_vcf,
         user_id=user_id,
+        pipeline_names=pipeline_names,
         is_from_failed_execution=is_from_failed_execution,
     )
 

@@ -136,6 +136,8 @@ def lambda_handler(event, context):
             Bucket=PGXFLOW_BUCKET,
             Key=s3_key,
         )
-        update_clinic_job(request_id, job_status="completed")
+        update_clinic_job(
+            request_id, job_status="completed", pipeline_names=["pharmcat"]
+        )
     except Exception as e:
-        handle_failed_execution(request_id, e)
+        handle_failed_execution(request_id, e, ["pharmcat"])

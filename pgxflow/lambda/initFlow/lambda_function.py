@@ -21,25 +21,28 @@ PHARMCAT_HUBS = ["RSPON", "RSJPD"]
 LOOKUP_HUBS = ["RSIGNG", "RSJPD"]
 PHARMCAT_REFERENCE_IDS = ["pharmcat_version", "pharmgkb_version"]
 LOOKUP_REFERENCE_IDS = ["dbsnp_version", "lookup_version"]
-HUB_CONFIG = {
+HUB_CONFIGS = {
     "RSPON": {
         "reference_ids": PHARMCAT_REFERENCE_IDS,
         "sns_topics": [PHARMCAT_PREPROCESSOR_SNS_TOPIC_ARN],
+        "pipeline_names": ["pharmcat"],
     },
     "RSIGNG": {
         "reference_ids": LOOKUP_REFERENCE_IDS,
         "sns_topics": [LOOKUP_DBSNP_SNS_TOPIC_ARN],
+        "pipeline_names": ["lookup"],
     },
     "RSJPD": {
         "reference_ids": PHARMCAT_REFERENCE_IDS + LOOKUP_REFERENCE_IDS,
         "sns_topics": [PHARMCAT_PREPROCESSOR_SNS_TOPIC_ARN, LOOKUP_DBSNP_SNS_TOPIC_ARN],
+        "pipeline_names": ["pharmcat", "lookup"],
     },
 }
 
 sns_client = LoggingClient("sns")
 
 
-def handle_init_failure(result, is_batch_job):
+def handle_init_failure(result, is_batch_job, pipeline_names):
     """
     Handles failure responses for both batch and non-batch jobs.
     Batch jobs will log the error and update the job status in DynamoDB.
@@ -47,13 +50,13 @@ def handle_init_failure(result, is_batch_job):
     """
     error_message = result.get("error", "Unknown error")
     if is_batch_job:
-        if request_id := result.get("requestId"):
-            handle_failed_execution(request_id, error_message)
-        else:
-            print(
-                "Error in batch job without requestId:",
-                error_message,
-            )
+        request_id = result.get("requestId")
+        assert request_id, f"Error in batch job without requestId: {error_message}"
+        pipeline_names = HUB_CONFIGS.get(HUB_NAME, {}).get("pipeline_names")
+        assert (
+            pipeline_names
+        ), f"Error in batch job without pipeline(s): {error_message}"
+        handle_failed_execution(request_id, error_message, pipeline_names)
     else:
         return bad_request(error_message)
 
@@ -129,9 +132,11 @@ def lambda_handler(event, context):
     if "Records" in event and event["Records"][0].get("EventSource") == "aws:sns":
         is_batch_job = True
 
+    pipeline_names = HUB_CONFIGS.get(HUB_NAME, {}).get("pipeline_names", [])
+
     result = parse_sns(event) if is_batch_job else parse_api_gateway(event)
     if not result.get("success", False):
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     request_id = result["requestId"]
     sub = result["sub"]
@@ -144,7 +149,7 @@ def lambda_handler(event, context):
         check_user_in_project(sub, project)
     except Exception as e:
         result["error"] = f"Error checking user in project: {str(e)}"
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     job_name_exists = (not is_batch_job) and does_clinic_job_exist_by_name(
         job_name.lower(), project
@@ -153,21 +158,21 @@ def lambda_handler(event, context):
         result["error"] = (
             f"Job name '{job_name}' already exists in project '{project}'."
         )
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     try:
         sample_count = get_sample_count(location)
     except subprocess.CalledProcessError as e:
         result["error"] = f"Error counting samples: {str(e)}"
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
     if sample_count != 1:
         result["error"] = "Only single-sample VCFs are supported."
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
-    config = HUB_CONFIG.get(HUB_NAME)
+    config = HUB_CONFIGS.get(HUB_NAME)
     if not config:
         result["error"] = f"Unknown HUB_NAME: {HUB_NAME}."
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     reference_versions = {}
     failed_ids = []
@@ -183,7 +188,7 @@ def lambda_handler(event, context):
             f"Unable to retrieve reference versions for: {', '.join(failed_ids)}. "
             "Please contact an AWS administrator."
         )
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
     missing_references = [
         ref_id for ref_id, version in reference_versions.items() if version is None
     ]
@@ -192,18 +197,18 @@ def lambda_handler(event, context):
             f"Missing reference versions for: {', '.join(missing_references)}. "
             "Please contact an AWS administrator."
         )
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     if HUB_NAME in PHARMCAT_HUBS:
         passed, error_message = check_pharmcat_configuration()
         if not passed:
             result["error"] = error_message
-            return handle_init_failure(result, is_batch_job)
+            return handle_init_failure(result, is_batch_job, pipeline_names)
     if HUB_NAME in LOOKUP_HUBS:
         passed, error_message = check_assoc_matrix()
         if not passed:
             result["error"] = error_message
-            return handle_init_failure(result, is_batch_job)
+            return handle_init_failure(result, is_batch_job, pipeline_names)
 
     parsed_location = urlparse(location)
     source_vcf_key = parsed_location.path.lstrip("/")
@@ -214,9 +219,9 @@ def lambda_handler(event, context):
         result["error"] = (
             "No SNS topics configured for this hub. Please contact an AWS administrator."
         )
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
     try:
-        for topic_arn in HUB_CONFIG.get(HUB_NAME, {}).get("sns_topics"):
+        for topic_arn in HUB_CONFIGS.get(HUB_NAME, {}).get("sns_topics"):
             message = json.dumps(
                 {
                     "requestId": request_id,
@@ -229,7 +234,7 @@ def lambda_handler(event, context):
             sns_client.publish(**kwargs)
     except ClientError as e:
         result["error"] = f"Failed to publish message to SNS topic: {str(e)}"
-        return handle_init_failure(result, is_batch_job)
+        return handle_init_failure(result, is_batch_job, pipeline_names)
 
     update_clinic_job(
         job_id=request_id,
@@ -239,6 +244,7 @@ def lambda_handler(event, context):
         input_vcf=input_vcf,
         user_id=sub,
         reference_versions=reference_versions,
+        pipeline_names=pipeline_names,
         missing_to_ref=missing_to_ref,
         skip_email=True,
     )
