@@ -116,9 +116,10 @@ def lambda_handler(event, context):
                         continue
                     lookup_results.append(
                         dict(
-                            altVcf=allele,
                             **lookup_values,
-                            **line_fields,
+                            refVcf=line_fields["refVcf"],
+                            altVcf=allele,
+                            **{k: v for k, v in line_fields.items() if k != "refVcf"},
                         )
                     )
         query_rsid_process.check()
