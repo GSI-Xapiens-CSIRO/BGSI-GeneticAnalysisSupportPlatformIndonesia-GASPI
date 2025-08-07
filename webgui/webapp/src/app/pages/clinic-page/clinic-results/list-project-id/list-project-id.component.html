@@ -49,23 +49,25 @@
           </ng-container>
 
           <!-- Description Column -->
-          <ng-container matColumnDef="job_status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="flex flex-row items-center gap-2">
-                @if (element.job_status === JobStatus.FAILED) {
-                  <div
-                    (click)="
-                      handleError(element.failed_step, element.error_message)
-                    "
-                  >
-                    <mat-icon color="warn">error</mat-icon>
-                  </div>
-                }
-                <div>{{ element.job_status }}</div>
-              </div>
-            </td>
-          </ng-container>
+          @for (statusField of config.status_fields; track statusField) {
+            <ng-container [matColumnDef]="statusField">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{getStatusDisplayName(statusField)}}</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="flex flex-row items-center gap-2">
+                  @if (element[statusField] === JobStatus.FAILED) {
+                    <div
+                      (click)="
+                        handleError(element)
+                      "
+                    >
+                      <mat-icon color="warn">error</mat-icon>
+                    </div>
+                  }
+                  <div>{{ element[statusField] }}</div>
+                </div>
+              </td>
+            </ng-container>
+          }
 
           <!-- Job Name Column -->
           <ng-container matColumnDef="job_name">
@@ -82,21 +84,21 @@
                   class="flex my-1"
                   aria-label="Example tooltip"
                   [style.color]="
-                    element.job_status !== JobStatus.COMPLETED
-                      ? 'gray'
-                      : '#16B3AC'
+                    isAnyStatus(element, JobStatus.COMPLETED)
+                      ? '#16B3AC'
+                      : 'gray'
                   "
                 >
                   <div
                     (click)="
-                      element.job_status === JobStatus.COMPLETED &&
+                      isAnyStatus(element, JobStatus.COMPLETED) &&
                         loadResult(element.job_id, element.input_vcf)
                     "
-                    [matTooltip]="tooltipMessage(element.job_status)"
+                    [matTooltip]="tooltipMessage(element)"
                     [style.cursor]="
-                      element.job_status !== JobStatus.COMPLETED
-                        ? 'not-allowed'
-                        : 'pointer'
+                      isAnyStatus(element, JobStatus.COMPLETED)
+                        ? 'pointer'
+                        : 'not-allowed'
                     "
                   >
                     {{ element.job_id }}
@@ -131,8 +133,8 @@
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let element">
               @if (
-                (element.job_status === JobStatus.FAILED ||
-                  element.job_status === JobStatus.EXPIRED) &&
+                (isAnyStatus(element, JobStatus.FAILED) ||
+                  isAnyStatus(element, JobStatus.EXPIRED)) &&
                 ((auth.userGroups | async)!.has("administrators") ||
                   (auth.userGroups | async)!.has("managers"))
               ) {

@@ -59,7 +59,7 @@ export const serializeFilters = (
     switch (filter.type) {
       case FilterTypes.ALPHANUMERIC:
         return {
-          scope: defaultScope,
+          scope: filter.scope,
           id: filter.id,
           operator: filter.operator,
           value: filter.value,
@@ -72,7 +72,7 @@ export const serializeFilters = (
         };
       case FilterTypes.CUSTOM:
         return {
-          scope: defaultScope,
+          scope: filter.scope,
           id: filter.id,
         };
       default:
