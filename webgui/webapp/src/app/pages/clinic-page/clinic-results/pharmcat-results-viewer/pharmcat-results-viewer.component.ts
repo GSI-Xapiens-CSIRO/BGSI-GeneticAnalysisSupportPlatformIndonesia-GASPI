@@ -78,6 +78,12 @@ type PharmcatResult = {
 
 type FilterType = 'variants' | 'diplotypes';
 
+interface FlagInfo {
+  shouldShow: boolean;
+  color: string;
+  message: string;
+}
+
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   changes = new Subject<void>();
@@ -134,8 +140,11 @@ export class PharmcatResultsViewerComponent implements OnInit {
   protected results: PharmcatResult | null = null;
   protected diplotypeColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.diplotypeCols;
-  protected variantColumns: string[] =
-    COLUMNS[environment.hub_name].pharmcatCols.variantCols;
+  protected variantColumns: string[] = [
+    'Status', // Add Status column as first column
+    ...COLUMNS[environment.hub_name].pharmcatCols.variantCols,
+  ];
+
   protected warningColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.warningCols;
 
@@ -215,6 +224,147 @@ export class PharmcatResultsViewerComponent implements OnInit {
     );
   }
 
+  // Flag generation methods
+  private generateFlagInfo(row: any): FlagInfo {
+    const thresholds = environment.clinic_warning_thresholds;
+    const scoreFields = {
+      Qual: { value: row['Qual'], threshold: thresholds.qual },
+      DP: { value: row['Read Depth'], threshold: thresholds.dp },
+      GQ: { value: row['Genotype Quality'], threshold: thresholds.gq },
+      MQ: { value: row['Mapping Quality'], threshold: thresholds.mq },
+      QD: { value: row['Quality by Depth'], threshold: thresholds.qd },
+    };
+
+    const belowThreshold: string[] = [];
+    const missingKeys: string[] = [];
+
+    // Check each field
+    Object.entries(scoreFields).forEach(([key, config]) => {
+      const value = config.value;
+
+      if (
+        value === '.' ||
+        value === '-' ||
+        value === '' ||
+        value === null ||
+        value === undefined
+      ) {
+        missingKeys.push(key);
+      } else {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && numValue < config.threshold) {
+          belowThreshold.push(key);
+        }
+      }
+    });
+
+    // Check filter condition
+    const filterValue = row['Filter'];
+    const hasFilterIssue = ![thresholds.filter, '-', ''].includes(filterValue);
+    const hasScoreIssues = belowThreshold.length > 0;
+    const hasMissingKeys = missingKeys.length > 0;
+
+    // Show flag if there are ANY issues: filter, score, or missing keys
+    const shouldShowFlag = hasFilterIssue || hasScoreIssues || hasMissingKeys;
+
+    return this.determineFlagInfo(
+      belowThreshold,
+      missingKeys,
+      shouldShowFlag,
+      filterValue,
+      hasFilterIssue,
+    );
+  }
+
+  private determineFlagInfo(
+    belowThreshold: string[],
+    missingKeys: string[],
+    shouldShowFlag: boolean,
+    filterValue: string,
+    hasFilterIssue: boolean,
+  ): FlagInfo {
+    // Don't show flag if no issues at all
+    if (!shouldShowFlag) {
+      return {
+        shouldShow: false,
+        color: '#4b5563',
+        message: '',
+      };
+    }
+
+    // Generate messages
+    const messages: string[] = [];
+
+    // Add filter message only if filter has issues
+    if (hasFilterIssue) {
+      messages.push(this.getFilterMessage(filterValue));
+    }
+
+    // Add score message if there are threshold violations
+    if (belowThreshold.length > 0) {
+      messages.push(
+        `The Result Score ${belowThreshold.join(
+          ', ',
+        )} is less than minimum Score`,
+      );
+    }
+
+    // Add missing keys message if there are missing values
+    if (missingKeys.length > 0) {
+      messages.push(`The Key ${missingKeys.join(', ')} is missing in vcf file`);
+    }
+
+    const fullMessage = messages.join(' and ');
+
+    // Determine color based on content
+    // Gray hanya jika filter is missing (., -, atau empty) DAN tidak ada score violations DAN ada missing keys
+    const filterIsMissing =
+      filterValue === '.' ||
+      filterValue === '-' ||
+      filterValue === '' ||
+      filterValue === null ||
+      filterValue === undefined;
+    const isGrayFlag =
+      filterIsMissing && belowThreshold.length === 0 && missingKeys.length > 0;
+
+    return {
+      shouldShow: true,
+      color: isGrayFlag ? '#4b5563' : '#dc2626', // gray if only missing keys, red otherwise
+      message: fullMessage,
+    };
+  }
+
+  private getFilterMessage(filterValue: string): string {
+    if (
+      filterValue === '.' ||
+      filterValue === '-' ||
+      filterValue === '' ||
+      filterValue === null ||
+      filterValue === undefined
+    ) {
+      return 'Filter is missing';
+    } else {
+      return 'Filter is not Passed';
+    }
+  }
+
+  // Methods to get flag info for templates
+  getFlagInfo(row: any): FlagInfo {
+    return this.generateFlagInfo(row);
+  }
+
+  shouldShowFlag(row: any): boolean {
+    return this.generateFlagInfo(row).shouldShow;
+  }
+
+  getFlagColor(row: any): string {
+    return this.generateFlagInfo(row).color;
+  }
+
+  getFlagMessage(row: any): string {
+    return this.generateFlagInfo(row).message;
+  }
+
   addFilter(type: FilterType) {
     const isVariant = type === 'variants';
 
@@ -277,7 +427,8 @@ export class PharmcatResultsViewerComponent implements OnInit {
     convertToString = false,
   ) {
     columns.forEach((columnKey) => {
-      if (columnKey !== 'selected') {
+      if (columnKey !== 'selected' && columnKey !== 'Status') {
+        // Exclude Status column from filter data
         const uniqueValues = new Set<string>();
 
         originalRows.forEach((row) => {
@@ -323,6 +474,8 @@ export class PharmcatResultsViewerComponent implements OnInit {
   ) {
     const filtered = originalRows.filter((item) =>
       Object.keys(filterValues).every((col) => {
+        if (col === 'Status') return true; // Skip Status column in filtering
+
         const filterVal = filterValues[col];
         const itemVal = item[col]?.toString().toLowerCase() || '';
 
@@ -401,6 +554,58 @@ export class PharmcatResultsViewerComponent implements OnInit {
     const orgs = this.getOrganisations();
     const uniqueOrgs = [...new Set(orgs.map((org) => org.gene))];
     return uniqueOrgs;
+  }
+
+  /**
+   * Check if clinic thresholds are available
+   */
+  getClinicThresholds(): boolean {
+    return !!environment.clinic_warning_thresholds;
+  }
+
+  /**
+   * Get quality thresholds for display
+   */
+  getQualityThresholds(): Array<{
+    label: string;
+    value: string;
+    description: string;
+  }> {
+    const thresholds = environment.clinic_warning_thresholds;
+    if (!thresholds) return [];
+
+    return [
+      {
+        label: 'Filter Status',
+        value: thresholds.filter || 'PASS',
+        description: 'Expected filter status for variant quality',
+      },
+      {
+        label: 'Quality Score (QUAL)',
+        value: thresholds.qual?.toString() || '20',
+        description: 'Minimum quality score threshold',
+      },
+      {
+        label: 'Read Depth (DP)',
+        value: thresholds.dp?.toString() || '10',
+        description: 'Minimum read depth coverage',
+      },
+      {
+        label: 'Genotype Quality (GQ)',
+        value: thresholds.gq?.toString() || '15',
+        description: 'Minimum genotype quality score',
+      },
+      {
+        label: 'Mapping Quality (MQ)',
+        value: thresholds.mq?.toString() || '30',
+        description: 'Minimum mapping quality score',
+      },
+      {
+        label: 'Quality by Depth (QD)',
+        value: thresholds.qd?.toString() || '20',
+        description: 'Minimum quality score normalized by depth',
+      },
+    ];
   }
 
   resortDiplotypes(sort: Sort) {
@@ -545,6 +750,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
           this.tstr.error('Failed to load data', 'Error');
         } else {
           this.results = data;
+
           this.updateTable(data);
         }
         this.isLoading = false;
@@ -572,10 +778,13 @@ export class PharmcatResultsViewerComponent implements OnInit {
     this.variantOriginalRows = variants.map((variant: any) => {
       const variantRow: any = {};
       Object.values(variant).forEach((v, i) => {
-        variantRow[this.variantColumns[i]] = v;
+        // Skip Status column index 0, start from index 1
+        variantRow[this.variantColumns[i + 1]] = v;
       });
       return variantRow;
     });
+
+    console.log('Variants:', this.variantOriginalRows);
     this.variantHasRows = this.variantOriginalRows.length > 0;
 
     const warnings = resultJson.messages;
@@ -587,8 +796,6 @@ export class PharmcatResultsViewerComponent implements OnInit {
       return messageRow;
     });
 
-    // this.diplotypeDataRows.next(this.diplotypeOriginalRows);
-    // this.variantDataRows.next(this.variantOriginalRows);
     this.warningDataRows.next(this.warningOriginalRows);
     this.setMasterData();
     this.setFilter();

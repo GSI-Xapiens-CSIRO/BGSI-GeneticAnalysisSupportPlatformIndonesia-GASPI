@@ -1,0 +1,106 @@
+<div class="bg-transparent md:bg-white rounded-md shadow-lg">
+  <!-- Add overflow -->
+  <div class="flex flex-col md:flex-row gap-4">
+    <div
+      class="bg-white md:bg-transparent w-auto sticky top-0 md:relative md:w-[40vh] p-4"
+    >
+      <div class="sticky top-0 flex flex-col gap-2">
+        @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
+          <div class="flex flex-row items-center gap-4">
+            <mat-checkbox
+              class="example-margin"
+              [checked]="allComplete"
+              [indeterminate]="someComplete()"
+              (change)="setAll($event.checked)"
+            >
+              {{ task.name }}
+            </mat-checkbox>
+            <div
+              class="flex items-center justify-center cursor-pointer"
+              (click)="toggleShowAllDiseases()"
+            >
+              <mat-icon>
+                @if (!showAllDiseases) {
+                  keyboard_arrow_down
+                } @else {
+                  keyboard_arrow_up
+                }
+              </mat-icon>
+            </div>
+          </div>
+          @if (showAllDiseases) {
+            <div class="flex flex-col gap-2 pl-5" @expandCollapse>
+              @for (subtask of task.subtasks; track subtask) {
+                <mat-checkbox
+                  [checked]="subtask.completed"
+                  (change)="toggleSubtask(subtask)"
+                >
+                  {{ subtask.name }}
+                </mat-checkbox>
+              }
+            </div>
+          }
+        }
+
+        @if (["RSPON", "RSJPD"].includes(hubName)) {
+          <mat-checkbox [(ngModel)]="pharmCat"
+            >PharmCat Pharmacogenomics Terms</mat-checkbox
+          >
+        }
+
+        @if (["RSIGNG"].includes(hubName)) {
+          <mat-checkbox [(ngModel)]="IGNG"
+            >IGNG Pharmacogenomics Lookup Terms</mat-checkbox
+          >
+        }
+        @if (["RSJPD"].includes(hubName)) {
+          <mat-checkbox [(ngModel)]="RSJPD"
+            >RSJPD Pharmacogenomics Lookup Terms</mat-checkbox
+          >
+        }
+      </div>
+    </div>
+    <div class="w-auto lg:w-full p-4 flex flex-col gap-4">
+      <div>
+        <mat-form-field appearance="outline" class="w-full md:w-[50%]">
+          <input
+            matInput
+            placeholder="What are you looking for?"
+            class="pr-10"
+            [(ngModel)]="search"
+          />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+      <div
+        class="flex flex-row flex-nowrap md:flex-wrap gap-2 w-full overflow-x-scroll no-scrollbar items-center"
+      >
+        @for (ch of letters; track ch) {
+          <div
+            (click)="selectLetter(ch)"
+            class="px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
+            [class.text-[#16B3AC]]="selectedLetter === ch"
+            [class.font-semibold]="selectedLetter === ch"
+            [class.text-xl]="selectedLetter === ch"
+          >
+            {{ ch }}
+          </div>
+        }
+      </div>
+      <div class="flex flex-col gap-4 shadow-lg rounded-md min-h-64 p-4">
+        @for (list of listGlossary; track list) {
+          <div class="text-black font-normal">
+            <div class="text-primary-60 text-xl font-semibold">
+              {{ list.keyword }}
+            </div>
+            <div>{{ list.definition }}</div>
+          </div>
+        }
+
+        @if (listGlossary.length === 0) {
+          <div class="text-gray-500 text-center">No glossary terms found</div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
