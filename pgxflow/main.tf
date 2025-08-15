@@ -134,6 +134,7 @@ module "lambda-getResultsURL" {
   tags = var.common-tags
 
   environment_variables = {
+    HUB_NAME                   = var.hub_name
     DPORTAL_BUCKET             = var.data-portal-bucket-name
     DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     LOOKUP_CONFIGURATION       = jsonencode(var.lookup_configuration)

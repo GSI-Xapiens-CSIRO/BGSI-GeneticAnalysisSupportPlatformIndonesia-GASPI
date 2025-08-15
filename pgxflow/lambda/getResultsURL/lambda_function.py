@@ -6,6 +6,7 @@ from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, query_clinic_job
 from shared.utils import LoggingClient
 
+HUB_NAME = os.environ["HUB_NAME"]
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 PIPELINE_SUFFIXES = {
     "pharmcat": "_pharmcat_results.json",
@@ -50,15 +51,25 @@ def lambda_handler(event, _):
 
         check_user_in_project(sub, project_name)
 
-        missing_to_ref = (
-            query_clinic_job(request_id).get("missing_to_ref", {}).get("BOOL")
-        )
+        job = query_clinic_job(request_id)
+        missing_to_ref = job.get("missing_to_ref", {}).get("BOOL")
+        status = job.get(f"{pipeline}_status", {}).get("S")
 
-        response = s3_client.get_object(
-            Bucket=DPORTAL_BUCKET,
-            Key=results_path,
-        )
-        content = response["Body"].read()
+        no_results_message = None
+        no_results_message_type = None
+        content = None
+        if status == "pending":
+            no_results_message = "The job may still be partially complete."
+            no_results_message_type = "Warning"
+        elif status == "failed":
+            no_results_message = f"Some results are unavailable due to {str(pipeline).capitalize()} pipeline failure."
+            no_results_message_type = "Error"
+        else:
+            response = s3_client.get_object(
+                Bucket=DPORTAL_BUCKET,
+                Key=results_path,
+            )
+            content = response["Body"].read()
 
         return bundle_response(
             200,
@@ -66,12 +77,14 @@ def lambda_handler(event, _):
                 "url": None,
                 "pages": {"-": 1},
                 "page": 1,
-                "content": content.decode("utf-8"),
+                "content": content.decode("utf-8") if content else "",
                 "config": {
                     "lookup": prepare_lookup_config(),  # Filtered config
                     "pharmcat": PHARMCAT_CONFIGURATION,
                 },
                 "missingToRef": missing_to_ref,
+                "noResultsMessage": no_results_message,
+                "noResultsMessageType": no_results_message_type,
             },
         )
 
