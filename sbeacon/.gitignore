@@ -1,0 +1,44 @@
+.idea/
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+credentials.auto.tfvars
+remote_state.tf
+
+# Build files
+*.zip
+*.pyc
+build
+libraries
+.hash.txt
+
+# csi/tbi files from tests
+*.csi
+*.tbi
+
+# python lambda layers
+layers/python_libraries/python
+layers/binaries/bin/*
+layers/binaries/lib/*
+
+# simulation files
+vcf.txt
+tmp*
+nohup.out
+tmpterms
+
+# terraform
+*.tfvars
+backend.tf
+.terraform.lock.hcl
+
+# docker related bundle images
+lambda/submitDataset/shared
+lambda/submitDataset/schemas
+
+# MAC
+.DS_Store
+
+# Coverage files
+.coverage
+htmlcov
