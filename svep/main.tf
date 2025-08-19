@@ -1,0 +1,868 @@
+data "aws_caller_identity" "this" {}
+
+locals {
+  api_version     = "v1.0.0"
+  slice_size_mbp  = 5
+  result_suffix   = "_results.tsv"
+  result_duration = 86400
+  # layers
+  binaries_layer = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
+  // python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
+  python_modules_layer = module.python_modules_layer.lambda_layer_arn
+  output_columns = join(",", [
+    "rank",
+    "region",
+    "alt",
+    "consequence",
+    "varName",
+    "geneName",
+    "geneId",
+    "feature",
+    "transcriptId",
+    "transcriptBiotype",
+    "exonNumber",
+    "aminoAcids",
+    "codons",
+    "strand",
+    "transcriptSupportLevel",
+    "ref",
+    "gt",
+    "qual",
+    "filter",
+    "variationId",
+    "rsId",
+    "omimId",
+    "classification",
+    "conditions",
+    "clinSig",
+    "reviewStatus",
+    "lastEvaluated",
+    "accession",
+    "pubmed",
+    "afAfr",
+    "afEas",
+    "afFin",
+    "afNfe",
+    "afSas",
+    "afAmr",
+    "af",
+    "ac",
+    "an",
+    "siftMax",
+    "af1KG",
+    "afKhv",
+    "ac1KG",
+    "an1KG",
+    "misZ",
+    "misOe",
+    "misOeCiLower",
+    "misOeCiUpper",
+    "lofPli",
+    "lofOe",
+    "lofOeCiUpper",
+    "lofOeCiLower",
+    "dp",
+    "gq",
+    "mq",
+    "qd",
+  ])
+}
+
+#
+# initQuery Lambda Function
+#
+module "lambda-initQuery" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-initQuery"
+  description         = "Invokes queryVCF with the calculated regions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-initQuery.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/initQuery"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    CONCAT_STARTER_SNS_TOPIC_ARN    = aws_sns_topic.concatStarter.arn
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.queryVCF.arn
+    RESULT_DURATION                 = local.result_duration
+    RESULT_SUFFIX                   = local.result_suffix
+    SLICE_SIZE_MBP                  = local.slice_size_mbp
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
+    DYNAMO_PROJECT_USERS_TABLE      = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    DYNAMO_SVEP_REFERENCES_TABLE    = aws_dynamodb_table.svep_references.name
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    CLINIC_JOBS_PROJECT_NAME_INDEX  = local.clinic_jobs_project_name_index
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# sendJobEmail Lambda Function
+#
+module "lambda-sendJobEmail" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-sendJobEmail"
+  description         = "Invokes sendJobEmail to send email to user"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-sendJobEmail.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/sendJobEmail"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# queryVCF Lambda Function
+#
+module "lambda-queryVCF" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-queryVCF"
+  description         = "Invokes queryGTF for each region."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 140
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-queryVCF.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/queryVCF"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.queryGTF.arn
+    QUERY_VCF_SUBMIT_SNS_TOPIC_ARN  = aws_sns_topic.queryVCFsubmit.arn
+    SLICE_SIZE_MBP                  = local.slice_size_mbp
+    FILTER_MIN_QUAL                 = var.filters.min_qual
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# queryVCFsubmit Lambda Function
+#
+module "lambda-queryVCFsubmit" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-queryVCFsubmit"
+  description         = "This lambda will be called if there are too many batchids to be processed within"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-queryVCFsubmit.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/queryVCFsubmit"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                   = aws_s3_bucket.svep-temp.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
+    DYNAMO_CLINIC_JOBS_TABLE    = var.dynamo-clinic-jobs-table
+    USER_POOL_ID                = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN          = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.python_modules_layer
+  ]
+}
+
+#
+# queryGTF Lambda Function
+#
+module "lambda-queryGTF" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-queryGTF"
+  description         = "Queries GTF for a specified VCF regions."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 24
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-queryGTF.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/queryGTF"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    REFERENCE_LOCATION              = aws_s3_bucket.svep-references.bucket
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    REFERENCE_GENOME                = "sorted_filtered_${var.gtf_file_base}.gtf.bgz"
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.pluginConsequence.arn
+    FILTER_GENES                    = join(",", var.filters.genes)
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginConsequence Lambda Function
+#
+# TODO: update source to terraform-aws-modules/lambda/aws once docker support is added
+module "lambda-pluginConsequence" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-pluginConsequence"
+  description         = "Queries VCF for a specified variant."
+  create_package      = false
+  image_uri           = module.docker_image_pluginConsequence_lambda.image_uri
+  package_type        = "Image"
+  memory_size         = 2048
+  timeout             = 600
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginConsequence.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/pluginConsequence"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.pluginClinvar.arn
+    REFERENCE_LOCATION              = aws_s3_bucket.svep-references.bucket
+    SPLICE_REFERENCE                = "sorted_${var.splice_file_base}.gtf.bgz"
+    MIRNA_REFERENCE                 = "sorted_filtered_${var.mirna_file_base}.gff3.bgz"
+    FASTA_REFERENCE_BASE            = var.fasta_file_base
+    FILTER_CONSEQUENCE_RANK         = var.filters.consequence_rank
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
+  }
+}
+
+#
+# pluginClinvar Lambda Function
+#
+module "lambda-pluginClinvar" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-pluginClinvar"
+  description         = "Add ClinVar annotations to sVEP result rows."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 24
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginClinvar.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/pluginClinvar"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    REFERENCE_LOCATION              = aws_s3_bucket.svep-references.bucket
+    CLINVAR_REFERENCE               = "clinvar.bed.gz"
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.pluginGnomad.arn
+    FILTER_CLINVAR_EXCLUDE          = join(",", var.filters.clinvar_exclude)
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginGnomad Lambda Function
+#
+module "lambda-pluginGnomad" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-pluginGnomad"
+  description         = "Add Gnomad annotations to sVEP result rows."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 256
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginGnomad.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/pluginGnomad"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.pluginGnomadOneKG.arn
+    FILTER_MAX_MAF                  = var.filters.max_maf
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginGnomadOneKG Lambda Function
+#
+module "lambda-pluginGnomadOneKG" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-pluginGnomadOneKG"
+  description         = "Add Gnomad 1kg annotations to sVEP result rows."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 256
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginGnomadOneKG.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/pluginGnomadOneKG"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.pluginGnomadConstraint.arn
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+#
+# pluginGnomadConstraint Lambda Function
+#
+module "lambda-pluginGnomadConstraint" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-pluginGnomadConstraint"
+  description         = "Add Gnomad Constraint annotations to sVEP result rows."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginGnomadConstraint.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/pluginGnomadConstraint"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    NEXT_FUNCTION_SNS_TOPIC_ARN     = aws_sns_topic.formatOutput.arn
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    REFERENCE_LOCATION              = aws_s3_bucket.svep-references.bucket
+    CONSTRAINT_REFERENCE            = "gnomad_constraint_metrics.tsv"
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# concat Lambda Function
+#
+module "lambda-concat" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-concat"
+  description         = "Triggers createPages."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-concat.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/concat"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    CREATEPAGES_SNS_TOPIC_ARN       = aws_sns_topic.createPages.arn
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.python_modules_layer
+  ]
+}
+
+#
+# concatStarter Lambda Function
+#
+module "lambda-concatStarter" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-concatStarter"
+  description         = "Validates all processing is done and triggers concat"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 128
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-concatStarter.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/concatStarter"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    CONCAT_SNS_TOPIC_ARN            = aws_sns_topic.concat.arn
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# createPages Lambda Function
+#
+module "lambda-createPages" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-createPages"
+  description         = "concatenates individual page with 700 entries, received from concat lambda"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-createPages.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/createPages"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    SVEP_RESULTS                    = var.data_portal_bucket_name
+    CONCATPAGES_SNS_TOPIC_ARN       = aws_sns_topic.concatPages.arn
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# concatPages Lambda Function
+#
+module "lambda-concatPages" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-concatPages"
+  description         = "concatenates all the page files created by createPages lambda."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 3008
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-concatPages.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/concatPages"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    RESULT_SUFFIX                   = local.result_suffix
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    SVEP_RESULTS                    = var.data_portal_bucket_name
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.python_modules_layer
+  ]
+}
+
+#
+# getResultsURL Lambda Function
+#
+module "lambda-getResultsURL" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-getResultsURL"
+  description         = "Returns the presigned results URL for results"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-getResultsURL.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/getResultsURL"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    REGION                     = var.region
+    RESULT_DURATION            = local.result_duration
+    RESULT_SUFFIX              = local.result_suffix
+    SVEP_RESULTS               = var.data_portal_bucket_name
+    DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+    FILTERS                    = jsonencode(var.filters)
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# updateReferenceFiles Lambda Function
+#
+module "lambda-updateReferenceFiles" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-updateReferenceFiles"
+  description            = "Retrieves latest reference files and updates the reference bucket in S3"
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 2048
+  timeout                = 900
+  ephemeral_storage_size = 8192
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-updateReferenceFiles.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/updateReferenceFiles"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    REFERENCE_LOCATION                 = aws_s3_bucket.svep-references.bucket
+    DYNAMO_SVEP_REFERENCES_TABLE       = aws_dynamodb_table.svep_references.name
+    GNOMAD_CONSTRAINTS_VERSION         = "4.1"
+    GTF_BASE                           = var.gtf_file_base
+    SPLICE_BASE                        = var.splice_file_base
+    FASTA_BASE                         = var.fasta_file_base
+    MIRNA_BASE                         = var.mirna_file_base
+    UPDATEREFERENCEFILES_SNS_TOPIC_ARN = aws_sns_topic.updateReferenceFiles.arn
+    EC2_IAM_INSTANCE_PROFILE           = aws_iam_instance_profile.ec2_references_instance_profile.name
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+module "lambda-clearTempAndRegions" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-clearTempAndRegions"
+  description         = "Clears temp and regions buckets for finished sVEP executions"
+  runtime             = "python3.12"
+  handler             = "lambda_function.lambda_handler"
+  memory_size         = 256
+  timeout             = 900
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-clearTempAndRegions.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/clearTempAndRegions"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    CLEAR_TEMP_AND_REGIONS_SNS_TOPIC_ARN = aws_sns_topic.clearTempAndRegions.arn
+    SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
+  }
+}
+
+#
+# formatOutput Lambda Function
+#
+module "lambda-formatOutput" {
+  source              = "terraform-aws-modules/lambda/aws"
+  function_name       = "svep-backend-formatOutput"
+  description         = "Convert input list of dictionaries to a TSV file."
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 2048
+  timeout             = 24
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-formatOutput.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/formatOutput"
+  tags                   = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                    = aws_s3_bucket.svep-regions.bucket
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+    COLUMNS                         = local.output_columns
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# qcFigures Lambda Function
+#
+module "lambda-qcFigures" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-qcFigures"
+  description            = "Running vcfstats for generating graphic."
+  create_package         = false
+  image_uri              = module.docker_image_qcFigures_lambda.image_uri
+  package_type           = "Image"
+  memory_size            = 3000
+  timeout                = 900
+  ephemeral_storage_size = 10240
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcFigures.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/qcFigures"
+  tags                   = var.common-tags
+  environment_variables = {
+    FILE_LOCATION   = var.data_portal_bucket_name
+    USER_POOL_ID    = var.cognito-user-pool-id
+    HTS_S3_HOST     = "s3.${var.region}.amazonaws.com"
+    RESULT_DURATION = local.result_duration
+  }
+}
+
+#
+# qcNotes Lambda Function
+#
+module "lambda-qcNotes" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-qcNotes"
+  description            = "Running qcNotes API."
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 128
+  timeout                = 60
+  source_path            = "${path.module}/lambda/qcNotes"
+  attach_policy_jsons    = true
+  number_of_policy_jsons = 1
+  tags                   = var.common-tags
+
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcNotes.json
+  ]
+
+  environment_variables = {
+    FILE_LOCATION = var.data_portal_bucket_name
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+module "lambda-deleteClinicalWorkflow" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-deleteClinicalWorkflow"
+  description            = "Delete pending after 2 days clinical workflow using cron job."
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 2048
+  timeout                = 900
+  ephemeral_storage_size = 8192
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-deleteClinicalWorkflow.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/deleteClinicalWorkflow"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                       = aws_s3_bucket.svep-temp.bucket
+    DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
+    COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
+    USER_POOL_ID                    = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# batchSubmit Lambda Function
+#
+module "lambda-batchSubmit" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-batchSubmit"
+  description         = "Batch submission of sVEP jobs"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchSubmit.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchSubmit"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DPORTAL_BUCKET                       = var.data_portal_bucket_name
+    SVEP_BATCH_SUBMIT_QUEUE_URL          = aws_sqs_queue.batch_submit_queue.url
+    DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    CLINIC_JOBS_TABLE_PROJECT_NAME_INDEX = local.clinic_jobs_project_name_index
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# batchStarter Lambda Function
+#
+module "lambda-batchStarter" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-batchStarter"
+  description         = "Scheduler for sVEP batch submissions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchStarter.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchStarter"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    SVEP_BATCH_SUBMIT_QUEUE_URL = aws_sqs_queue.batch_submit_queue.url
+    INIT_QUERY_SNS_TOPIC_ARN    = aws_sns_topic.initQuery.arn
+    LAMBDA_CONCURRENCY_MARGIN   = 200
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
