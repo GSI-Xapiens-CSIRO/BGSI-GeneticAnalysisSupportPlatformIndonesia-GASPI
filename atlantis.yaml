@@ -13,7 +13,7 @@ projects:
   branch: /main/
   dir: .
   workspace: default
-  terraform_version: &tf_version v1.9.4
+  terraform_version: &tf_version v1.12.2
   execution_order_group: 1
   autoplan:
     when_modified: &tf_files
