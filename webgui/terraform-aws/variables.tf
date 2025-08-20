@@ -91,7 +91,7 @@ variable "hub_name" {
   description = "Hub name"
 }
 
-variable "svep-warning-thresholds" {
+variable "clinic-warning-thresholds" {
   type = object({
     qual   = optional(number, 0)
     filter = optional(string, "")

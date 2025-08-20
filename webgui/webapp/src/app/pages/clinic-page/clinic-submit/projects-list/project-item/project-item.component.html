@@ -24,10 +24,39 @@
                         placeholder="File Name"
                     />
                 </mat-form-field>
+                <div class="flex justify-between items-center mb-2 px-4">
+                    <mat-checkbox
+                        (change)="checkAllFiles()"
+                        [checked]="allFilesSelected"
+                        [disabled]="enabledFiles.length === 0"
+                    >Select All
+                    </mat-checkbox>
+                    <div class="justify-end flex items-center gap-2">
+                        @if (checkedFiles.size > 100) {
+                            <span class="text-red-500 text-sm">
+                                You can only submit up to 100 files at a time.
+                            </span>
+                        }
+                        <button
+                            (click)="batchSubmitQuery.emit(checkedFiles)"
+                            mat-raised-button
+                            color="primary"
+                            [disabled]="checkedFiles.size === 0 || checkedFiles.size > 100"
+                        >
+                            Batch Submit
+                        </button>
+                    </div>
+                </div>
                 <div class="mt-4 flex flex-col gap-4">
                     @for (file of projectFiles; track $index) {
                         <div class="flex flex-row items-center justify-between p-2 border-b">
-                            <div class="text-sm">{{ file.filename }}</div>
+                            <div class="text-sm">
+                                <mat-checkbox
+                                    (change)="updateCheckedFile(file)"
+                                    [checked]="checkedFiles!.has(file.filename)"
+                                    [disabled]="file.disabled"
+                                >{{ file.filename }}</mat-checkbox>
+                            </div>
                             <div class="flex flex-row gap-2">
                             <button
                                 (click)="submitQuery.emit(file)"

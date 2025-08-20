@@ -1,0 +1,92 @@
+<div
+  class="bg-transparent rounded-md shadow-none flex gap-4 p-2 flex-col lg:flex-row lg:bg-white lg:p-4 lg:shadow-md font-normal"
+>
+  <div class="w-full sticky top-0 lg:relative lg:w-[20vw]">
+    <mat-accordion class="block lg:hidden">
+      <mat-expansion-panel
+        (opened)="panelOpenState = true"
+        (closed)="panelOpenState = false"
+      >
+        <mat-expansion-panel-header>
+          <mat-panel-title> Table of Content </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="flex flex-col gap-2">
+          <div
+            class="cursor-pointer p-2 rounded-md"
+            (click)="setContent('introduction')"
+            [class.bg-[#F1FDFD]]="content === 'introduction'"
+            [class.text-[#16B3AC]]="content === 'introduction'"
+          >
+            Introduction & Concepts
+          </div>
+          <div
+            class="cursor-pointer p-2 rounded-md"
+            (click)="setContent('step-by-step')"
+            [class.bg-[#F1FDFD]]="content === 'step-by-step'"
+            [class.text-[#16B3AC]]="content === 'step-by-step'"
+          >
+            Step by Step Guide
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+    <div class="hidden lg:flex lg:flex-col gap-2">
+      <div class="font-semibold mb-2 text-lg">Table of Content</div>
+      <div
+        class="cursor-pointer p-2 rounded-md"
+        (click)="setContent('introduction')"
+        [class.bg-[#F1FDFD]]="content === 'introduction'"
+        [class.text-[#16B3AC]]="content === 'introduction'"
+      >
+        Introduction & Concepts
+      </div>
+      <div
+        class="cursor-pointer p-2 rounded-md transition-transform duration-300"
+        (click)="setContent('step-by-step')"
+        [class.bg-[#F1FDFD]]="content === 'step-by-step'"
+        [class.text-[#16B3AC]]="content === 'step-by-step'"
+      >
+        Step by Step Guide
+      </div>
+    </div>
+  </div>
+  <div
+    class="bg-white flex flex-col p-4 gap-4 shadow-xl rounded-md lg:w-full lg:p-0 lg:bg-transparent lg:shadow-none"
+  >
+    @if (content === "introduction" || content === "") {
+      <div class="flex flex-col gap-4">
+        @for (faq of faqItems; track faq.title) {
+          <mat-accordion>
+            <mat-expansion-panel
+              (opened)="panelContentState = true"
+              (closed)="panelContentState = false"
+            >
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div class="text-md">
+                    {{ faq.title }}
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <div [innerHTML]="faq.html"></div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        }
+      </div>
+    }
+
+    @if (content === "" || content === "step-by-step") {
+      <div class="flex flex-col gap-4">
+        @for (step of stepData; track step.title) {
+          <div
+            class="mat-expansion-panel custom-card"
+            (click)="handleRedirect(step.url)"
+          >
+            <div class="font-semibold text-md">{{ step.title }}</div>
+            <div class="rotate-45"><mat-icon>arrow_upward</mat-icon></div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

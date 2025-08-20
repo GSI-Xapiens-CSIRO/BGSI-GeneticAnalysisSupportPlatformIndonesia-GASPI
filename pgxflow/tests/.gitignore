@@ -1,0 +1,3 @@
+*.jar
+*.log
+test_pharmcat/test_output/*

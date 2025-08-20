@@ -12,7 +12,7 @@ Before using this Makefile, ensure you have the following prerequisites:
 - Git
 - Python 3.12
 - AWS CLI v2
-- Terraform v1.9.4 or newer
+- Terraform v1.12.2 or newer
 - Valid AWS credentials for both Hub01 and Hub02 environments
 - SSH access configured for GitHub
 - Sudo privileges (for Docker installation)

@@ -83,7 +83,7 @@ export class SubmitQueryDialogComponent {
           catchError((e) => {
             const errorMessage =
               e.response?.data?.error?.errorMessage ||
-              'Something went wrong when initaiting the job. Please try again later.';
+              'Something went wrong when initiating the job. Please try again later.';
             this.tstr.error(errorMessage, 'Error');
             this.loading = false;
 

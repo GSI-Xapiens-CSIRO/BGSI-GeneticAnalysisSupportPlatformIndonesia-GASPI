@@ -30,13 +30,13 @@ ENVIRONMENT = """export const environment = {{
   }},
   clinic_mode: '{clinic_mode}',
   hub_name: '{hub_name}',
-  svep_warning_thresholds: {{
-    qual: {svep_warning_qual},
-    filter: '{svep_warning_filter}',
-    dp: {svep_warning_dp},
-    gq: {svep_warning_gq},
-    mq: {svep_warning_mq},
-    qd: {svep_warning_qd},
+  clinic_warning_thresholds: {{
+    qual: {clinic_warning_qual},
+    filter: '{clinic_warning_filter}',
+    dp: {clinic_warning_dp},
+    gq: {clinic_warning_gq},
+    mq: {clinic_warning_mq},
+    qd: {clinic_warning_qd},
   }}
 }};"""
 
@@ -97,12 +97,12 @@ def setup_env(
     dir: str,
     hub_name: str,
     clinic_mode: str,
-    svep_warning_dp: float,
-    svep_warning_filter: str,
-    svep_warning_gq: float,
-    svep_warning_mq: float,
-    svep_warning_qual: float,
-    svep_warning_qd: float,
+    clinic_warning_dp: float,
+    clinic_warning_filter: str,
+    clinic_warning_gq: float,
+    clinic_warning_mq: float,
+    clinic_warning_qual: float,
+    clinic_warning_qd: float,
 ):
     common_format_values = {
         "base_range": base_range,
@@ -115,12 +115,12 @@ def setup_env(
         "api_endpoint_clinic": api_endpoint_clinic,
         "hub_name": hub_name,
         "clinic_mode": clinic_mode,
-        "svep_warning_dp": svep_warning_dp,
-        "svep_warning_filter": svep_warning_filter,
-        "svep_warning_gq": svep_warning_gq,
-        "svep_warning_mq": svep_warning_mq,
-        "svep_warning_qual": svep_warning_qual,
-        "svep_warning_qd": svep_warning_qd,
+        "clinic_warning_dp": clinic_warning_dp,
+        "clinic_warning_filter": clinic_warning_filter,
+        "clinic_warning_gq": clinic_warning_gq,
+        "clinic_warning_mq": clinic_warning_mq,
+        "clinic_warning_qual": clinic_warning_qual,
+        "clinic_warning_qd": clinic_warning_qd,
     }
     with open(
         os.path.join(dir, "src/environments/environment.development.ts"), "w"
@@ -155,13 +155,13 @@ if __name__ == "__main__":
     api_endpoint_clinic = args["api_endpoint_clinic"]
     data_portal_bucket = args["data_portal_bucket"]
     hub_name = args["hub_name"]
-    clinic_mode = args["clinic_mode"]
-    svep_warning_dp = float(args["svep_warning_dp"])
-    svep_warning_filter = args["svep_warning_filter"]
-    svep_warning_gq = float(args["svep_warning_gq"])
-    svep_warning_mq = float(args["svep_warning_mq"])
-    svep_warning_qual = float(args["svep_warning_qual"])
-    svep_warning_qd = float(args["svep_warning_qd"])
+    clinic_mode = args.get("clinic_mode")
+    clinic_warning_dp = float(args["clinic_warning_dp"])
+    clinic_warning_filter = args["clinic_warning_filter"]
+    clinic_warning_gq = float(args["clinic_warning_gq"])
+    clinic_warning_mq = float(args["clinic_warning_mq"])
+    clinic_warning_qual = float(args["clinic_warning_qual"])
+    clinic_warning_qd = float(args["clinic_warning_qd"])
 
     setup_env(
         base_range,
@@ -175,12 +175,12 @@ if __name__ == "__main__":
         webapp_dir,
         hub_name,
         clinic_mode,
-        svep_warning_dp,
-        svep_warning_filter,
-        svep_warning_gq,
-        svep_warning_mq,
-        svep_warning_qual,
-        svep_warning_qd,
+        clinic_warning_dp,
+        clinic_warning_filter,
+        clinic_warning_gq,
+        clinic_warning_mq,
+        clinic_warning_qual,
+        clinic_warning_qd,
     )
     npm_install(install_cmd, webapp_dir)
     build(build_cmd, webapp_dir)

@@ -1,0 +1,21 @@
+.terraform
+terraform.tfstate
+.git
+.idea/
+.DS_Store
+builds
+
+# python lambda layers
+layers/python_libraries/python
+layers/binaries/bin/*
+layers/binaries/lib/*
+
+# Build files
+*.zip
+*.pyc
+build
+libraries
+.hash.txt
+
+# shared resources
+lambda/qcFigures/shared

@@ -89,6 +89,7 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
       notebookRole: [NotebookRole.BASIC, Validators.required], // default role
       institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
       institutionName: ['', Validators.required],
+      isMedicalDirector: [false],
     });
   }
 
@@ -136,9 +137,11 @@ export class AdminCreateUserComponent implements OnInit, OnDestroy {
   createUser(): void {
     const form = this.newUserForm.value;
     const groups = _.pick(form, ['administrators', 'managers']);
+    const attributes = _.pick(form, ['isMedicalDirector']);
+
     this.ss.start();
     this.as
-      .createUser(form.firstName, form.lastName, form.email, groups)
+      .createUser(form.firstName, form.lastName, form.email, groups, attributes)
       .pipe(
         catchError((e) => {
           if (

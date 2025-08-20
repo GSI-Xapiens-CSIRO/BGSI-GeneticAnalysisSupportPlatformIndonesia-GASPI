@@ -5,8 +5,8 @@ RUN dnf install -y which git tar make openssl-devel libcurl-devel wget bzip2-dev
 RUN dnf install -y gcc gcc-c++ cmake
 RUN dnf install -y docker
 
-RUN wget https://releases.hashicorp.com/terraform/1.9.4/terraform_1.9.4_linux_amd64.zip
-RUN unzip terraform_1.9.4_linux_amd64.zip -d /usr/bin/
+RUN wget https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
+RUN unzip terraform_1.12.2_linux_amd64.zip -d /usr/bin/
 RUN dnf install -y java-17-amazon-corretto-headless
 # Copy requirements.txt
 RUN pip install --upgrade pip

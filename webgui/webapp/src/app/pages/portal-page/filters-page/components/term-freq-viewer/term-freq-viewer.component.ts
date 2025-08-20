@@ -1,7 +1,17 @@
 import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
-import { Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
+import {
+  Subject,
+  catchError,
+  from,
+  map,
+  mergeMap,
+  of,
+  takeUntil,
+  tap,
+  toArray,
+} from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { EntityCountsByTermPlotComponent } from '../entity-counts-by-term-plot/entity-counts-by-term-plot.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
@@ -29,6 +39,7 @@ export class TermFreqViewerComponent implements OnChanges, OnDestroy {
   protected loading = true;
   protected counts: any[] = [];
   private destroy$ = new Subject<void>();
+  private readonly CONCURRENCY = 5;
 
   constructor(
     private fs: FilterService,
@@ -48,33 +59,41 @@ export class TermFreqViewerComponent implements OnChanges, OnDestroy {
     this.loading = true;
     this.completed = 0;
 
-    const observables$ = _.map(this.terms, (term) =>
-      this.fs
-        .fetch_counts_by_scope_and_term(this.projects, this.scope, {
-          id: term.id,
-        })
-        .pipe(
-          map((count) => {
-            this.completed++;
-            return {
-              term: term.id,
-              count: count,
-              label: term.label,
-            };
-          }),
-        ),
-    );
-
-    forkJoin(observables$)
+    from(this.terms)
       .pipe(
+        mergeMap(
+          (term) =>
+            this.fs
+              .fetch_counts_by_scope_and_term(this.projects, this.scope, {
+                id: term.id,
+              })
+              .pipe(
+                catchError(() => of(null)),
+                tap(() => this.completed++),
+                map((count) =>
+                  count
+                    ? { term: term.id, count, label: term.label }
+                    : { term: term.id, count: -1, label: term.label },
+                ),
+              ),
+          this.CONCURRENCY,
+        ),
+        toArray(),
         takeUntil(this.destroy$),
-        catchError((_) => of(null)),
+        catchError(() => of(null)),
       )
       .subscribe((counts) => {
         if (!counts) {
           this.tstr.error('Unable to fetch details', 'Error');
         } else if (counts.length == this.terms.length) {
-          this.counts = _.reverse(_.sortBy(counts, (item) => item.count));
+          const validCounts = _.filter(counts, (item) => item.count >= 0);
+          if (validCounts.length !== this.terms.length) {
+            this.tstr.warning(
+              'Some terms could not be counted. System may be busy or you may have exceeded your quota. Please try again later.',
+              'Warning',
+            );
+          }
+          this.counts = _.reverse(_.sortBy(validCounts, (item) => item.count));
           this.loading = false;
         }
       });

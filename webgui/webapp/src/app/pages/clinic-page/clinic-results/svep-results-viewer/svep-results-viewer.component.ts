@@ -53,7 +53,6 @@ import {
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
-
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -62,12 +61,21 @@ import { BoxDataComponent } from './box-data/box-data.component';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { isEqual } from 'lodash';
+import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+
 type SVEPResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
   chromosome: string;
+  filters?: {
+    clinvar_exclude: string[];
+    consequence_rank: number;
+    genes: string[];
+    max_maf: number;
+    min_qual: number;
+  };
 };
 
 @Injectable()
@@ -113,6 +121,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatTooltipModule,
     MatAutocompleteModule,
     BoxDataComponent,
+    NoResultsAlertComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -161,8 +170,10 @@ export class SvepResultsViewerComponent
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
   rows: any[] = [];
+  genesExpanded: boolean = false; // Add this property
 
   expandedMap = new Map<string, boolean>();
+  protected isLoading = false;
 
   constructor(
     protected cs: ClinicService,
@@ -172,6 +183,135 @@ export class SvepResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
+
+  /**
+   * Check if SVEP configuration is available and has data
+   */
+  hasSvepConfig(): boolean {
+    const filters = this.results?.filters;
+    const thresholds = environment.clinic_warning_thresholds;
+    return !!(filters || thresholds);
+  }
+
+  /**
+   * Get filters configuration
+   */
+  getFilters(): any {
+    return this.results?.filters || null;
+  }
+
+  /**
+   * Get clinic warning thresholds from environment
+   */
+  getClinicThresholds(): any {
+    return environment.clinic_warning_thresholds || null;
+  }
+
+  /**
+   * Get filter criteria for display
+   */
+  getFilterCriteria(): Array<{ label: string; value: any; type: string }> {
+    const filters = this.getFilters();
+    if (!filters) return [];
+
+    return [
+      {
+        label: 'ClinVar Exclude',
+        value: filters.clinvar_exclude,
+        type: 'array',
+      },
+      {
+        label: 'Consequence Rank',
+        value: filters.consequence_rank,
+        type: 'number',
+      },
+      { label: 'Max MAF', value: filters.max_maf, type: 'number' },
+      { label: 'Min Quality', value: filters.min_qual, type: 'number' },
+      {
+        label: 'Target Genes',
+        value: filters.genes?.length || 0,
+        type: 'count',
+      },
+    ];
+  }
+
+  /**
+   * Get quality thresholds for display
+   */
+  getQualityThresholds(): Array<{
+    label: string;
+    value: any;
+    description: string;
+  }> {
+    const thresholds = this.getClinicThresholds();
+    if (!thresholds) return [];
+
+    return [
+      {
+        label: 'Filter',
+        value: thresholds.filter,
+        description: 'Filter status threshold',
+      },
+      {
+        label: 'Quality Score (QUAL)',
+        value: thresholds.qual,
+        description: 'Minimum quality score',
+      },
+      {
+        label: 'Read Depth (DP)',
+        value: thresholds.dp,
+        description: 'Minimum read depth',
+      },
+      {
+        label: 'Genotype Quality (GQ)',
+        value: thresholds.gq,
+        description: 'Minimum genotype quality',
+      },
+      {
+        label: 'Mapping Quality (MQ)',
+        value: thresholds.mq,
+        description: 'Minimum mapping quality',
+      },
+      {
+        label: 'Quality by Depth (QD)',
+        value: thresholds.qd,
+        description: 'Minimum quality by depth',
+      },
+    ];
+  }
+
+  /**
+   * Get target genes (first 10 for preview)
+   */
+  getTargetGenesPreview(): string[] {
+    const filters = this.getFilters();
+    if (!filters?.genes) return [];
+    return filters.genes.slice(0, 10);
+  }
+
+  /**
+   * Get total genes count
+   */
+  getTotalGenesCount(): number {
+    const filters = this.getFilters();
+    return filters?.genes?.length || 0;
+  }
+
+  /**
+   * Toggle genes expanded state
+   */
+  toggleGenesExpanded(): void {
+    this.genesExpanded = !this.genesExpanded;
+  }
+
+  /**
+   * Get remaining genes (after first 10)
+   */
+  getRemainingGenes(): string[] {
+    const filters = this.getFilters();
+    if (!filters?.genes) return [];
+    return filters.genes.slice(10);
+  }
 
   resort(sort: Sort) {
     const snapshot = [...this.currentRenderedRows];
@@ -289,6 +429,7 @@ export class SvepResultsViewerComponent
     this.originalRows = [];
     this.dataRows.next([]);
     this.ss.start();
+    this.isLoading = true;
     this.cs
       .getClinicResults(requestId, projectName, chromosome, page, position)
       .pipe(catchError(() => of(null)))
@@ -300,11 +441,15 @@ export class SvepResultsViewerComponent
           this.updateTable(data);
         }
         this.ss.end();
+        this.isLoading = false;
       });
   }
 
   updateTable(result: SVEPResult): void {
     this.results = result;
+
+    // No hardcoding - filters comes from API response
+
     this.resultsLength = result.pages[result.chromosome];
     const lines = result.content.split('\n');
     this.originalRows = lines

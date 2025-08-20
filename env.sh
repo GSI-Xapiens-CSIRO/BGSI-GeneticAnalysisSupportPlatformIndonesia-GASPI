@@ -11,8 +11,8 @@ sudo ln -s /usr/bin/python3.12 /usr/bin/python
 sudo dnf install -y python3.12-pip
 sudo ln -s /usr/bin/pip3.12 /usr/bin/pip
 
-wget https://releases.hashicorp.com/terraform/1.9.4/terraform_1.9.4_linux_amd64.zip
-sudo unzip terraform_1.9.4_linux_amd64.zip -d /usr/bin/
+wget https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
+sudo unzip terraform_1.12.2_linux_amd64.zip -d /usr/bin/
 
 wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -
 source /home/ec2-user/.bashrc

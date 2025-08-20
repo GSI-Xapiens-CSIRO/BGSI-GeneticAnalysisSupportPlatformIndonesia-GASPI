@@ -15,12 +15,12 @@ data "external" "build" {
     api_endpoint_clinic     = var.api_endpoint_clinic
     clinic_mode             = var.clinic_mode
     hub_name                = var.hub_name
-    svep_warning_dp         = var.svep-warning-thresholds.dp
-    svep_warning_filter     = var.svep-warning-thresholds.filter
-    svep_warning_gq         = var.svep-warning-thresholds.gq
-    svep_warning_mq         = var.svep-warning-thresholds.mq
-    svep_warning_qual       = var.svep-warning-thresholds.qual
-    svep_warning_qd         = var.svep-warning-thresholds.qd
+    clinic_warning_dp         = var.clinic-warning-thresholds.dp
+    clinic_warning_filter     = var.clinic-warning-thresholds.filter
+    clinic_warning_gq         = var.clinic-warning-thresholds.gq
+    clinic_warning_mq         = var.clinic-warning-thresholds.mq
+    clinic_warning_qual       = var.clinic-warning-thresholds.qual
+    clinic_warning_qd         = var.clinic-warning-thresholds.qd
   }
   working_dir = path.module
 }

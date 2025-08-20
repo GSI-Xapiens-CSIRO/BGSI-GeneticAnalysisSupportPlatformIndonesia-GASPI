@@ -6,6 +6,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,6 +31,7 @@ interface Project {
   standalone: true,
   imports: [
     MatButtonModule,
+    MatCheckboxModule,
     MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
@@ -45,8 +47,12 @@ export class ProjectItemComponent {
   @Output() panelToggled = new EventEmitter<boolean>();
   @Output() submitQuery = new EventEmitter<ProjectFile>();
   @Output() viewQcReport = new EventEmitter<ProjectFile>();
+  @Output() batchSubmitQuery = new EventEmitter<Set<string>>();
   searchControl = new FormControl('');
   protected projectFiles: ProjectFile[] = [];
+  protected enabledFiles: ProjectFile[] = [];
+  protected checkedFiles: Set<string> = new Set();
+  protected allFilesSelected: boolean = false;
 
   ngOnInit(): void {
     this.searchControl.valueChanges.subscribe((value) => {
@@ -64,12 +70,42 @@ export class ProjectItemComponent {
   filterFiles(searchTerm: string) {
     if (!this.project) {
       this.projectFiles = [];
+      this.allFilesSelected = false;
       return;
     }
     const lowerSearch = searchTerm.toLowerCase();
     this.projectFiles = this.project.files.filter((file) =>
       file.filename.toLowerCase().includes(lowerSearch),
     );
+
+    this.enabledFiles = this.projectFiles
+      .filter((f) => !f.disabled)
+      .map((f) => f);
+
+    this.allFilesSelected = this.checkAllFilesSelected();
+  }
+
+  checkAllFilesSelected(): boolean {
+    if (this.enabledFiles.length === 0) return false;
+    return this.enabledFiles.every((f) => this.checkedFiles.has(f.filename));
+  }
+
+  updateCheckedFile(file: ProjectFile): void {
+    if (file.disabled) return;
+    this.checkedFiles.has(file.filename)
+      ? this.checkedFiles.delete(file.filename)
+      : this.checkedFiles.add(file.filename);
+
+    this.allFilesSelected = this.checkAllFilesSelected();
+  }
+
+  checkAllFiles(): void {
+    const action = this.allFilesSelected
+      ? (f: ProjectFile) => this.checkedFiles.delete(f.filename)
+      : (f: ProjectFile) => this.checkedFiles.add(f.filename);
+
+    this.enabledFiles.filter((f) => !f.disabled).forEach(action);
+    this.allFilesSelected = !this.allFilesSelected;
   }
 
   togglePanel(opened: boolean) {

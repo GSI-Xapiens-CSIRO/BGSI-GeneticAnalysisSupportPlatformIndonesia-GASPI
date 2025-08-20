@@ -1,0 +1,5 @@
+﻿Variant,Zygosity,chr,start,end,Description
+rs7412,1/0,chr19,44908822,44908823,Test present variant 1
+rs7412,1/0,chr19,44908822,44908823,Test present variant 2
+rs7412,1/0,chr19,44908822,44908823,Test present variant 3
+rs1045642,1/0,chr7,87509328,87509329,Test absent variant 1
