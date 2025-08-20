@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,7 +7,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { catchError, of, Subscription } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
 import { DportalService } from 'src/app/services/dportal.service';
 import { ScopeTypes } from 'src/app/utils/interfaces';
@@ -53,7 +53,7 @@ interface Project {
   templateUrl: './filters-tab.component.html',
   styleUrl: './filters-tab.component.scss',
 })
-export class FiltersTabComponent implements OnInit, OnDestroy {
+export class FiltersTabComponent {
   protected _ = _;
   protected form: FormGroup;
   protected myProjects: Project[] = [];
@@ -64,7 +64,6 @@ export class FiltersTabComponent implements OnInit, OnDestroy {
   protected activeScope: string | null = null;
   protected terms: any[] = [];
   protected projects: any[] = [];
-  private form$: Subscription | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -88,34 +87,21 @@ export class FiltersTabComponent implements OnInit, OnDestroy {
       stats: this.fb.control(false),
     });
 
-    this.form$ = this.form.valueChanges.subscribe((form) => {
-      const scope = form.scope;
-      const limit = form.limit;
-
+    this.form.controls['scope'].valueChanges.subscribe((scope) => {
       if (scope === ScopeTypes.DATASETS) {
-        this.form.controls['id'].enable({ emitEvent: false });
+        this.form.controls['id'].enable();
         this.form.controls['id'].markAsTouched();
-        this.form.controls['stats'].setValue(false, { emitEvent: false });
+        this.form.controls['stats'].setValue(false);
         this.form.controls['stats'].disable();
-      } else if (limit <= 100) {
-        this.form.controls['stats'].enable({ emitEvent: false });
-        this.form.controls['id'].disable({ emitEvent: false });
       } else {
-        this.form.controls['stats'].setValue(false, { emitEvent: false });
-        this.form.controls['stats'].disable({ emitEvent: false });
-        this.form.controls['id'].disable({ emitEvent: false });
+        this.form.controls['stats'].enable();
+        this.form.controls['id'].disable();
       }
     });
   }
 
   ngOnInit(): void {
     this.list();
-  }
-
-  ngOnDestroy(): void {
-    if (this.form$) {
-      this.form$.unsubscribe();
-    }
   }
 
   list() {

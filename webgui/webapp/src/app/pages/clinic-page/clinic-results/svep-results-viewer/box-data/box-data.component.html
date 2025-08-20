@@ -17,12 +17,14 @@
             class="flex items-center w-[200vw] md:w-full lg:w-full xl:w-full font-normal"
           >
             <div class="flex flex-1 flex-row items-center gap-2">
-              @if (shouldShowFlag()) {
+              @if (!["PASS", "-", ""].includes(row["filter"])) {
                 <div
                   class="flex justify-center items-center rounded-full"
-                  [matTooltip]="showTooltip(row['filter'], row)"
+                  [matTooltip]="showTooltip(row['filter'])"
                   style="width: 30px; height: 30px"
-                  [style.background]="getFlagColor()"
+                  [style.background]="
+                    row['filter'] === '.' ? '#4b5563' : '#dc2626'
+                  "
                 >
                   <mat-icon class="text-white">priority_high</mat-icon>
                 </div>

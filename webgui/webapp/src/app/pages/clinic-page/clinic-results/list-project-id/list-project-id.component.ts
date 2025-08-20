@@ -42,7 +42,6 @@ import { AsyncPipe } from '@angular/common';
 import dayjs from 'dayjs';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { clinicResort } from 'src/app/utils/clinic';
-import { environment } from 'src/environments/environment';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
@@ -51,72 +50,20 @@ dayjs.extend(timezone);
 
 const localTz = dayjs.tz.guess();
 
+interface Project {
+  job_id: string;
+  input_vcf: string;
+  job_status: JobStatus;
+  error_message: string;
+  failed_step: string;
+}
+
 enum JobStatus {
   COMPLETED = 'completed',
   FAILED = 'failed',
   EXPIRED = 'expired',
   PENDING = 'pending',
 }
-
-interface BaseJob {
-  job_id: string;
-  job_name: string;
-  input_vcf: string;
-  created_at: string;
-}
-
-interface SvepJob extends BaseJob {
-  svep_status: JobStatus;
-  svep_failed_step?: string;
-  svep_error_message?: string;
-}
-
-interface PharmcatJob extends BaseJob {
-  pharmcat_status: JobStatus;
-  pharmcat_failed_step?: string;
-  pharmcat_error_message?: string;
-  missing_to_ref?: boolean;
-}
-
-interface LookupJob extends BaseJob {
-  lookup_status: JobStatus;
-  lookup_failed_step?: string;
-  lookup_error_message?: string;
-}
-
-interface HybridJob extends BaseJob {
-  pharmcat_status: JobStatus;
-  pharmcat_failed_step?: string;
-  pharmcat_error_message?: string;
-  lookup_status: JobStatus;
-  lookup_failed_step?: string;
-  lookup_error_message?: string;
-  missing_to_ref: boolean;
-}
-
-type ClinicJob = SvepJob | PharmcatJob | LookupJob | HybridJob;
-
-type HubConfig = {
-  status_fields: string[];
-};
-
-const HUB_CONFIGS: Record<string, HubConfig> = {
-  RSCM: {
-    status_fields: ['svep_status'],
-  },
-  RSSARDJITO: {
-    status_fields: ['svep_status'],
-  },
-  RSPON: {
-    status_fields: ['pharmcat_status'],
-  },
-  RSIGNG: {
-    status_fields: ['lookup_status'],
-  },
-  RSJPD: {
-    status_fields: ['pharmcat_status', 'lookup_status'],
-  },
-};
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -163,10 +110,17 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
 export class ListJobComponent implements OnChanges, OnInit {
   @Input({ required: true }) projectName!: string;
   loading = true;
-  dataSource = new MatTableDataSource<ClinicJob>();
+  dataSource = new MatTableDataSource<Project>();
+  displayedColumns: string[] = [
+    'input_vcf',
+    'job_status',
+    'job_name',
+    'job_id',
+    'created_at',
+    'action',
+  ];
   JobStatus = JobStatus;
   jobStatusOptions = ['all', ...Object.values(JobStatus)];
-  protected hubName: string = environment.hub_name;
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
@@ -176,7 +130,6 @@ export class ListJobComponent implements OnChanges, OnInit {
   snapshotSorting: Sort | null = null;
 
   private pageTokens = new Map<number, string>();
-  protected config: HubConfig;
 
   // Reactive form controls for search and status
   searchControl = new FormControl('');
@@ -192,23 +145,7 @@ export class ListJobComponent implements OnChanges, OnInit {
     private router: Router,
     private dg: MatDialog,
     protected auth: AuthService,
-  ) {
-    this.config = HUB_CONFIGS[environment.hub_name];
-  }
-
-  get displayedColumns(): string[] {
-    return [
-      'input_vcf',
-      'job_name',
-      'job_id',
-      ...this.config.status_fields,
-      ...(['RSPON', 'RSJPD'].includes(environment.hub_name)
-        ? ['missing_to_ref']
-        : []),
-      'created_at',
-      'action',
-    ];
-  }
+  ) {}
 
   ngOnInit(): void {
     this.list(0, '', this.jobStatusOptions[0]);
@@ -258,82 +195,6 @@ export class ListJobComponent implements OnChanges, OnInit {
     if (this.paginator) {
       this.refresh();
     }
-  }
-
-  getMissingToRefDisplay(missingToRef: boolean | null): string {
-    return missingToRef === null
-      ? 'Unknown'
-      : missingToRef
-        ? 'Enabled'
-        : 'Disabled';
-  }
-
-  getStatusDisplayName(statusField: string) {
-    const statusMap: { [key: string]: string } = {
-      svep_status: 'sVEP Status',
-      pharmcat_status: 'PharmCAT Status',
-      lookup_status: 'Lookup Status',
-    };
-    return statusMap[statusField];
-  }
-
-  getOverallStatus(element: any) {
-    const statusFields = this.config.status_fields;
-
-    if (statusFields.some((field) => element[field] === JobStatus.COMPLETED)) {
-      return JobStatus.COMPLETED;
-    }
-
-    if (statusFields.some((field) => element[field] === JobStatus.FAILED)) {
-      return JobStatus.FAILED;
-    }
-
-    if (statusFields.some((field) => element[field] === JobStatus.EXPIRED)) {
-      return JobStatus.EXPIRED;
-    }
-
-    return JobStatus.PENDING;
-  }
-
-  tooltipMessage(element: any) {
-    const overallStatus = this.getOverallStatus(element);
-    switch (overallStatus) {
-      case JobStatus.COMPLETED:
-        return 'Load the result';
-      case JobStatus.FAILED:
-        return 'Failed to process';
-      case JobStatus.EXPIRED:
-        return 'Job ID is no longer work';
-      default:
-        return 'Job ID is processing result';
-    }
-  }
-
-  isAnyStatus(element: any, status: JobStatus) {
-    const statusFields = this.config.status_fields;
-    return statusFields.some((field) => element[field] === status);
-  }
-
-  getFailedInfo(element: any) {
-    for (const statusField of this.config.status_fields) {
-      if (element[statusField] === JobStatus.FAILED) {
-        const failedStepField = statusField.replace('_status', '_failed_step');
-        const errorMessageField = statusField.replace(
-          '_status',
-          '_error_message',
-        );
-
-        return {
-          failedStep: element[failedStepField],
-          errorMessage: element[errorMessageField],
-        };
-      }
-    }
-
-    return {
-      failedStep: null,
-      errorMessage: null,
-    };
   }
 
   async loadResult(jobID: string, vcf_file: string) {
@@ -447,8 +308,20 @@ export class ListJobComponent implements OnChanges, OnInit {
     }
   }
 
-  async handleError(element: any) {
-    const { failedStep, errorMessage } = this.getFailedInfo(element);
+  tooltipMessage(status: JobStatus) {
+    switch (status) {
+      case JobStatus.COMPLETED:
+        return 'Load the result';
+      case JobStatus.FAILED:
+        return 'Failed to process';
+      case JobStatus.EXPIRED:
+        return 'Job ID is no longer work';
+      default:
+        return 'Job ID is processing result';
+    }
+  }
+
+  async handleError(failedStep: any, error: any) {
     const { ErrorDialogComponent } = await import(
       './error-dialog/error-dialog.component'
     );
@@ -456,7 +329,7 @@ export class ListJobComponent implements OnChanges, OnInit {
     this.dg.open(ErrorDialogComponent, {
       data: {
         failedStep: failedStep,
-        errorMessage: errorMessage,
+        errorMessage: error,
       },
     });
   }

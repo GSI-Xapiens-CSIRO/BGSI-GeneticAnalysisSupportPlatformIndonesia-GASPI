@@ -94,28 +94,6 @@ export class ClinicService {
     );
   }
 
-  batchSubmitClinicJobs(
-    projectName: string,
-    jobs: Array<{ filename: string; jobName: string }>,
-    missingToRef: boolean,
-  ) {
-    return from(Auth.currentCredentials()).pipe(
-      switchMap((credentials) => {
-        const userId = credentials.identityId;
-        return from(
-          API.post(environment.api_endpoint_clinic.name, 'batch-submit', {
-            body: {
-              projectName,
-              jobs,
-              userId,
-              missingToRef,
-            },
-          }),
-        );
-      }),
-    );
-  }
-
   generateQC(projectName: string, fileName: string, key: string) {
     return from(
       API.post(environment.api_endpoint_clinic.name, 'vcfstats', {
@@ -175,13 +153,10 @@ export class ClinicService {
       }),
     ).pipe(
       switchMap((res: any) => {
-        const filters = res.filters || {};
         if (res.url) {
           return this.http
             .get(res.url, { responseType: 'text' })
-            .pipe(
-              map((res) => ({ pages: [], content: res, page: 1, filters })),
-            );
+            .pipe(map((res) => ({ pages: [], content: res, page: 1 })));
         } else {
           return of(res);
         }

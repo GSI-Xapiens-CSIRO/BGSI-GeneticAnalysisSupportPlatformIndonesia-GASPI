@@ -49,37 +49,20 @@ import {
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
+
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
-import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
-
 type LookupResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
   chromosome: string;
-  config?: {
-    lookup?: {
-      chr_header: string;
-      start_header: string;
-      end_header: string;
-    };
-    pharmcat?: any;
-  };
-  noResultsMessage: string;
-  noResultsMessageType: string;
 };
-
-interface FlagInfo {
-  shouldShow: boolean;
-  color: string;
-  message: string;
-}
 
 @Component({
   selector: 'app-lookup-results-viewer',
@@ -102,7 +85,6 @@ interface FlagInfo {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
-    NoResultsAlertComponent,
   ],
   providers: [
     {
@@ -120,16 +102,9 @@ export class LookupResultsViewerComponent
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild(MatSort) sort!: MatSort;
-
   readonly panelOpenState = signal(false);
   protected results: LookupResult | null = null;
-  protected columns: string[] = [
-    'selected',
-    'Status', // Add Status column
-    ...COLUMNS[environment.hub_name].lookupCols.filter(
-      (col: any) => col !== 'selected',
-    ),
-  ];
+  protected columns: string[] = COLUMNS[environment.hub_name].lookupCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -152,7 +127,6 @@ export class LookupResultsViewerComponent
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
-  protected isLoading = false;
 
   constructor(
     protected cs: ClinicService,
@@ -163,227 +137,6 @@ export class LookupResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
   ) {}
-
-  // Flag generation methods
-  private generateFlagInfo(row: any): FlagInfo {
-    const thresholds = environment.clinic_warning_thresholds;
-    const scoreFields = {
-      Qual: { value: row['Qual'], threshold: thresholds.qual },
-      DP: { value: row['Read Depth'], threshold: thresholds.dp },
-      GQ: { value: row['Genotype Quality'], threshold: thresholds.gq },
-      MQ: { value: row['Mapping Quality'], threshold: thresholds.mq },
-      QD: { value: row['Quality by Depth'], threshold: thresholds.qd },
-    };
-
-    const belowThreshold: string[] = [];
-    const missingKeys: string[] = [];
-
-    // Check each field
-    Object.entries(scoreFields).forEach(([key, config]) => {
-      const value = config.value;
-
-      if (
-        value === '.' ||
-        value === '-' ||
-        value === '' ||
-        value === null ||
-        value === undefined
-      ) {
-        missingKeys.push(key);
-      } else {
-        const numValue = parseFloat(value);
-        if (!isNaN(numValue) && numValue < config.threshold) {
-          belowThreshold.push(key);
-        }
-      }
-    });
-
-    // Check filter condition
-    const filterValue = row['Filter'];
-    const hasFilterIssue = ![thresholds.filter, '-', ''].includes(filterValue);
-    const hasScoreIssues = belowThreshold.length > 0;
-    const hasMissingKeys = missingKeys.length > 0;
-
-    // Show flag if there are ANY issues: filter, score, or missing keys
-    const shouldShowFlag = hasFilterIssue || hasScoreIssues || hasMissingKeys;
-
-    return this.determineFlagInfo(
-      belowThreshold,
-      missingKeys,
-      shouldShowFlag,
-      filterValue,
-      hasFilterIssue,
-    );
-  }
-
-  private determineFlagInfo(
-    belowThreshold: string[],
-    missingKeys: string[],
-    shouldShowFlag: boolean,
-    filterValue: string,
-    hasFilterIssue: boolean,
-  ): FlagInfo {
-    // Don't show flag if no issues at all
-    if (!shouldShowFlag) {
-      return {
-        shouldShow: false,
-        color: '#4b5563',
-        message: '',
-      };
-    }
-
-    // Generate messages
-    const messages: string[] = [];
-
-    // Add filter message only if filter has issues
-    if (hasFilterIssue) {
-      messages.push(this.getFilterMessage(filterValue));
-    }
-
-    // Add score message if there are threshold violations
-    if (belowThreshold.length > 0) {
-      messages.push(
-        `The Result Score ${belowThreshold.join(
-          ', ',
-        )} is less than minimum Score`,
-      );
-    }
-
-    // Add missing keys message if there are missing values
-    if (missingKeys.length > 0) {
-      messages.push(`The Key ${missingKeys.join(', ')} is missing in vcf file`);
-    }
-
-    const fullMessage = messages.join(' and ');
-
-    // Determine color based on content
-    // Gray if filter is missing AND all score values are missing (no actual score violations)
-    const filterIsMissing =
-      filterValue === '.' ||
-      filterValue === '' ||
-      filterValue === null ||
-      filterValue === undefined;
-    const isGrayFlag =
-      filterIsMissing && belowThreshold.length === 0 && missingKeys.length > 0;
-
-    return {
-      shouldShow: true,
-      color: isGrayFlag ? '#4b5563' : '#dc2626', // gray if only missing keys, red otherwise
-      message: fullMessage,
-    };
-  }
-
-  private getFilterMessage(filterValue: string): string {
-    if (
-      filterValue === '.' ||
-      filterValue === '' ||
-      filterValue === null ||
-      filterValue === undefined
-    ) {
-      return 'Filter is missing';
-    } else {
-      return 'Filter is not Passed';
-    }
-  }
-
-  // Methods to get flag info for templates
-  getFlagInfo(row: any): FlagInfo {
-    return this.generateFlagInfo(row);
-  }
-
-  shouldShowFlag(row: any): boolean {
-    return this.generateFlagInfo(row).shouldShow;
-  }
-
-  getFlagColor(row: any): string {
-    return this.generateFlagInfo(row).color;
-  }
-
-  getFlagMessage(row: any): string {
-    return this.generateFlagInfo(row).message;
-  }
-
-  getClinicThresholds(): any {
-    return environment.clinic_warning_thresholds || null;
-  }
-
-  getQualityThresholds(): Array<{
-    label: string;
-    value: string;
-    description: string;
-  }> {
-    const thresholds = environment.clinic_warning_thresholds;
-    if (!thresholds) return [];
-
-    return [
-      {
-        label: 'Filter Status',
-        value: thresholds.filter || 'PASS',
-        description: 'Expected filter status for variant quality',
-      },
-      {
-        label: 'Quality Score (QUAL)',
-        value: thresholds.qual?.toString(),
-        description: 'Minimum quality score threshold',
-      },
-      {
-        label: 'Read Depth (DP)',
-        value: thresholds.dp?.toString(),
-        description: 'Minimum read depth coverage',
-      },
-      {
-        label: 'Genotype Quality (GQ)',
-        value: thresholds.gq?.toString(),
-        description: 'Minimum genotype quality score',
-      },
-      {
-        label: 'Mapping Quality (MQ)',
-        value: thresholds.mq?.toString(),
-        description: 'Minimum mapping quality score',
-      },
-      {
-        label: 'Quality by Depth (QD)',
-        value: thresholds.qd?.toString(),
-        description: 'Minimum quality score normalized by depth',
-      },
-    ];
-  }
-
-  /**
-   * Check if lookup configuration is available and has data
-   */
-  hasLookupConfig(): boolean {
-    const config = this.results?.config?.lookup;
-    return !!(
-      config &&
-      (config.chr_header || config.start_header || config.end_header)
-    );
-  }
-
-  /**
-   * Get lookup configuration
-   */
-  getLookupConfig(): {
-    chr_header: string;
-    start_header: string;
-    end_header: string;
-  } | null {
-    return this.results?.config?.lookup || null;
-  }
-
-  /**
-   * Get header fields as array for display
-   */
-  getHeaderFields(): Array<{ label: string; value: string }> {
-    const config = this.getLookupConfig();
-    if (!config) return [];
-
-    return [
-      { label: 'Chromosome Header', value: config.chr_header || 'N/A' },
-      { label: 'Start Position Header', value: config.start_header || 'N/A' },
-      { label: 'End Position Header', value: config.end_header || 'N/A' },
-    ];
-  }
 
   resort(sort: Sort) {
     const snapshot = [...this.currentRenderedRows];
@@ -484,7 +237,6 @@ export class LookupResultsViewerComponent
     this.originalRows = [];
     this.dataRows.next([]);
     this.ss.start();
-    this.isLoading = true;
     this.cs
       .getClinicResults(
         requestId,
@@ -499,21 +251,10 @@ export class LookupResultsViewerComponent
         if (!data) {
           this.tstr.error('Failed to load data', 'Error');
         } else {
-          if (data?.noResultsMessage) {
-            const noResultsMessageType = data.noResultsMessageType || 'Warning';
-            if (noResultsMessageType === 'Error') {
-              this.tstr.error(data.noResultsMessage, noResultsMessageType);
-            } else {
-              this.tstr.warning(data.noResultsMessage, noResultsMessageType);
-            }
-          }
           this.results = data;
-          if (this.results?.content) {
-            this.updateTable(data);
-          }
+          this.updateTable(data);
         }
         this.ss.end();
-        this.isLoading = false;
       });
   }
 
@@ -523,18 +264,13 @@ export class LookupResultsViewerComponent
       console.warn('updateTable ran before originalRows was initialised');
     }
     this.results = result;
-
     const lines = result.content.split('\n');
     this.originalRows = lines
       .filter((l) => l.length > 0)
       .map((l) => {
         const annotationRow: any = {};
-        const parsedData = JSON.parse(l);
-        Object.values(parsedData).forEach((v, i) => {
-          // Skip Status column (index 1), start mapping from index 2
-          if (this.columns[i + 2]) {
-            annotationRow[this.columns[i + 2]] = v;
-          }
+        Object.values(JSON.parse(l)).forEach((v, i) => {
+          annotationRow[this.columns[i + 1]] = v;
         });
         return annotationRow;
       });
@@ -546,8 +282,6 @@ export class LookupResultsViewerComponent
   setFilter() {
     const filtered = this.originalRows.filter((item) => {
       return this.columns.every((col) => {
-        if (col === 'selected' || col === 'Status') return true; // Skip these columns in filtering
-
         const filterVal = this.filterValues[col];
         const itemVal = item[col]?.toString().toLowerCase() || '';
         return filterVal ? itemVal.includes(filterVal.toLowerCase()) : true;
@@ -578,8 +312,7 @@ export class LookupResultsViewerComponent
 
   setMasterData() {
     this.columns.forEach((x) => {
-      if (x !== 'selected' && x !== 'Status') {
-        // Exclude Status from master data
+      if (x !== 'selected') {
         const uniqueData = Array.from(
           new Set(this.originalRows.map((item) => item[x])),
         );
@@ -612,11 +345,8 @@ export class LookupResultsViewerComponent
   private _filter(value: string): string[] {
     const filterValue = value.toLowerCase();
 
-    return this.columns.filter(
-      (option) =>
-        option.toLowerCase().includes(filterValue) &&
-        option !== 'selected' &&
-        option !== 'Status',
+    return this.columns.filter((option) =>
+      option.toLowerCase().includes(filterValue),
     );
   }
 
