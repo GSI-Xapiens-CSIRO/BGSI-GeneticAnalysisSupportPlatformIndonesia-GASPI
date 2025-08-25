@@ -125,4 +125,54 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
+  {
+    path: 'faq',
+    loadComponent: () =>
+      import('./pages/faq-page/faq-page.component').then(
+        (c) => c.FaqPageComponent,
+      ),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'help-and-features',
+      },
+      {
+        path: 'help-and-features',
+        loadComponent: () =>
+          import(
+            './pages/faq-page/help-and-features/help-and-features-page.component'
+          ).then((c) => c.HelpAndFeaturesPageComponent),
+      },
+      {
+        path: 'glossary',
+        loadComponent: () =>
+          import('./pages/faq-page/glossary/glossary-page.component').then(
+            (c) => c.GlossaryPageComponent,
+          ),
+      },
+    ],
+  },
+  {
+    path: 'faq/advanced-filter',
+    loadComponent: () =>
+      import(
+        './pages/faq-page/advanced-filter/advanced-filter-page.component'
+      ).then((c) => c.AdvacedFilterPageComponent),
+  },
+  {
+    path: 'faq/annotation',
+    loadComponent: () =>
+      import('./pages/faq-page/annotation/annotation-page.component').then(
+        (c) => c.AnnotationPageComponent,
+      ),
+  },
+  {
+    path: 'faq/generate-report',
+    loadComponent: () =>
+      import('./pages/faq-page/report/report-page.component').then(
+        (c) => c.ReportPageComponent,
+      ),
+  },
 ];

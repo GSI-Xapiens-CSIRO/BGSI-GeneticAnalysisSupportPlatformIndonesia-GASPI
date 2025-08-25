@@ -1,12 +1,15 @@
 import {
   ChangeDetectorRef,
   Component,
+  Inject,
   Injectable,
   Input,
   SimpleChanges,
   ViewChild,
+  signal,
+  OnInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, KeyValue } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import {
   MatPaginator,
@@ -18,10 +21,13 @@ import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import {
   BehaviorSubject,
   catchError,
+  combineLatest,
   map,
   Observable,
   of,
+  startWith,
   Subject,
+  Subscription,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import {
@@ -44,6 +50,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
+import { TableVirtualScrollStrategy } from '../scroll-strategy.service';
+import {
+  ScrollingModule,
+  VIRTUAL_SCROLL_STRATEGY,
+} from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,6 +64,7 @@ import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
 
 type PharmcatResult = {
   url?: string;
@@ -70,7 +82,17 @@ type PharmcatResult = {
     };
   };
   missingToRef: boolean | null;
+  noResultsMessage: string;
+  noResultsMessageType: string;
 };
+
+type FilterType = 'variants' | 'diplotypes';
+
+interface FlagInfo {
+  shouldShow: boolean;
+  color: string;
+  message: string;
+}
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -107,6 +129,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
+    ScrollingModule,
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
@@ -114,22 +137,29 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     RsponBoxDataViewComponent,
     NoResultsAlertComponent,
+    AutoCompleteComponent,
   ],
-  providers: [{ provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl }],
+  providers: [
+    { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
+    { provide: VIRTUAL_SCROLL_STRATEGY, useClass: TableVirtualScrollStrategy },
+    TableVirtualScrollStrategy,
+  ],
   templateUrl: './pharmcat-results-viewer.component.html',
   styleUrl: './pharmcat-results-viewer.component.scss',
 })
-export class PharmcatResultsViewerComponent {
+export class PharmcatResultsViewerComponent implements OnInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-
   protected results: PharmcatResult | null = null;
   protected diplotypeColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.diplotypeCols;
-  protected variantColumns: string[] =
-    COLUMNS[environment.hub_name].pharmcatCols.variantCols;
+  protected variantColumns: string[] = [
+    'Status', // Add Status column as first column
+    ...COLUMNS[environment.hub_name].pharmcatCols.variantCols,
+  ];
+
   protected warningColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.warningCols;
 
@@ -137,6 +167,8 @@ export class PharmcatResultsViewerComponent {
   protected diplotypeHasRows: boolean = false;
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
+  protected diplotypeDataView = new Observable<any[]>();
+  protected diplotypeCurrentRenderedRows: any[] = [];
   protected diplotypeFilterField: FormControl = new FormControl('');
   protected diplotypeScopeReduced: boolean = false;
 
@@ -162,7 +194,22 @@ export class PharmcatResultsViewerComponent {
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
+  protected diplotypeRows: any[] = [];
   protected isLoading: boolean = false;
+
+  readonly panelOpenState = signal(false);
+
+  //filter dyplotypes
+  protected advancedFilter: FormControl = new FormControl('');
+  filteredColumns: Observable<string[]> | undefined;
+  filterValuesDyplotypes: { [key: string]: string } = {};
+  filterMasterDataDyplotypes: { [key: string]: any[] } = {};
+
+  //filter variants
+  protected advancedFilterVariants: FormControl = new FormControl('');
+  filteredColumnsVariants: Observable<string[]> | undefined;
+  filterValuesVariants: { [key: string]: string } = {};
+  filterMasterDataVariants: { [key: string | number]: any[] } = {};
 
   constructor(
     protected cs: ClinicService,
@@ -170,7 +217,321 @@ export class PharmcatResultsViewerComponent {
     private tstr: ToastrService,
     private dg: MatDialog,
     private cdr: ChangeDetectorRef,
+    @Inject(VIRTUAL_SCROLL_STRATEGY)
+    private readonly virtualScrollStrategy: TableVirtualScrollStrategy,
   ) {}
+
+  //handle on init
+  ngOnInit(): void {
+    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || '', 'diplotypes')),
+    );
+    this.filteredColumnsVariants =
+      this.advancedFilterVariants.valueChanges.pipe(
+        startWith(''),
+        map((value) => this._filter(value || '', 'variants')),
+      );
+  }
+
+  private _filter(value: string, type: FilterType): string[] {
+    const filterValue = value.toLowerCase();
+    const source =
+      type === 'variants' ? this.variantColumns : this.diplotypeColumns;
+
+    return source.filter((option) =>
+      option.toLowerCase().includes(filterValue),
+    );
+  }
+
+  // Flag generation methods
+  private generateFlagInfo(row: any): FlagInfo {
+    const thresholds = environment.clinic_warning_thresholds;
+    const scoreFields = {
+      Qual: { value: row['Qual'], threshold: thresholds.qual },
+      DP: { value: row['Read Depth'], threshold: thresholds.dp },
+      GQ: { value: row['Genotype Quality'], threshold: thresholds.gq },
+      MQ: { value: row['Mapping Quality'], threshold: thresholds.mq },
+      QD: { value: row['Quality by Depth'], threshold: thresholds.qd },
+    };
+
+    const belowThreshold: string[] = [];
+    const missingKeys: string[] = [];
+
+    // Check each field
+    Object.entries(scoreFields).forEach(([key, config]) => {
+      const value = config.value;
+
+      if (
+        value === '.' ||
+        value === '-' ||
+        value === '' ||
+        value === null ||
+        value === undefined
+      ) {
+        missingKeys.push(key);
+      } else {
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue) && numValue < config.threshold) {
+          belowThreshold.push(key);
+        }
+      }
+    });
+
+    // Check filter condition
+    const filterValue = row['Filter'];
+    const hasFilterIssue = ![thresholds.filter, '-', ''].includes(filterValue);
+    const hasScoreIssues = belowThreshold.length > 0;
+    const hasMissingKeys = missingKeys.length > 0;
+
+    // Show flag if there are ANY issues: filter, score, or missing keys
+    const shouldShowFlag = hasFilterIssue || hasScoreIssues || hasMissingKeys;
+
+    return this.determineFlagInfo(
+      belowThreshold,
+      missingKeys,
+      shouldShowFlag,
+      filterValue,
+      hasFilterIssue,
+    );
+  }
+
+  private determineFlagInfo(
+    belowThreshold: string[],
+    missingKeys: string[],
+    shouldShowFlag: boolean,
+    filterValue: string,
+    hasFilterIssue: boolean,
+  ): FlagInfo {
+    // Don't show flag if no issues at all
+    if (!shouldShowFlag) {
+      return {
+        shouldShow: false,
+        color: '#4b5563',
+        message: '',
+      };
+    }
+
+    // Generate messages
+    const messages: string[] = [];
+
+    // Add filter message only if filter has issues
+    if (hasFilterIssue) {
+      messages.push(this.getFilterMessage(filterValue));
+    }
+
+    // Add score message if there are threshold violations
+    if (belowThreshold.length > 0) {
+      messages.push(
+        `The Result Score ${belowThreshold.join(
+          ', ',
+        )} is less than minimum Score`,
+      );
+    }
+
+    // Add missing keys message if there are missing values
+    if (missingKeys.length > 0) {
+      messages.push(`The Key ${missingKeys.join(', ')} is missing in vcf file`);
+    }
+
+    const fullMessage = messages.join(' and ');
+
+    // Determine color based on content
+    // Gray hanya jika filter is missing (., -, atau empty) DAN tidak ada score violations DAN ada missing keys
+    const filterIsMissing =
+      filterValue === '.' ||
+      filterValue === '-' ||
+      filterValue === '' ||
+      filterValue === null ||
+      filterValue === undefined;
+    const isGrayFlag =
+      filterIsMissing && belowThreshold.length === 0 && missingKeys.length > 0;
+
+    return {
+      shouldShow: true,
+      color: isGrayFlag ? '#4b5563' : '#dc2626', // gray if only missing keys, red otherwise
+      message: fullMessage,
+    };
+  }
+
+  private getFilterMessage(filterValue: string): string {
+    if (
+      filterValue === '.' ||
+      filterValue === '-' ||
+      filterValue === '' ||
+      filterValue === null ||
+      filterValue === undefined
+    ) {
+      return 'Filter is missing';
+    } else {
+      return 'Filter is not Passed';
+    }
+  }
+
+  // Methods to get flag info for templates
+  getFlagInfo(row: any): FlagInfo {
+    return this.generateFlagInfo(row);
+  }
+
+  shouldShowFlag(row: any): boolean {
+    return this.generateFlagInfo(row).shouldShow;
+  }
+
+  getFlagColor(row: any): string {
+    return this.generateFlagInfo(row).color;
+  }
+
+  getFlagMessage(row: any): string {
+    return this.generateFlagInfo(row).message;
+  }
+
+  addFilter(type: FilterType) {
+    const isVariant = type === 'variants';
+
+    const filterKey = isVariant
+      ? this.advancedFilterVariants.value
+      : this.advancedFilter.value;
+
+    const currentFilterValues = isVariant
+      ? this.filterValuesVariants
+      : this.filterValuesDyplotypes;
+
+    if (currentFilterValues.hasOwnProperty(filterKey) || filterKey === '') {
+      isVariant
+        ? this.advancedFilterVariants.reset()
+        : this.advancedFilter.reset();
+      return;
+    }
+
+    const updated = {
+      ...currentFilterValues,
+      [filterKey]: '',
+    };
+
+    if (isVariant) {
+      this.filterValuesVariants = updated;
+      this.advancedFilterVariants.reset();
+    } else {
+      this.filterValuesDyplotypes = updated;
+      this.advancedFilter.reset();
+    }
+  }
+
+  //handling order autocomplete based on index
+  compareFn = (a: KeyValue<string, any>, b: KeyValue<string, any>): number => {
+    return 0;
+  };
+
+  onSelectChange(event: any, key: string, type: FilterType): void {
+    const target =
+      type === 'variants'
+        ? this.filterValuesVariants
+        : this.filterValuesDyplotypes;
+    target[key] = event;
+  }
+
+  removeFilter(key: string) {
+    const { [key]: _, ...rest } = this.filterValuesDyplotypes;
+    this.filterValuesDyplotypes = rest;
+  }
+
+  removeFilterVariants(key: string) {
+    const { [key]: _, ...rest } = this.filterValuesVariants;
+    this.filterValuesVariants = rest;
+  }
+
+  private setMasterFilterData<T extends Record<string, any>>(
+    columns: string[],
+    originalRows: T[],
+    target: { [key: string]: string[] },
+    convertToString = false,
+  ) {
+    columns.forEach((columnKey) => {
+      if (columnKey !== 'selected' && columnKey !== 'Status') {
+        // Exclude Status column from filter data
+        const uniqueValues = new Set<string>();
+
+        originalRows.forEach((row) => {
+          const value = row[columnKey];
+
+          if (Array.isArray(value)) {
+            value.forEach((v) =>
+              uniqueValues.add(convertToString ? String(v) : v),
+            );
+          } else {
+            uniqueValues.add(convertToString ? String(value) : value);
+          }
+        });
+
+        const existing = target[columnKey] || [];
+        const merged = Array.from(new Set([...existing, ...uniqueValues]));
+
+        target[columnKey] = merged;
+      }
+    });
+  }
+
+  setMasterData() {
+    this.setMasterFilterData(
+      this.diplotypeColumns,
+      this.diplotypeOriginalRows,
+      this.filterMasterDataDyplotypes,
+      false,
+    );
+
+    this.setMasterFilterData(
+      this.variantColumns,
+      this.variantOriginalRows,
+      this.filterMasterDataVariants,
+      true,
+    );
+  }
+
+  private applyFilter<T extends Record<string, any>>(
+    originalRows: T[],
+    filterValues: { [key: string]: string },
+    updateFn: (filtered: T[]) => void,
+  ) {
+    const filtered = originalRows.filter((item) =>
+      Object.keys(filterValues).every((col) => {
+        if (col === 'Status') return true; // Skip Status column in filtering
+
+        const filterVal = filterValues[col];
+        const itemVal = item[col]?.toString().toLowerCase() || '';
+
+        return !filterVal?.trim() || itemVal.includes(filterVal.toLowerCase());
+      }),
+    );
+
+    updateFn(filtered);
+  }
+
+  setFilter() {
+    this.applyFilter(
+      this.diplotypeOriginalRows,
+      this.filterValuesDyplotypes,
+      (result) => this.diplotypeDataRows.next(result),
+    );
+    this.diplotypeFilterField.setValue('');
+  }
+
+  setFilterVariants() {
+    this.applyFilter(
+      this.variantOriginalRows,
+      this.filterValuesVariants,
+      (result) => this.variantDataRows.next(result),
+    );
+    this.variantFilterField.setValue('');
+  }
+
+  resetFilter() {
+    this.filterValuesDyplotypes = {};
+    this.setFilter();
+  }
+  resetFilterVariants() {
+    this.filterValuesVariants = {};
+    this.setFilterVariants();
+  }
 
   /**
    * Check if PharmCAT configuration is available and has data
@@ -215,8 +576,60 @@ export class PharmcatResultsViewerComponent {
     return uniqueOrgs;
   }
 
+  /**
+   * Check if clinic thresholds are available
+   */
+  getClinicThresholds(): boolean {
+    return !!environment.clinic_warning_thresholds;
+  }
+
+  /**
+   * Get quality thresholds for display
+   */
+  getQualityThresholds(): Array<{
+    label: string;
+    value: string;
+    description: string;
+  }> {
+    const thresholds = environment.clinic_warning_thresholds;
+    if (!thresholds) return [];
+
+    return [
+      {
+        label: 'Filter Status',
+        value: thresholds.filter || 'PASS',
+        description: 'Expected filter status for variant quality',
+      },
+      {
+        label: 'Quality Score (QUAL)',
+        value: thresholds.qual?.toString() || '20',
+        description: 'Minimum quality score threshold',
+      },
+      {
+        label: 'Read Depth (DP)',
+        value: thresholds.dp?.toString() || '10',
+        description: 'Minimum read depth coverage',
+      },
+      {
+        label: 'Genotype Quality (GQ)',
+        value: thresholds.gq?.toString() || '15',
+        description: 'Minimum genotype quality score',
+      },
+      {
+        label: 'Mapping Quality (MQ)',
+        value: thresholds.mq?.toString() || '30',
+        description: 'Minimum mapping quality score',
+      },
+      {
+        label: 'Quality by Depth (QD)',
+        value: thresholds.qd?.toString() || '20',
+        description: 'Minimum quality score normalized by depth',
+      },
+    ];
+  }
+
   resortDiplotypes(sort: Sort) {
-    const snapshot = [...this.diplotypeDataRows.value];
+    const snapshot = [...this.diplotypeCurrentRenderedRows];
     clinicResort(snapshot, sort, (sorted) =>
       this.diplotypeDataRows.next(sorted),
     );
@@ -225,6 +638,29 @@ export class PharmcatResultsViewerComponent {
   resortVariants(sort: Sort) {
     const snapshot = [...this.variantDataRows.value];
     clinicResort(snapshot, sort, (sorted) => this.variantDataRows.next(sorted));
+  }
+
+  ngAfterViewInit() {
+    this.virtualScrollStrategy.setScrollHeight(52, 56);
+
+    this.diplotypeDataView = combineLatest([
+      this.diplotypeDataRows,
+      this.virtualScrollStrategy.scrolledIndexChange,
+    ]).pipe(
+      map((value: any) => {
+        // Determine the start and end rendered range
+        const start = Math.max(0, value[1] - 10);
+        const end = Math.min(value[0].length, value[1] + 100);
+        this.diplotypeCurrentRenderedRows = [...value[0].slice(start, end)];
+
+        // Update the datasource for the rendered range of data
+        return value[0].slice(start, end);
+      }),
+    );
+
+    this.diplotypeDataView.subscribe(
+      (diplotypeRows) => (this.diplotypeRows = diplotypeRows),
+    );
   }
 
   pageChange(event: PageEvent) {
@@ -243,17 +679,20 @@ export class PharmcatResultsViewerComponent {
     this.diplotypeFilterField.setValue(mappingId);
     this.filterDiplotypes();
     this.cdr.detectChanges();
+    this.filterValuesDyplotypes = {};
   }
 
   resetDiplotypes() {
     this.diplotypeFilterField.setValue('');
     this.filterDiplotypes();
     this.cdr.detectChanges();
+    this.filterValuesDyplotypes = {};
   }
 
   resetRelatedDiplotype() {
     this.resetDiplotypes();
     this.diplotypeScopeReduced = false;
+    this.filterValuesDyplotypes = {};
   }
 
   filterVariants() {
@@ -264,13 +703,13 @@ export class PharmcatResultsViewerComponent {
   }
 
   resetVariants() {
+    this.filterValuesVariants = {};
     this.variantFilterField.setValue('');
     this.filterVariants();
     this.cdr.detectChanges();
   }
 
   filterRelatedVariants = (mappingIds: string[]) => {
-    console.log('filterRelatedVariants', mappingIds);
     this.variantScopeReduced = true;
     this.variantFilterField.setValue('');
     const terms = mappingIds;
@@ -278,11 +717,13 @@ export class PharmcatResultsViewerComponent {
       this.variantDataRows.next(filtered);
     });
     this.cdr.detectChanges();
+    this.filterValuesVariants = {};
   };
 
   resetRelatedVariants() {
     this.resetVariants();
     this.variantScopeReduced = false;
+    this.filterValuesVariants = {};
   }
 
   handleSelectionChange(row: any, isChecked: boolean): void {
@@ -351,8 +792,19 @@ export class PharmcatResultsViewerComponent {
         if (!data) {
           this.tstr.error('Failed to load data', 'Error');
         } else {
+          console.log(data);
+          if (data?.noResultsMessage) {
+            const noResultsMessageType = data.noResultsMessageType || 'Warning';
+            if (noResultsMessageType === 'Error') {
+              this.tstr.error(data.noResultsMessage, noResultsMessageType);
+            } else {
+              this.tstr.warning(data.noResultsMessage, noResultsMessageType);
+            }
+          }
           this.results = data;
-          this.updateTable(data);
+          if (this.results?.content) {
+            this.updateTable(data);
+          }
         }
         this.isLoading = false;
         this.ss.end();
@@ -363,7 +815,7 @@ export class PharmcatResultsViewerComponent {
     this.results = result;
     this.resultsLength = result.pages[result.page];
     this.missingToRef = result.missingToRef;
-    const resultJson = JSON.parse(result.content);
+    const resultJson = result.content ? JSON.parse(result.content) : {};
 
     const diplotypes = resultJson.diplotypes;
     this.diplotypeOriginalRows = diplotypes.map((diplotype: any) => {
@@ -379,10 +831,13 @@ export class PharmcatResultsViewerComponent {
     this.variantOriginalRows = variants.map((variant: any) => {
       const variantRow: any = {};
       Object.values(variant).forEach((v, i) => {
-        variantRow[this.variantColumns[i]] = v;
+        // Skip Status column index 0, start from index 1
+        variantRow[this.variantColumns[i + 1]] = v;
       });
       return variantRow;
     });
+
+    console.log('Variants:', this.variantOriginalRows);
     this.variantHasRows = this.variantOriginalRows.length > 0;
 
     const warnings = resultJson.messages;
@@ -394,8 +849,9 @@ export class PharmcatResultsViewerComponent {
       return messageRow;
     });
 
-    this.diplotypeDataRows.next(this.diplotypeOriginalRows);
-    this.variantDataRows.next(this.variantOriginalRows);
     this.warningDataRows.next(this.warningOriginalRows);
+    this.setMasterData();
+    this.setFilter();
+    this.setFilterVariants();
   }
 }
