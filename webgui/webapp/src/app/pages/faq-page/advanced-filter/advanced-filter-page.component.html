@@ -1,0 +1,181 @@
+<div class="flex p-4 flex-col lg:flex-row gap-10">
+  <div class="w-full lg:w-[70vw]">
+    <mat-card>
+      <mat-card-content>
+        <div class="flex flex-col gap-4 text-black font-normal p-2">
+          <!-- bread crumb  -->
+          <div class="flex flex-row items-center gap-2 text-sm md:text-lg">
+            <div (click)="handleRouter('clinic')" class="cursor-pointer">
+              Clinic
+            </div>
+            <div>/</div>
+            <div (click)="handleRouter('faq')" class="cursor-pointer">FAQs</div>
+            <div>/</div>
+            <div class="text-primary-50">How to Use the Advanced Filter?</div>
+          </div>
+
+          <!-- content  -->
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/result-table.png"
+            />
+          </div>
+          <div class="font-semibold text-2xl">
+            How to Use The Advanced Filter?
+          </div>
+          <div>
+            Enable query of a specific string of letters/words per available
+            columns within the result table, and can be combined for sequential
+            filtering purposes. This feature uses the "AND" logic, so when the
+            parameters are added, only the specific entry(ies) with the
+            parameters will be shown. To note, when the parameters were added
+            sequentially, where one parameter is filtered first, then the second
+            parameter will only filter the currently filtered/shown result in
+            the UI. Hence, if combined parameters are to be used, the User is
+            encouraged to enter the parameters first before clicking on the
+            "Filter" button. The steps will be as follows:
+          </div>
+          <div class="font-semibold">
+            Step 1: Users can click on the collapsible Advanced Filter Term
+            card.
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2 items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 h-full"
+              >
+                <img
+                  class="w-11/12"
+                  alt="result table"
+                  src="assets/images/faq/advanced-filter-closed.png"
+                />
+              </div>
+              <div>Before</div>
+            </div>
+            <div class="flex flex-col gap-2 items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 h-full w-full"
+              >
+                <img
+                  class="w-8/12"
+                  alt="result table"
+                  src="assets/images/faq/advanced-filter-open.png"
+                />
+              </div>
+              <div>After</div>
+            </div>
+          </div>
+          <div class="font-semibold">
+            Step 2: Users can choose a parameter from the available columns
+            within the result table.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-5/12"
+              alt="result table"
+              src="assets/images/faq/advanced-filter-2.png"
+            />
+          </div>
+          <div class="font-semibold">
+            Step 3: Upon choosing the parameters, Users can then click on the
+            "Add Filter" button, to which the query section for the specific
+            parameter will appear under the search box.
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2 items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 w-full h-full"
+              >
+                <img
+                  class="w-8/12"
+                  alt="result table"
+                  src="assets/images/faq/advanced-filter-open.png"
+                />
+              </div>
+              <div>Before</div>
+            </div>
+            <div class="flex flex-col gap-2 items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 w-full h-full"
+              >
+                <img
+                  class="w-8/12"
+                  alt="result table"
+                  src="assets/images/faq/add-filter-2.png"
+                />
+              </div>
+              <div>After</div>
+            </div>
+          </div>
+
+          <div class="font-semibold">
+            Step 4: By clicking on the entry field, Users will be able to see
+            the values present within the chosen column from the results. Note
+            that only values present within the result table will be
+            shown/queryable.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/advanced-filter-condition.png"
+            />
+          </div>
+
+          <div class="font-semibold">
+            Step 5: Upon choosing the parameter's value, Users can choose
+            another filtering parameter by redoing step 2 to step 4 above.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/advanced-filter-condition-1.png"
+            />
+          </div>
+
+          <div class="font-semibold">
+            Step 6: Users can then click on the "Filter" button below the
+            parameters to query the specific entry(ies) possessing the values
+            entered. If desired, Users can also replace the parameters by
+            clicking on the delete button right next to the parameter field, and
+            redo the step 2 to step 6 steps.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/advanced-filter-condition-2.png"
+            />
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- other guides  -->
+  <div class="w-full lg:w-[30vw]">
+    <mat-card>
+      <mat-card-content>
+        <div class="flex flex-col gap-4">
+          <div class="text-2xl font-semibold text-black">Read Other Guides</div>
+          @for (step of stepData; track step.no) {
+            <div
+              class="text-black cursor-pointer"
+              (click)="handleRouter(step.url)"
+            >
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 mb-2"
+              >
+                <img class="w-9/12" alt="result table" [src]="step.image" />
+              </div>
+              <div class="font-semibold">{{ step.title }}</div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

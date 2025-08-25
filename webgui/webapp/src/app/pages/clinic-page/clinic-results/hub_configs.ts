@@ -13,6 +13,8 @@ export const COLUMNS: { [key: string]: any } = {
         'PubMed IDs',
         'Implications',
         'Recommendation',
+        'Classification',
+        'Population',
         'Dosing Information',
         'Alternate Drug Available',
         'Other Prescribing Guidance',
@@ -28,6 +30,10 @@ export const COLUMNS: { [key: string]: any } = {
         'Qual',
         'Filter',
         'Zygosity',
+        'Read Depth', // dp
+        'Genotype Quality', // gq
+        'Mapping Quality', // mq
+        'Quality by Depth', // qd
         'AF (Afr)',
         'AF (Eas)',
         'AF (Fin)',
@@ -105,19 +111,17 @@ export const COLUMNS: { [key: string]: any } = {
   RSIGNG: {
     lookupCols: [
       'selected',
-      'No',
       'PharmGKB ID',
       'Level',
       'Variant',
       'Gene',
-      'Drugs',
       'Alleles',
-      'Allele Function',
+      'REF/ALT',
+      'Zygosity',
+      'Drugs',
       'Phenotype Categories',
-      'Phenotype',
       'Implication',
-      'Recommendation',
-      'Pediatric',
+      'Phenotype',
       'chr',
       'start',
       'end',
@@ -217,6 +221,8 @@ export const COLUMNS: { [key: string]: any } = {
         'PubMed IDs',
         'Implications',
         'Recommendation',
+        'Classification',
+        'Population',
         'Dosing Information',
         'Alternate Drug Available',
         'Other Prescribing Guidance',
@@ -232,6 +238,10 @@ export const COLUMNS: { [key: string]: any } = {
         'Qual',
         'Filter',
         'Zygosity',
+        'Read Depth', // dp
+        'Genotype Quality', // gq
+        'Mapping Quality', // mq
+        'Quality by Depth', // qd
         'AF (Afr)',
         'AF (Eas)',
         'AF (Fin)',
@@ -252,7 +262,7 @@ export const COLUMNS: { [key: string]: any } = {
       'Variant',
       'Gene',
       'Alleles',
-      'Ref/Alt',
+      'REF/ALT',
       'Zygosity',
       'Drugs',
       'Phenotype Categories',
