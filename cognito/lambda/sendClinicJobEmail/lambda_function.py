@@ -23,6 +23,7 @@ def lambda_handler(event, context):
         project_name = body_dict["project_name"]
         input_vcf = body_dict["input_vcf"]
         job_status = body_dict["job_status"]
+        pipeline_names = body_dict.get("pipeline_names")
 
         response = ssm_client.get_parameter(Name=BUI_SSM_PARAM_NAME)
         beacon_ui_url = response.get("Parameter", {}).get("Value", "")
@@ -34,10 +35,14 @@ def lambda_handler(event, context):
 
         if job_status == "completed":
             subject += f" {project_name} has completed"
+            if pipeline_names:
+                subject += f" for {", ".join(pipeline_names)}"
 
             body_message += f"<p><b>Please load the results on the Clinic Results page </b> or click the link <a href='{clinic_ui_url}'>here</a>.</p>"
         elif job_status == "failed":
             subject += f" {project_name} is failed"
+            if pipeline_names:
+                subject += f" for {", ".join(pipeline_names)}"
 
             body_message += "<p><b>We are sorry that the result generated failed</b>, please check your VCF file again.</p>"
         elif job_status == "pending":

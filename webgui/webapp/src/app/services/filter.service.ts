@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { API } from 'aws-amplify';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { from, map, retry } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
