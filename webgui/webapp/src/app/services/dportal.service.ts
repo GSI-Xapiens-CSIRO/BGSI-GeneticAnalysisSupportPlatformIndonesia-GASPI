@@ -112,13 +112,23 @@ export class DportalService {
   }
 
   // data portal admin notebook actions
-  getAdminNotebooks() {
-    console.log('get my notebooks');
+  getAdminNotebooks(
+    limit: number = 3,
+    last_evaluated_index: number = 0,
+    search?: string,
+  ) {
+    console.log('get admin notebooks');
     return from(
       API.get(
         environment.api_endpoint_sbeacon.name,
         'dportal/admin/notebooks',
-        {},
+        {
+          queryStringParameters: {
+            limit: limit,
+            last_evaluated_index: last_evaluated_index,
+            search,
+          },
+        },
       ),
     );
   }

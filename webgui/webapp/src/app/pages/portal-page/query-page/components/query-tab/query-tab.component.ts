@@ -355,9 +355,15 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     result$
       .pipe(
         catchError((err: any) => {
-          if (
-            err.response.status === 403 &&
-            err.response.data.code === 'QUOTA_EXCEEDED'
+          if (err?.code === 'ERR_NETWORK') {
+            this.tstr.error(
+              'API request failed. Please check your network connectivity.',
+              'Error',
+            );
+          } else if (
+            err?.response?.status === 403 &&
+            (err?.response?.data?.code === 'QUOTA_EXCEEDED' ||
+              err?.response?.data?.code === 'NO_QUOTA')
           ) {
             this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',

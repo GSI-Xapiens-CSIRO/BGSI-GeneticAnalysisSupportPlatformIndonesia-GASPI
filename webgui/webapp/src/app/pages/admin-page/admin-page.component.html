@@ -52,10 +52,10 @@
       </button>
     </form>
 
-    <table mat-table [dataSource]="usersTableDataSource">
+    <table mat-table [dataSource]="usersTableDataSource" matSort>
       @for (column of usersTableDisplayedColumns; track column) {
         <ng-container [matColumnDef]="column">
-          <th class="whitespace-nowrap" mat-header-cell *matHeaderCellDef>
+          <th class="whitespace-nowrap" mat-header-cell *matHeaderCellDef mat-sort-header>
             {{ column }}
           </th>
           <td

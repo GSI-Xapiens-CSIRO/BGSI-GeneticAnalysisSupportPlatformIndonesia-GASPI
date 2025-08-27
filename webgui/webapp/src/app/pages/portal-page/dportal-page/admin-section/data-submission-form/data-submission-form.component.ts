@@ -18,6 +18,7 @@ import { forkJoin } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { DecimalPipe } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-data-submission-form',
@@ -48,6 +49,7 @@ export class DataSubmissionFormComponent {
     private fb: FormBuilder,
     private dps: DportalService,
     private tstr: ToastrService,
+    private auth: AuthService,
   ) {
     this.dataSubmissionForm = this.fb.group({
       projectName: fb.control('', [
@@ -66,11 +68,16 @@ export class DataSubmissionFormComponent {
   async uploadFile(path: string, file: File): Promise<string> {
     this.fileProgress.set(file.name, 0);
     try {
+      const user = this.auth.user.getValue();
       await Storage.put(
         `staging/projects/${path}/project-files/${file.name}`,
         file,
         {
           customPrefix: { public: '' },
+          metadata: {
+            usersub: user.attributes.sub,
+            username: user.attributes.email,
+          },
           progressCallback: (progress: { loaded: number; total: number }) => {
             this.fileProgress.set(file.name, progress.loaded);
             this.progress = Array.from(this.fileProgress.values()).reduce(
