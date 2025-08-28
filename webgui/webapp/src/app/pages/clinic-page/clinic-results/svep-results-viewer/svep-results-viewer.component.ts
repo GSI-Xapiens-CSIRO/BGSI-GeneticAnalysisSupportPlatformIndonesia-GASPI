@@ -62,6 +62,7 @@ import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { isEqual } from 'lodash';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { Router } from '@angular/router';
 
 type SVEPResult = {
   url?: string;
@@ -182,6 +183,7 @@ export class SvepResultsViewerComponent
     private dg: MatDialog,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
+    private router: Router,
   ) {}
 
   /**
@@ -619,4 +621,8 @@ export class SvepResultsViewerComponent
     const result = this.checkRow(this.listData, row);
     return result || false;
   }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
 }
