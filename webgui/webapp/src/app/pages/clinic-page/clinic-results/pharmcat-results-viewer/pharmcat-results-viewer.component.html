@@ -1,11 +1,9 @@
 <mat-card class="mt-4">
   <mat-card-content>
     <!-- No Results Alert -->
-    @if (
-      !diplotypeHasRows && !variantHasRows && !isLoading
-    ) {
+    @if (!diplotypeHasRows && !variantHasRows && !isLoading) {
       <app-no-results-alert
-        [message]="results?.noResultsMessage" 
+        [message]="results?.noResultsMessage"
       ></app-no-results-alert>
     }
 
@@ -23,7 +21,9 @@
             </mat-panel-description>
           </mat-expansion-panel-header>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4"
+          >
             <!-- Organizations -->
             @if (getOrganisations().length > 0) {
               <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -100,7 +100,9 @@
                     <div class="bg-white rounded p-2 border border-indigo-100">
                       <div class="flex justify-between items-center">
                         <div class="flex-1 min-w-0">
-                          <div class="text-xs font-medium text-indigo-700 truncate">
+                          <div
+                            class="text-xs font-medium text-indigo-700 truncate"
+                          >
                             {{ threshold.label }}
                           </div>
                         </div>
@@ -331,23 +333,46 @@
       </div>
     }
     <!-- end advanced filter  -->
+    <div
+      class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <mat-icon class="text-primary-50"> info </mat-icon>
+        <div>Need help understanding filters?</div>
+      </div>
+      <div
+        (click)="handleRedirectFAQ()"
+        class="font-medium text-primary-60 cursor-pointer"
+      >
+        Learn more in the FAQ
+      </div>
+    </div>
     @if (diplotypeDataRows.value.length > 0) {
       <div
         class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700 p-2"
       >
-        <div class="max-h-[500px] overflow-y-auto">
-          <div class="flex flex-col gap-2">
-            @for (row of diplotypeDataRows.value; track row) {
-              <app-rspon-box-data-view
-                [row]="row"
-                [selected]="(cs.selectedVariants | async)!.has(cs.hashRow(row))"
-                [variantHasRows]="variantHasRows"
-                (change)="handleSelectionChange(row, $event)"
-                (filter)="filterRelatedVariants($event)"
-              />
-            }
+        <cdk-virtual-scroll-viewport
+          appCustomVirtualScroll
+          #diplotypeViewport
+          [style.height.px]="500"
+          class="diplotype-viewport"
+        >
+          <div class="max-h-[500px] overflow-y-auto">
+            <div class="flex flex-col gap-2">
+              @for (row of diplotypeRows; track row) {
+                <app-rspon-box-data-view
+                  [row]="row"
+                  [selected]="
+                    (cs.selectedVariants | async)!.has(cs.hashRow(row))
+                  "
+                  [variantHasRows]="variantHasRows"
+                  (change)="handleSelectionChange(row, $event)"
+                  (filter)="filterRelatedVariants($event)"
+                />
+              }
+            </div>
           </div>
-        </div>
+        </cdk-virtual-scroll-viewport>
       </div>
     } @else {
       <div class="flex flex-row space-x-1 items-center mb-2">
@@ -526,7 +551,7 @@
                       <div
                         class="flex justify-center items-center rounded-full cursor-pointer"
                         [matTooltip]="getFlagMessage(element)"
-                        style="width: 24px; height: 24px; margin: 0 auto;"
+                        style="width: 24px; height: 24px; margin: 0 auto"
                         [style.background]="getFlagColor(element)"
                       >
                         <mat-icon class="text-white">priority_high</mat-icon>

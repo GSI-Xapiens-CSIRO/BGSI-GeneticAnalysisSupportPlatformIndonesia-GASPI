@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  Inject,
   Injectable,
   Input,
   SimpleChanges,
@@ -20,11 +21,13 @@ import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import {
   BehaviorSubject,
   catchError,
+  combineLatest,
   map,
   Observable,
   of,
   startWith,
   Subject,
+  Subscription,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import {
@@ -47,6 +50,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
+import { TableVirtualScrollStrategy } from '../scroll-strategy.service';
+import {
+  ScrollingModule,
+  VIRTUAL_SCROLL_STRATEGY,
+} from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
@@ -57,6 +65,7 @@ import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
+import { Router } from '@angular/router';
 
 type PharmcatResult = {
   url?: string;
@@ -121,6 +130,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
+    ScrollingModule,
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
@@ -130,7 +140,11 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     NoResultsAlertComponent,
     AutoCompleteComponent,
   ],
-  providers: [{ provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl }],
+  providers: [
+    { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
+    { provide: VIRTUAL_SCROLL_STRATEGY, useClass: TableVirtualScrollStrategy },
+    TableVirtualScrollStrategy,
+  ],
   templateUrl: './pharmcat-results-viewer.component.html',
   styleUrl: './pharmcat-results-viewer.component.scss',
 })
@@ -154,6 +168,8 @@ export class PharmcatResultsViewerComponent implements OnInit {
   protected diplotypeHasRows: boolean = false;
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
   protected diplotypeToVariantMap: Map<string, string[]> = new Map();
+  protected diplotypeDataView = new Observable<any[]>();
+  protected diplotypeCurrentRenderedRows: any[] = [];
   protected diplotypeFilterField: FormControl = new FormControl('');
   protected diplotypeScopeReduced: boolean = false;
 
@@ -179,6 +195,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
+  protected diplotypeRows: any[] = [];
   protected isLoading: boolean = false;
 
   readonly panelOpenState = signal(false);
@@ -201,6 +218,9 @@ export class PharmcatResultsViewerComponent implements OnInit {
     private tstr: ToastrService,
     private dg: MatDialog,
     private cdr: ChangeDetectorRef,
+    private router: Router,
+    @Inject(VIRTUAL_SCROLL_STRATEGY)
+    private readonly virtualScrollStrategy: TableVirtualScrollStrategy,
   ) {}
 
   //handle on init
@@ -611,7 +631,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
   }
 
   resortDiplotypes(sort: Sort) {
-    const snapshot = [...this.diplotypeDataRows.value];
+    const snapshot = [...this.diplotypeCurrentRenderedRows];
     clinicResort(snapshot, sort, (sorted) =>
       this.diplotypeDataRows.next(sorted),
     );
@@ -620,6 +640,29 @@ export class PharmcatResultsViewerComponent implements OnInit {
   resortVariants(sort: Sort) {
     const snapshot = [...this.variantDataRows.value];
     clinicResort(snapshot, sort, (sorted) => this.variantDataRows.next(sorted));
+  }
+
+  ngAfterViewInit() {
+    this.virtualScrollStrategy.setScrollHeight(52, 56);
+
+    this.diplotypeDataView = combineLatest([
+      this.diplotypeDataRows,
+      this.virtualScrollStrategy.scrolledIndexChange,
+    ]).pipe(
+      map((value: any) => {
+        // Determine the start and end rendered range
+        const start = Math.max(0, value[1] - 10);
+        const end = Math.min(value[0].length, value[1] + 100);
+        this.diplotypeCurrentRenderedRows = [...value[0].slice(start, end)];
+
+        // Update the datasource for the rendered range of data
+        return value[0].slice(start, end);
+      }),
+    );
+
+    this.diplotypeDataView.subscribe(
+      (diplotypeRows) => (this.diplotypeRows = diplotypeRows),
+    );
   }
 
   pageChange(event: PageEvent) {
@@ -723,6 +766,10 @@ export class PharmcatResultsViewerComponent implements OnInit {
       data: { projectName: this.projectName, requestId: this.requestId },
     });
   }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
 
   ngOnChanges(changes: SimpleChanges): void {
     this.refetch(
