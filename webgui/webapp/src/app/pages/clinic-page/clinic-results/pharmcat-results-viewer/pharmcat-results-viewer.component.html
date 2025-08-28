@@ -333,6 +333,20 @@
       </div>
     }
     <!-- end advanced filter  -->
+    <div
+      class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <mat-icon class="text-primary-50"> info </mat-icon>
+        <div>Need help understanding filters?</div>
+      </div>
+      <div
+        (click)="handleRedirectFAQ()"
+        class="font-medium text-primary-60 cursor-pointer"
+      >
+        Learn more in the FAQ
+      </div>
+    </div>
     @if (diplotypeDataRows.value.length > 0) {
       <div
         class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700 p-2"

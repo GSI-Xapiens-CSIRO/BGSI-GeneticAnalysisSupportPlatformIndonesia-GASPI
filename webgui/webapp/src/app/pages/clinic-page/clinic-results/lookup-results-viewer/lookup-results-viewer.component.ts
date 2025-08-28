@@ -56,6 +56,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { Router } from '@angular/router';
 
 type LookupResult = {
   url?: string;
@@ -162,6 +163,7 @@ export class LookupResultsViewerComponent
     private dg: MatDialog,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
+    private router: Router,
   ) {}
 
   // Flag generation methods
@@ -638,4 +640,8 @@ export class LookupResultsViewerComponent
       data: { rsid },
     });
   }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
 }
