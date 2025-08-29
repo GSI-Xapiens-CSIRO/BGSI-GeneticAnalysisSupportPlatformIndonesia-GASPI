@@ -213,3 +213,17 @@ variable "lookup_configuration" {
   }
   nullable = true
 }
+
+
+variable "subnet_id" {
+  type        = string
+  description = "Subnet ID for the GASPI VPC"
+  default     = "NONE"
+
+}
+
+variable "security_group_id" {
+  type        = string
+  description = "Security Group ID for the GASPI VPC"
+  default     = "NONE"
+}
