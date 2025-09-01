@@ -1,0 +1,116 @@
+<div class="dialog-container">
+  <h2 mat-dialog-title>Generate RSCM Genetic Test Report</h2>
+
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="reportForm" class="report-form">
+
+      <!-- Patient Name -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Patient Name</mat-label>
+        <input matInput
+               formControlName="patient_name"
+               placeholder="Enter patient name">
+        <mat-error *ngIf="reportForm.get('patient_name')?.touched && reportForm.get('patient_name')?.invalid">
+          {{ getErrorMessage('patient_name') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Date of Birth -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Date of Birth</mat-label>
+        <input matInput
+               [matDatepicker]="picker"
+               formControlName="date_of_birth"
+               placeholder="Select date">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="reportForm.get('date_of_birth')?.touched && reportForm.get('date_of_birth')?.invalid">
+          {{ getErrorMessage('date_of_birth') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Rekam Medis -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Rekam Medis</mat-label>
+        <input matInput
+               formControlName="rekam_medis"
+               placeholder="Enter medical record number">
+        <mat-error *ngIf="reportForm.get('rekam_medis')?.touched && reportForm.get('rekam_medis')?.invalid">
+          {{ getErrorMessage('rekam_medis') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Gender -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Gender</mat-label>
+        <mat-select formControlName="gender">
+          <mat-option *ngFor="let option of genderOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="reportForm.get('gender')?.touched && reportForm.get('gender')?.invalid">
+          {{ getErrorMessage('gender') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Clinical Diagnosis -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Clinical Diagnosis</mat-label>
+        <input matInput
+               formControlName="clinical_diagnosis"
+               placeholder="Enter diagnosis">
+        <mat-error *ngIf="reportForm.get('clinical_diagnosis')?.touched && reportForm.get('clinical_diagnosis')?.invalid">
+          {{ getErrorMessage('clinical_diagnosis') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Symptoms -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Symptoms</mat-label>
+        <textarea matInput
+                  rows="3"
+                  formControlName="symptoms"
+                  placeholder="Enter symptoms (optional)"></textarea>
+      </mat-form-field>
+
+      <!-- Physician -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Physician</mat-label>
+        <input matInput
+               formControlName="physician"
+               placeholder="Enter physician name">
+        <mat-error *ngIf="reportForm.get('physician')?.touched && reportForm.get('physician')?.invalid">
+          {{ getErrorMessage('physician') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Genetic Counselor -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Genetic Counselor</mat-label>
+        <input matInput
+               formControlName="genetic_counselor"
+               placeholder="Enter genetic counselor name">
+        <mat-error *ngIf="reportForm.get('genetic_counselor')?.touched && reportForm.get('genetic_counselor')?.invalid">
+          {{ getErrorMessage('genetic_counselor') }}
+        </mat-error>
+      </mat-form-field>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button
+            type="button"
+            (click)="onCancel()"
+            color="warn">
+      Cancel
+    </button>
+    <button mat-raised-button
+            type="submit"
+            (click)="onSubmit()"
+            color="primary"
+            [disabled]="reportForm.invalid">
+      Generate Report
+    </button>
+  </mat-dialog-actions>
+</div>
