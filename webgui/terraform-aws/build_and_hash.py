@@ -38,7 +38,7 @@ ENVIRONMENT = """export const environment = {{
     mq: {clinic_warning_mq},
     qd: {clinic_warning_qd},
   }}
-  pii_encryption_secret_name: '{pii_encryption_secret_name}
+  pii_encryption_secret_name: '{pii_encryption_secret_name}'
 }};"""
 
 
