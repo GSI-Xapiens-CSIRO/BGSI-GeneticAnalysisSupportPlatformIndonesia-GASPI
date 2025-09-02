@@ -20,6 +20,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatOptionModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 
 export interface ReportProps {
   projectName?: string;
@@ -29,27 +30,27 @@ export interface ReportProps {
 @Component({
   selector: 'app-report-dialog-rscm',
   standalone: true,
-  templateUrl: './report-dialog-rscm.component.html',
   imports: [
     CommonModule,
     MatDialogModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatOptionModule,
-    MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatOptionModule,
     MatRadioModule,
+    ReactiveFormsModule,
   ],
+  templateUrl: './report-dialog-rscm.component.html',
+  styleUrls: ['./report-dialog-rscm.component.scss'],
 })
-export class ReportDialogRscmComponent {
-  reportForm: FormGroup;
+export class ReportDialogRscmComponent implements OnInit {
+  protected reportForm: FormGroup;
 
   genderOptions = [
-    { value: 'Laki-laki', label: 'Laki-laki' },
-    { value: 'Perempuan', label: 'Perempuan' },
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
   ];
 
   constructor(
@@ -58,6 +59,9 @@ export class ReportDialogRscmComponent {
     @Inject(MAT_DIALOG_DATA) public props: ReportProps,
   ) {
     this.reportForm = this.createForm();
+  }
+  ngOnInit(): void {
+    throw new Error('Method not implemented.');
   }
 
   private createForm(): FormGroup {
@@ -80,6 +84,18 @@ export class ReportDialogRscmComponent {
   }
 
   onSubmit(): void {
+    console.log('Form valid:', this.reportForm.valid);
+    console.log('Form status:', this.reportForm.status);
+    console.log('Form value:', this.reportForm.value);
+
+    // Check each control
+    Object.keys(this.reportForm.controls).forEach((key) => {
+      const control = this.reportForm.get(key);
+      if (control?.invalid) {
+        console.log(`Invalid field: ${key}`, control.errors);
+      }
+    });
+
     if (this.reportForm.valid) {
       this.dialogRef.close(this.reportForm.value);
     } else {
