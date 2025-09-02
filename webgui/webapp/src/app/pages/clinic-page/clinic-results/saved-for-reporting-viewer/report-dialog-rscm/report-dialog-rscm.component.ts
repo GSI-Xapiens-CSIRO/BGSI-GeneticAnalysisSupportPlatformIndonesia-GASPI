@@ -84,10 +84,6 @@ export class ReportDialogRscmComponent implements OnInit {
   }
 
   onSubmit(): void {
-    console.log('Form valid:', this.reportForm.valid);
-    console.log('Form status:', this.reportForm.status);
-    console.log('Form value:', this.reportForm.value);
-
     // Check each control
     Object.keys(this.reportForm.controls).forEach((key) => {
       const control = this.reportForm.get(key);

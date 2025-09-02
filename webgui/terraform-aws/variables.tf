@@ -102,3 +102,10 @@ variable "clinic-warning-thresholds" {
   })
   description = "Thresholds before warnings are shown in clinic results page"
 }
+
+
+variable "dataportal-pii-encryption-secret-name" {
+  type        = string
+  description = "Name of the secret in Secrets Manager that contains the KMS key ARN used to encrypt PII data in the dataportal"
+  default     = null
+}

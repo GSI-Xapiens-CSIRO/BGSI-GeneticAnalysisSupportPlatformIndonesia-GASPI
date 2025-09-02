@@ -38,6 +38,7 @@ ENVIRONMENT = """export const environment = {{
     mq: {clinic_warning_mq},
     qd: {clinic_warning_qd},
   }}
+  pii_encryption_secret_name: '{pii_encryption_secret_name}
 }};"""
 
 
@@ -103,6 +104,7 @@ def setup_env(
     clinic_warning_mq: float,
     clinic_warning_qual: float,
     clinic_warning_qd: float,
+    pii_encryption_secret_name: str,
 ):
     common_format_values = {
         "base_range": base_range,
@@ -121,6 +123,7 @@ def setup_env(
         "clinic_warning_mq": clinic_warning_mq,
         "clinic_warning_qual": clinic_warning_qual,
         "clinic_warning_qd": clinic_warning_qd,
+        "pii_encryption_secret_name": pii_encryption_secret_name,
     }
     with open(
         os.path.join(dir, "src/environments/environment.development.ts"), "w"
@@ -162,6 +165,7 @@ if __name__ == "__main__":
     clinic_warning_mq = float(args["clinic_warning_mq"])
     clinic_warning_qual = float(args["clinic_warning_qual"])
     clinic_warning_qd = float(args["clinic_warning_qd"])
+    pii_encryption_secret_name = args["pii_encryption_secret_name"]
 
     setup_env(
         base_range,
@@ -181,6 +185,7 @@ if __name__ == "__main__":
         clinic_warning_mq,
         clinic_warning_qual,
         clinic_warning_qd,
+        pii_encryption_secret_name,
     )
     npm_install(install_cmd, webapp_dir)
     build(build_cmd, webapp_dir)
