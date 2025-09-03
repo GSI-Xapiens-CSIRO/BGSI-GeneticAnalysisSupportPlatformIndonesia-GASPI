@@ -288,6 +288,12 @@ export class ClinicService {
   }
 
   generateReport(project: string, jobId: string, args: any = {}) {
+    console.log({
+      body: {
+        lab: environment.hub_name,
+        ...args,
+      },
+    });
     return from(
       API.post(
         environment.api_endpoint_sbeacon.name,

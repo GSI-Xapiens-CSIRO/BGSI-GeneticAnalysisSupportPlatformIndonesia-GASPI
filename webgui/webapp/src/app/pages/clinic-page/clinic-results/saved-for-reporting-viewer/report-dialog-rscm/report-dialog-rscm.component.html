@@ -2,8 +2,10 @@
   <h1 mat-dialog-title class="text-2xl font-semibold text-primary mb-4">
     Your Report is Ready to Generate
   </h1>
+  <app-component-spinner [loading]="loading"></app-component-spinner>
 
   <div mat-dialog-content>
+
     <form [formGroup]="reportForm">
       <p class="text-gray-600 mb-4">Please fill in the following information first</p>
 
@@ -132,3 +134,5 @@
     </div>
   </div>
 </div>
+<a #downloadLink class="invisible" download="report.pdf"></a>
+

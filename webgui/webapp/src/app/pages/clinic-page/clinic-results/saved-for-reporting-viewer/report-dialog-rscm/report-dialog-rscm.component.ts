@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  Inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -22,10 +28,14 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { PIIEncryptionService } from 'src/app/services/pii-encryption.service';
+import { ClinicService } from 'src/app/services/clinic.service';
+import { SpinnerService } from 'src/app/services/spinner.service';
+import { ToastrService } from 'ngx-toastr';
+import { catchError, of } from 'rxjs';
 
 export interface ReportProps {
-  projectName?: string;
-  requestId?: string;
+  projectName: string;
+  requestId: string;
 }
 
 @Component({
@@ -42,12 +52,15 @@ export interface ReportProps {
     MatOptionModule,
     MatRadioModule,
     ReactiveFormsModule,
+    ComponentSpinnerComponent,
   ],
   templateUrl: './report-dialog-rscm.component.html',
   styleUrls: ['./report-dialog-rscm.component.scss'],
 })
-export class ReportDialogRscmComponent implements OnInit {
+export class ReportDialogRscmComponent {
   protected reportForm: FormGroup;
+  @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
+  protected loading = false;
 
   genderOptions = [
     { value: 'Male', label: 'Male' },
@@ -58,25 +71,28 @@ export class ReportDialogRscmComponent implements OnInit {
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<ReportDialogRscmComponent>,
     private PIIEncryptionService: PIIEncryptionService,
+    private cs: ClinicService,
+    private ss: SpinnerService,
+    private tstr: ToastrService,
     @Inject(MAT_DIALOG_DATA) public props: ReportProps,
   ) {
     this.reportForm = this.createForm();
   }
-  ngOnInit(): void {
-    throw new Error('Method not implemented.');
-  }
 
   private createForm(): FormGroup {
     return this.fb.group({
-      patient_name: ['', [Validators.required, Validators.minLength(2)]],
-      date_of_birth: ['', [Validators.required]],
-      rekam_medis: ['', [Validators.required]],
-      gender: ['', [Validators.required]],
+      patient_name: [
+        'testing name',
+        [Validators.required, Validators.minLength(2)],
+      ],
+      date_of_birth: ['1992-01-01', [Validators.required]],
+      rekam_medis: ['testing rekam medis', [Validators.required]],
+      gender: ['Male', [Validators.required]],
       clinical_diagnosis: [
         'Familial Hypercholesterolemia (FH)',
         [Validators.required],
       ],
-      symptoms: [''],
+      symptoms: ['testing syptoms', [Validators.required]],
       physician: ['dr. Dicky Tahapary, SpPD-KEMD., PhD', [Validators.required]],
       genetic_counselor: [
         'dr. Widya Eka Nugraha, M.Si. Med.',
@@ -85,18 +101,49 @@ export class ReportDialogRscmComponent implements OnInit {
     });
   }
 
-  onSubmit(): void {
-    console.log(this.reportForm.value);
-    const body = this.PIIEncryptionService.encryptPIIData(
-      this.reportForm.value,
-      false,
-    );
-    console.log('Enkripted data: ', body);
-
-    if (this.reportForm.valid) {
-      this.dialogRef.close(this.reportForm.value);
-    } else {
+  async onSubmit(): Promise<void> {
+    if (!this.reportForm.valid) {
       this.markFormGroupTouched();
+      return;
+    }
+
+    this.loading = true;
+    try {
+      const pii = await this.PIIEncryptionService.encryptPIIData(
+        this.reportForm.value,
+        false,
+      );
+
+      this.cs
+        .generateReport(this.props.projectName, this.props.requestId, { pii })
+        .pipe(catchError(() => of(null)))
+        .subscribe(async (res: any) => {
+          if (res && res.success) {
+            // Download file
+            const link = document.createElement('a');
+            const dataUrl = `data:application/pdf;base64,${res.content}`;
+            link.download = `${this.props.projectName}_${
+              this.props.requestId
+            }_${new Date().toISOString()}_report.pdf`;
+            link.href = dataUrl;
+            link.click();
+            link.remove();
+
+            // Success message
+            this.tstr.success('Report downloaded successfully', 'Success');
+
+            this.dialogRef.close(this.reportForm.value);
+          } else if (res && !res.success) {
+            this.tstr.error(res.message, 'Error');
+          } else {
+            this.tstr.error('Failed to generate report', 'Error');
+          }
+
+          this.loading = false;
+        });
+    } catch (error) {
+      this.tstr.error('Failed to process request', 'Error');
+      this.loading = false;
     }
   }
 

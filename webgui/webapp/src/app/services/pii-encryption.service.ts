@@ -40,8 +40,6 @@ export class PIIEncryptionService {
     try {
       const creds = await Auth.currentCredentials();
 
-      console.log('AWS Credentials for Secrets Manager:', creds);
-
       if (!creds) {
         throw new Error('No valid AWS credentials found');
       }
@@ -57,7 +55,6 @@ export class PIIEncryptionService {
 
       return this.secretsClient;
     } catch (error) {
-      console.error('Error creating Secrets Manager client:', error);
       throw new Error('Failed to create AWS client');
     }
   }
@@ -151,7 +148,7 @@ export class PIIEncryptionService {
         encryptedBytes.words.slice(4),
         encryptedBytes.sigBytes - 16,
       );
-
+      debugger;
       if (iv.sigBytes !== 16) {
         throw new Error('Invalid IV length');
       }
