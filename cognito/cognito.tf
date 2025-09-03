@@ -192,6 +192,21 @@ data "aws_iam_policy_document" "admin_group_role_policy" {
 
     resources = ["*"]
   }
+
+  # Allow access to KMS for PII encryption keys
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "admin_group_role_policy" {
@@ -309,6 +324,21 @@ data "aws_iam_policy_document" "manager_group_role_policy" {
     actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
+    ]
+
+    resources = ["*"]
+  }
+
+  # Allow access to KMS for PII encryption keys
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
     ]
 
     resources = ["*"]

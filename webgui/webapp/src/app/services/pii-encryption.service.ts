@@ -97,6 +97,11 @@ export class PIIEncryptionService {
         version: secretData.version,
       };
 
+      console.log(
+        'Fetched PII keys from AWS Secrets Manager:',
+        this.cachedSecret,
+      );
+
       return this.cachedSecret;
     } catch (error) {
       console.error('Error fetching secret from AWS:', error);
