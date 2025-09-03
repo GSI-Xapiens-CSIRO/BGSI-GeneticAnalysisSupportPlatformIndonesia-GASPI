@@ -21,6 +21,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
+import { PIIEncryptionService } from 'src/app/services/pii-encryption.service';
 
 export interface ReportProps {
   projectName?: string;
@@ -56,6 +57,7 @@ export class ReportDialogRscmComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<ReportDialogRscmComponent>,
+    private PIIEncryptionService: PIIEncryptionService,
     @Inject(MAT_DIALOG_DATA) public props: ReportProps,
   ) {
     this.reportForm = this.createForm();
@@ -84,13 +86,12 @@ export class ReportDialogRscmComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // Check each control
-    Object.keys(this.reportForm.controls).forEach((key) => {
-      const control = this.reportForm.get(key);
-      if (control?.invalid) {
-        console.log(`Invalid field: ${key}`, control.errors);
-      }
-    });
+    console.log(this.reportForm.value);
+    const body = this.PIIEncryptionService.encryptPIIData(
+      this.reportForm.value,
+      false,
+    );
+    console.log('Enkripted data: ', body);
 
     if (this.reportForm.valid) {
       this.dialogRef.close(this.reportForm.value);

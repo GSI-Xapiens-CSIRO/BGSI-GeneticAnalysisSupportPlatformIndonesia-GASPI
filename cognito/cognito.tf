@@ -180,6 +180,18 @@ data "aws_iam_policy_document" "admin_group_role_policy" {
       "arn:aws:s3:::${var.dataportal-bucket-prefix}*/private/$${cognito-identity.amazonaws.com:sub}/*",
     ]
   }
+
+  # Allow access to Secrets Manager for PII encryption keys
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "admin_group_role_policy" {
@@ -285,6 +297,18 @@ data "aws_iam_policy_document" "manager_group_role_policy" {
 
     actions = [
       "pricing:*",
+    ]
+
+    resources = ["*"]
+  }
+
+  # Allow access to Secrets Manager for PII encryption keys
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
     ]
 
     resources = ["*"]

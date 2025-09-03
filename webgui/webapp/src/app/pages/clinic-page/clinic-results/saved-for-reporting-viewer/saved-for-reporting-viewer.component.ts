@@ -293,40 +293,40 @@ export class SavedForReportingViewerComponent
     }
   }
 
-  generateReportRSCM() {
-    this.ss.start();
-    this.cs
-      .generateReport(this.projectName, this.requestId)
-      .pipe(catchError(() => of(null)))
-      .subscribe(async (res: any) => {
-        if (res && res.success) {
-          console.log(res);
-          const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
-          this.downloadLink.nativeElement.href = dataUrl;
-          this.downloadLink.nativeElement.click();
-        } else if (res && !res.success) {
-          this.tstr.error(res.message, 'Error');
-        } else {
-          this.tstr.error('Failed to generate report', 'Error');
-        }
+  async generateReportRSCM() {
+    // this.ss.start();
+    // this.cs
+    //   .generateReport(this.projectName, this.requestId)
+    //   .pipe(catchError(() => of(null)))
+    //   .subscribe(async (res: any) => {
+    //     if (res && res.success) {
+    //       console.log(res);
+    //       const dataUrl = `data:application/pdf;base64,${res.content}`;
+    //       this.downloadLink.nativeElement.download = `${this.projectName}_${
+    //         this.requestId
+    //       }_${new Date().toISOString()}_report.pdf`;
+    //       this.downloadLink.nativeElement.href = dataUrl;
+    //       this.downloadLink.nativeElement.click();
+    //     } else if (res && !res.success) {
+    //       this.tstr.error(res.message, 'Error');
+    //     } else {
+    //       this.tstr.error('Failed to generate report', 'Error');
+    //     }
 
-        // TODO: Implement report dialog opening
-        // const { ReportDialogRscmComponent } = await import(
-        //   './report-dialog-rscm/report-dialog-rscm.component'
-        // );
+    // TODO: Implement report dialog opening
+    const { ReportDialogRscmComponent } = await import(
+      './report-dialog-rscm/report-dialog-rscm.component'
+    );
 
-        // this.dg.open(ReportDialogRscmComponent, {
-        //   data: {
-        //     projectName: this.projectName,
-        //     requestId: this.requestId,
-        //   },
-        // });
+    this.dg.open(ReportDialogRscmComponent, {
+      data: {
+        projectName: this.projectName,
+        requestId: this.requestId,
+      },
+    });
 
-        this.ss.end();
-      });
+    //   this.ss.end();
+    // });
   }
 
   generateReportRSJPD() {
