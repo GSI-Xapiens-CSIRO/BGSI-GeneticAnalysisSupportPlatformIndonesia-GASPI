@@ -147,20 +147,21 @@ moved {
 }
 
 module "webgui" {
-  source                    = "./webgui/terraform-aws"
-  region                    = var.region
-  base_range                = 5000
-  user_pool_id              = module.cognito.cognito_user_pool_id
-  identity_pool_id          = module.cognito.cognito_identity_pool_id
-  user_pool_web_client_id   = module.cognito.cognito_client_id
-  data_portal_bucket        = module.sbeacon.data-portal-bucket
-  api_endpoint_sbeacon      = module.sbeacon.api_url
-  api_endpoint_clinic       = local.clinic_api_url
-  clinic_mode               = local.clinic_mode
-  bui-ssm-parameter-name    = var.bui-ssm-parameter-name
-  web_acl_arn               = module.security.web_acl_arn
-  hub_name                  = var.hub_name
-  clinic-warning-thresholds = var.clinic-warning-thresholds
+  source                                = "./webgui/terraform-aws"
+  region                                = var.region
+  base_range                            = 5000
+  user_pool_id                          = module.cognito.cognito_user_pool_id
+  identity_pool_id                      = module.cognito.cognito_identity_pool_id
+  user_pool_web_client_id               = module.cognito.cognito_client_id
+  data_portal_bucket                    = module.sbeacon.data-portal-bucket
+  api_endpoint_sbeacon                  = module.sbeacon.api_url
+  api_endpoint_clinic                   = local.clinic_api_url
+  clinic_mode                           = local.clinic_mode
+  bui-ssm-parameter-name                = var.bui-ssm-parameter-name
+  web_acl_arn                           = module.security.web_acl_arn
+  hub_name                              = var.hub_name
+  clinic-warning-thresholds             = var.clinic-warning-thresholds
+  dataportal-pii-encryption-secret-name = module.sbeacon.dataportal-pii-encryption-secret-name
 
   common-tags = merge(var.common-tags, {
     "NAME" = "portal-frontend"
