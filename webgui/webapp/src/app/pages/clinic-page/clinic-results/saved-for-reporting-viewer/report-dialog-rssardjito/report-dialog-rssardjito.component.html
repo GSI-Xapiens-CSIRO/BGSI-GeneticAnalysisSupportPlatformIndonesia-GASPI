@@ -1,0 +1,187 @@
+<div class="relative min-w-[300px] md:min-w-[700px] max-w-[800px]">
+  <h1 mat-dialog-title class="text-2xl font-semibold text-primary mb-4">
+    Your Report is Ready to Generate
+  </h1>
+  <app-component-spinner [loading]="loading"></app-component-spinner>
+
+  <div mat-dialog-content>
+
+    <form [formGroup]="reportForm">
+      <p class="text-gray-600 mb-4">Please fill in the following information first</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Left Column - Patient Information -->
+        <div class="flex flex-col gap-4">
+          <div class="font-semibold text-lg text-gray-700 border-b pb-2">Patient Information</div>
+
+          <mat-form-field>
+            <mat-label>Patient Name</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter patient name"
+              formControlName="patient_name"
+            />
+            <mat-error>{{ getErrorMessage('patient_name') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Lab Number</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter lab number"
+              formControlName="lab_number"
+            />
+            <mat-error>{{ getErrorMessage('lab_number') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Date of Birth</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="date_of_birth"
+            />
+            <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Gender</mat-label>
+            <mat-select formControlName="gender">
+              <mat-option *ngFor="let option of genderOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error>{{ getErrorMessage('gender') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Race</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter race"
+              formControlName="race"
+            />
+            <mat-error>{{ getErrorMessage('race') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Specimen Type</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter specimen type"
+              formControlName="specimen_type"
+            />
+            <mat-error>{{ getErrorMessage('specimen_type') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Sample ID</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter sample ID"
+              formControlName="sample_id"
+            />
+            <mat-error>{{ getErrorMessage('sample_id') }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Right Column - Medical Information -->
+        <div class="flex flex-col gap-4">
+          <div class="font-semibold text-lg text-gray-700 border-b pb-2">Clinical Information</div>
+
+          <mat-form-field>
+            <mat-label>Referring Clinician</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter referring clinician name"
+              formControlName="referring_clinician"
+            />
+            <mat-error>{{ getErrorMessage('referring_clinician') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Referring Institution</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter referring institution"
+              formControlName="reffering_institution"
+            />
+            <mat-error>{{ getErrorMessage('reffering_institution') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Testing Laboratory</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter testing laboratory"
+              formControlName="testing_laboratory"
+            />
+            <mat-error>{{ getErrorMessage('testing_laboratory') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Sampling Date</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="sampling_date"
+            />
+            <mat-error>{{ getErrorMessage('sampling_date') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Testing Date</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="testing_date"
+            />
+            <mat-error>{{ getErrorMessage('testing_date') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Reporting Date</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="reporting_date"
+            />
+            <mat-error>{{ getErrorMessage('reporting_date') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+
+    <br />
+    <div class="flex justify-end space-x-3">
+      <button
+        class="min-w-[100px]"
+        mat-button
+        mat-raised-button
+        color="primary"
+        (click)="onCancel()"
+      >
+        Cancel
+      </button>
+      <button
+        class="min-w-[140px]"
+        mat-raised-button
+        color="primary"
+        (click)="onSubmit()"
+        [disabled]="reportForm.invalid"
+      >
+        Generate Report
+      </button>
+    </div>
+  </div>
+</div>
+<a #downloadLink class="invisible" download="report.pdf"></a>

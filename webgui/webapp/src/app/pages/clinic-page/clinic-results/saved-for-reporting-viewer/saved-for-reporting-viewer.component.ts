@@ -375,27 +375,19 @@ export class SavedForReportingViewerComponent
       });
   }
 
-  generateReportRSSARDJITO(lang: string, mode: string) {
-    this.ss.start();
-    this.cs
-      .generateReport(this.projectName, this.requestId, { lang, mode })
-      .pipe(catchError(() => of(null)))
-      .subscribe((res: any) => {
-        if (res && res.success) {
-          console.log(res);
-          const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
-          this.downloadLink.nativeElement.href = dataUrl;
-          this.downloadLink.nativeElement.click();
-        } else if (res && !res.success) {
-          this.tstr.error(res.message, 'Error');
-        } else {
-          this.tstr.error('Failed to generate report', 'Error');
-        }
-        this.ss.end();
-      });
+  async generateReportRSSARDJITO(lang: string, mode: string) {
+    const { ReportDialogRscmComponent } = await import(
+      './report-dialog-rssardjito/report-dialog-rssardjito.component'
+    );
+
+    this.dg.open(ReportDialogRscmComponent, {
+      data: {
+        projectName: this.projectName,
+        requestId: this.requestId,
+        lang,
+        mode,
+      },
+    });
   }
 
   list(page: number) {

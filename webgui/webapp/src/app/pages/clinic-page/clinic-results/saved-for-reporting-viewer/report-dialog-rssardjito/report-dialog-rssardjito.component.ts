@@ -36,6 +36,8 @@ import { catchError, of } from 'rxjs';
 export interface ReportProps {
   projectName: string;
   requestId: string;
+  lang: string;
+  mode: string;
 }
 
 @Component({
@@ -54,8 +56,8 @@ export interface ReportProps {
     ReactiveFormsModule,
     ComponentSpinnerComponent,
   ],
-  templateUrl: './report-dialog-rscm.component.html',
-  styleUrls: ['./report-dialog-rscm.component.scss'],
+  templateUrl: './report-dialog-rssardjito.component.html',
+  styleUrls: ['./report-dialog-rssardjito.component.scss'],
 })
 export class ReportDialogRscmComponent {
   protected reportForm: FormGroup;
@@ -82,19 +84,18 @@ export class ReportDialogRscmComponent {
   private createForm(): FormGroup {
     return this.fb.group({
       patient_name: ['', [Validators.required, Validators.minLength(2)]],
-      date_of_birth: ['', [Validators.required]],
-      rekam_medis: ['', [Validators.required]],
+      lab_number: ['', [Validators.required, Validators.minLength(2)]],
       gender: ['', [Validators.required]],
-      clinical_diagnosis: [
-        'Familial Hypercholesterolemia (FH)',
-        [Validators.required],
-      ],
-      symptoms: ['', [Validators.required]],
-      physician: ['dr. Dicky Tahapary, SpPD-KEMD., PhD', [Validators.required]],
-      genetic_counselor: [
-        'dr. Widya Eka Nugraha, M.Si. Med.',
-        [Validators.required],
-      ],
+      date_of_birth: ['', [Validators.required]],
+      race: ['', [Validators.required]],
+      specimen_type: ['', [Validators.required]],
+      sample_id: ['', [Validators.required]],
+      referring_clinician: ['', [Validators.required]],
+      sampling_date: ['', [Validators.required]],
+      testing_date: ['', [Validators.required]],
+      reporting_date: ['', [Validators.required]],
+      reffering_institution: ['', [Validators.required]],
+      testing_laboratory: ['', [Validators.required]],
     });
   }
 
@@ -112,30 +113,26 @@ export class ReportDialogRscmComponent {
       );
 
       this.cs
-        .generateReport(this.props.projectName, this.props.requestId, { pii })
+        .generateReport(this.props.projectName, this.props.requestId, {
+          lang: this.props.lang,
+          mode: this.props.mode,
+          pii,
+        })
         .pipe(catchError(() => of(null)))
-        .subscribe(async (res: any) => {
+        .subscribe((res: any) => {
           if (res && res.success) {
-            // Download file
-            const link = document.createElement('a');
+            console.log(res);
             const dataUrl = `data:application/pdf;base64,${res.content}`;
-            link.download = `${this.props.projectName}_${
-              this.props.requestId
-            }_${new Date().toISOString()}_report.pdf`;
-            link.href = dataUrl;
-            link.click();
-            link.remove();
-
-            // Success message
-            this.tstr.success('Report downloaded successfully', 'Success');
-
-            this.dialogRef.close(this.reportForm.value);
+            this.downloadLink.nativeElement.download = `${
+              this.props.projectName
+            }_${this.props.requestId}_${new Date().toISOString()}_report.pdf`;
+            this.downloadLink.nativeElement.href = dataUrl;
+            this.downloadLink.nativeElement.click();
           } else if (res && !res.success) {
             this.tstr.error(res.message, 'Error');
           } else {
             this.tstr.error('Failed to generate report', 'Error');
           }
-
           this.loading = false;
         });
     } catch (error) {
@@ -175,13 +172,18 @@ export class ReportDialogRscmComponent {
   private getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
       patient_name: 'Patient Name',
-      date_of_birth: 'Date of Birth',
-      rekam_medis: 'Rekam Medis',
+      lab_number: 'Lab Number',
       gender: 'Gender',
-      clinical_diagnosis: 'Clinical Diagnosis',
-      symptoms: 'Symptoms',
-      physician: 'Physician',
-      genetic_counselor: 'Genetic Counselor',
+      date_of_birth: 'Date of Birth',
+      race: 'Race',
+      specimen_type: 'Specimen Type',
+      sample_id: 'Sample ID',
+      referring_clinician: 'Referring Clinician',
+      sampling_date: 'Sampling Date',
+      testing_date: 'Testing Date',
+      reporting_date: 'Reporting Date',
+      reffering_institution: 'Referring Institution',
+      testing_laboratory: 'Testing Laboratory',
     };
     return labels[fieldName] || fieldName;
   }
