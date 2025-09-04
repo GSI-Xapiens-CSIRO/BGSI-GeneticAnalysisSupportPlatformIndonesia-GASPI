@@ -24,13 +24,13 @@ export class PIIEncryptionService {
   private region: string;
 
   constructor() {
-    // Set dari environment atau configuration
+    // Set from environment or configuration
     this.secretName = environment.pii_encryption_secret_name;
     this.region = environment.auth.region;
   }
 
   /**
-   * Membuat Secrets Manager client dengan credentials dari Amplify
+   * Create Secrets Manager client with credentials from Amplify
    */
   private async getSecretsClient(): Promise<SecretsManagerClient> {
     if (this.secretsClient) {
@@ -60,7 +60,7 @@ export class PIIEncryptionService {
   }
 
   /**
-   * Mengambil encryption keys langsung dari AWS Secrets Manager
+   * Fetch encryption keys directly from AWS Secrets Manager
    */
   private async getPIIKeys(): Promise<PIIKeys> {
     if (this.cachedSecret) {
@@ -130,17 +130,17 @@ export class PIIEncryptionService {
   }
 
   /**
-   * Decrypt dengan key tertentu
+   * Decrypt with specific key
    */
   private decryptWithKey(encryptedData: string, keyHex: string): any {
     try {
-      // Convert hex key ke WordArray
+      // Convert hex key to WordArray
       const key = CryptoJS.enc.Hex.parse(keyHex);
 
       // Decode base64
       const encryptedBytes = CryptoJS.enc.Base64.parse(encryptedData);
 
-      // Extract IV (16 bytes pertama) dan content
+      // Extract IV (first 16 bytes) and content
       const iv = CryptoJS.lib.WordArray.create(
         encryptedBytes.words.slice(0, 4),
       );
@@ -153,7 +153,7 @@ export class PIIEncryptionService {
         throw new Error('Invalid IV length');
       }
 
-      // Decrypt menggunakan AES-CBC
+      // Decrypt using AES-CBC
       const decrypted = CryptoJS.AES.decrypt(
         { ciphertext: encryptedContent } as any,
         key,
@@ -164,7 +164,7 @@ export class PIIEncryptionService {
         },
       );
 
-      // Convert kembali ke JSON
+      // Convert back to JSON
       const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
       return JSON.parse(decryptedString);
     } catch (error) {
@@ -182,16 +182,16 @@ export class PIIEncryptionService {
     const keys = await this.getPIIKeys();
     const keyHex = useSecondary ? keys.secondary_key : keys.primary_key;
 
-    // Convert hex key ke WordArray
+    // Convert hex key to WordArray
     const key = CryptoJS.enc.Hex.parse(keyHex);
 
-    // Convert ke JSON string
+    // Convert to JSON string
     const jsonString = JSON.stringify(piiData);
 
     // Generate random IV
     const iv = CryptoJS.lib.WordArray.random(16);
 
-    // Encrypt menggunakan AES-CBC
+    // Encrypt using AES-CBC
     const encrypted = CryptoJS.AES.encrypt(jsonString, key, {
       iv: iv,
       mode: CryptoJS.mode.CBC,
@@ -202,7 +202,7 @@ export class PIIEncryptionService {
     const combined = iv.clone();
     combined.concat(encrypted.ciphertext);
 
-    // Encode ke base64
+    // Encode to base64
     return CryptoJS.enc.Base64.stringify(combined);
   }
 
@@ -214,39 +214,3 @@ export class PIIEncryptionService {
     this.secretsClient = null;
   }
 }
-
-// Usage example:
-/*
-// Di component Anda:
-import { PIIEncryptionService } from './pii-encryption.service';
-
-constructor(private piiEncryption: PIIEncryptionService) {}
-
-async encryptData() {
-  const sensitiveData = {
-    email: 'user@example.com',
-    phone: '+1234567890',
-    ssn: '123-45-6789'
-  };
-
-  try {
-    const encrypted = await this.piiEncryption.encryptPIIData(sensitiveData);
-    console.log('Encrypted:', encrypted);
-
-    // Kirim encrypted data ke backend
-    // this.http.post('/api/save-pii', { encryptedData: encrypted }).subscribe();
-
-  } catch (error) {
-    console.error('Encryption failed:', error);
-  }
-}
-
-async decryptData(encryptedData: string) {
-  try {
-    const decrypted = await this.piiEncryption.decryptPIIPayload(encryptedData);
-    console.log('Decrypted:', decrypted);
-  } catch (error) {
-    console.error('Decryption failed:', error);
-  }
-}
-*/
