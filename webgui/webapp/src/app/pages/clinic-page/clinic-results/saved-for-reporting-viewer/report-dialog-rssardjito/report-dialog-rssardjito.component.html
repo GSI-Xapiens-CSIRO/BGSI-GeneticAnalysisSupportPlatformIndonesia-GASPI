@@ -11,10 +11,8 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <!-- Left Column - Patient Information -->
+        <!-- Left Column - Patient & Sample Information -->
         <div class="flex flex-col gap-4">
-          <div class="font-semibold text-lg text-gray-700 border-b pb-2">Patient Information</div>
-
           <mat-form-field>
             <mat-label>Patient Name</mat-label>
             <input
@@ -38,16 +36,6 @@
           </mat-form-field>
 
           <mat-form-field>
-            <mat-label>Date of Birth</mat-label>
-            <input
-              matInput
-              type="date"
-              formControlName="date_of_birth"
-            />
-            <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
             <mat-label>Gender</mat-label>
             <mat-select formControlName="gender">
               <mat-option *ngFor="let option of genderOptions" [value]="option.value">
@@ -55,6 +43,16 @@
               </mat-option>
             </mat-select>
             <mat-error>{{ getErrorMessage('gender') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Date of Birth</mat-label>
+            <input
+              matInput
+              type="date"
+              formControlName="date_of_birth"
+            />
+            <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -91,10 +89,8 @@
           </mat-form-field>
         </div>
 
-        <!-- Right Column - Medical Information -->
+        <!-- Right Column - Clinical & Laboratory Information -->
         <div class="flex flex-col gap-4">
-          <div class="font-semibold text-lg text-gray-700 border-b pb-2">Clinical Information</div>
-
           <mat-form-field>
             <mat-label>Referring Clinician</mat-label>
             <input
@@ -104,28 +100,6 @@
               formControlName="referring_clinician"
             />
             <mat-error>{{ getErrorMessage('referring_clinician') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Referring Institution</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter referring institution"
-              formControlName="reffering_institution"
-            />
-            <mat-error>{{ getErrorMessage('reffering_institution') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Testing Laboratory</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter testing laboratory"
-              formControlName="testing_laboratory"
-            />
-            <mat-error>{{ getErrorMessage('testing_laboratory') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -156,6 +130,28 @@
               formControlName="reporting_date"
             />
             <mat-error>{{ getErrorMessage('reporting_date') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Referring Institution</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter referring institution"
+              formControlName="reffering_institution"
+            />
+            <mat-error>{{ getErrorMessage('reffering_institution') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Testing Laboratory</mat-label>
+            <input
+              matInput
+              type="text"
+              placeholder="Enter testing laboratory"
+              formControlName="testing_laboratory"
+            />
+            <mat-error>{{ getErrorMessage('testing_laboratory') }}</mat-error>
           </mat-form-field>
         </div>
       </div>
