@@ -1,15 +1,13 @@
-
-
-
-
 <mat-card class="mt-4">
   <mat-card-content>
-    <!-- No Results Alert - Add this if needed -->
+    <!-- No Results Alert -->
     @if (originalRows.length === 0 && !isLoading) {
-      <app-no-results-alert></app-no-results-alert>
+      <app-no-results-alert
+        [message]="results?.noResultsMessage"
+      ></app-no-results-alert>
     }
     <!-- Lookup Configuration Accordion -->
-    <!-- @if (results?.config?.lookup && hasLookupConfig()) { -->
+    @if (hasLookupConfig()) {
       <mat-accordion class="w-full">
         <mat-expansion-panel>
           <mat-expansion-panel-header>
@@ -23,22 +21,65 @@
           </mat-expansion-panel-header>
 
           <div class="mt-4">
-            <!-- Header Configuration -->
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 class="font-semibold text-green-800 mb-3 flex items-center">
-                <mat-icon class="mr-2 text-sm">table_chart</mat-icon>
-                Data Header Configuration
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                @for (field of getHeaderFields(); track $index) {
-                  <div class="bg-white rounded p-3 border border-green-100">
-                    <div class="text-sm font-medium text-green-700 mb-1">{{ field.label }}</div>
-                    <div class="text-sm text-green-600 font-mono bg-green-50 px-2 py-1 rounded">
-                      {{ field.value }}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Header Configuration -->
+              <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 class="font-semibold text-green-800 mb-3 flex items-center">
+                  <mat-icon class="mr-2 text-sm">table_chart</mat-icon>
+                  Data Header Configuration
+                </h4>
+                <div class="space-y-3">
+                  @for (field of getHeaderFields(); track $index) {
+                    <div class="bg-white rounded p-3 border border-green-100">
+                      <div class="text-sm font-medium text-green-700 mb-1">
+                        {{ field.label }}
+                      </div>
+                      <div
+                        class="text-sm text-green-600 font-mono bg-green-50 px-2 py-1 rounded"
+                      >
+                        {{ field.value }}
+                      </div>
                     </div>
-                  </div>
-                }
+                  }
+                </div>
               </div>
+
+              <!-- Quality Thresholds -->
+              @if (getClinicThresholds()) {
+                <div
+                  class="bg-indigo-50 border border-indigo-200 rounded-lg p-4"
+                >
+                  <h4
+                    class="font-semibold text-indigo-800 mb-3 flex items-center"
+                  >
+                    <mat-icon class="mr-2 text-sm">high_quality</mat-icon>
+                    Quality Thresholds
+                  </h4>
+                  <div class="space-y-3">
+                    @for (threshold of getQualityThresholds(); track $index) {
+                      <div
+                        class="bg-white rounded p-3 border border-indigo-100"
+                      >
+                        <div class="flex justify-between items-start">
+                          <div>
+                            <div class="text-sm font-medium text-indigo-700">
+                              {{ threshold.label }}
+                            </div>
+                            <div class="text-xs text-indigo-500 mt-1">
+                              {{ threshold.description }}
+                            </div>
+                          </div>
+                          <div
+                            class="text-sm text-indigo-600 font-mono bg-indigo-50 px-2 py-1 rounded"
+                          >
+                            {{ threshold.value }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </div>
 
             <!-- Analysis Summary -->
@@ -48,14 +89,17 @@
                 Analysis Summary
               </h4>
               <p class="text-gray-700 text-sm">
-                This lookup analysis processes genomic variants by querying the chromosome ({{ results?.config?.lookup?.chr_header }}),
-                start position ({{ results?.config?.lookup?.start_header }}), and end position ({{ results?.config?.lookup?.end_header }}) within the VCF file.
+                This lookup analysis processes genomic variants by querying the
+                chromosome ({{ results?.config?.lookup?.chr_header }}), start
+                position ({{ results?.config?.lookup?.start_header }}), and end
+                position ({{ results?.config?.lookup?.end_header }}) within the
+                VCF file.
               </p>
             </div>
           </div>
         </mat-expansion-panel>
       </mat-accordion>
-    <!-- } -->
+    }
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
       <div class="flex flex-row space-x-1 items-center mb-2">
@@ -106,7 +150,7 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <div class="flex flex-col">
-              <div class="flex flex-row space-x-1 items-center gap-2">
+              <div class="flex flex-row space-x-1 items-center gap-2 mb-4">
                 <mat-form-field class="w-[200px] self-center">
                   <mat-label>Filter</mat-label>
                   <input
@@ -119,7 +163,7 @@
                   />
                   <mat-autocomplete #auto="matAutocomplete">
                     @for (option of filteredColumns | async; track option) {
-                      @if (option !== "selected") {
+                      @if (option !== "selected" && option !== "Status") {
                         <mat-option [value]="option">
                           {{ option }}
                         </mat-option>
@@ -128,10 +172,22 @@
                   </mat-autocomplete>
                 </mat-form-field>
                 <div class="mb-5">
-                  <button mat-raised-button color="primary" (click)="addFilter()">
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="addFilter()"
+                  >
                     Add Filter
                   </button>
                 </div>
+                <mat-icon
+                  class="text-primary-50 mb-[1.25rem]"
+                  [matTooltip]="
+                    'The filter uses the AND logic to combine the values within the available result columns to pinpoint the variant(s) containing the specified entries.'
+                  "
+                >
+                  info
+                </mat-icon>
               </div>
 
               <div class="flex flex-wrap gap-4">
@@ -164,6 +220,22 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div>
+
+      <div
+        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+      >
+        <div class="flex flex-row gap-2 items-center">
+          <mat-icon class="text-primary-50"> info </mat-icon>
+          <div>Need help understanding filters?</div>
+        </div>
+        <div
+          (click)="handleRedirectFAQ()"
+          class="font-medium text-primary-60 cursor-pointer"
+        >
+          Learn more in the FAQ
+        </div>
+      </div>
+
       <!-- @if (dataRows.value.length > 0) { -->
       <div class="mb-2">
         <strong>Click on table headers to sort</strong>
@@ -178,6 +250,30 @@
             matSort
             (matSortChange)="resort($event)"
           >
+            <!-- Manual Status Column -->
+            <ng-container matColumnDef="Status">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                class="whitespace-nowrap text-center"
+              >
+                Status
+              </th>
+              <td mat-cell *matCellDef="let element" class="text-center">
+                @if (shouldShowFlag(element)) {
+                  <div
+                    class="flex justify-center items-center rounded-full cursor-pointer"
+                    [matTooltip]="getFlagMessage(element)"
+                    style="width: 24px; height: 24px; margin: 0 auto"
+                    [style.background]="getFlagColor(element)"
+                  >
+                    <mat-icon class="text-white">priority_high</mat-icon>
+                  </div>
+                }
+              </td>
+            </ng-container>
+
+            <!-- Checkbox Column -->
             <ng-container matColumnDef="selected">
               <th mat-header-cell *matHeaderCellDef class="!text-center">#</th>
               <td mat-cell *matCellDef="let row">
@@ -192,8 +288,14 @@
                 </div>
               </td>
             </ng-container>
+
+            <!-- Dynamic Columns -->
             @for (column of columns; track $index) {
-              @if (column !== "selected") {
+              @if (
+                column !== "selected" &&
+                column !== "Status" &&
+                !["qual", "filter", "dp", "gq", "mq", "qd"].includes(column)
+              ) {
                 <ng-container [matColumnDef]="column">
                   <th
                     mat-header-cell
@@ -211,7 +313,9 @@
                     <div class="flex flex-row justify-between space-x-2">
                       @if (column === "Variant") {
                         <div
-                          (click)="handleRedirectUrl('Variant', element[column])"
+                          (click)="
+                            handleRedirectUrl('Variant', element[column])
+                          "
                           class="link-click"
                         >
                           {{ element[column] }}

@@ -5,17 +5,24 @@
       <div class="flex-1">
         <h3 class="text-lg font-bold text-orange-800 mb-3 mt-0">No results were obtained from your VCF.</h3>
 
-        <div class="mb-4">
-          <p class="text-orange-700 font-bold mb-2 mt-0">This may be due to:</p>
-          <p class="text-orange-700 font-bold mb-1">1) The filtering parameters applied in the back-end, and/or</p>
-          <p class="text-orange-700 font-bold mb-3">2) The database(s) referred to not having matched record(s) with the input VCF file.</p>
-        </div>
+        @if (message) {
+          <div class="mb-4">
+            <p class="text-orange-700 font-bold mb-2">{{ message }}</p>
+          </div> 
+        } @else {
+          <div class="mb-4">
+            <p class="text-orange-700 font-bold mb-2 mt-0">This may be due to:</p>
+            @for (reason of allReasons; track $index) {
+              <p class="text-orange-700 font-bold" [ngClass]="$last ? 'mb-1' : 'mb-3'">{{ $index + 1 }}) {{reason}}</p>
+            }
+          </div>
 
-        <div class="bg-orange-100 border border-orange-200 rounded-lg p-3">
-          <p class="text-orange-800 text-sm m-0">
-            For more detailed information on the parameters, please refer to the Clinic Workflow Configuration below
-          </p>
-        </div>
+          <div class="bg-orange-100 border border-orange-200 rounded-lg p-3">
+            <p class="text-orange-800 text-sm m-0">
+              For more detailed information on the parameters, please refer to the Clinic Workflow Configuration below
+            </p>
+          </div>
+        }
       </div>
     </div>
   </mat-card-content>

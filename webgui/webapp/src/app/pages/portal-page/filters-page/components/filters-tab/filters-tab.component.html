@@ -88,13 +88,16 @@
           <mat-hint>Optional keyword to search for</mat-hint>
         </mat-form-field>
       </div>
-      <div class="bui-visualise-checkbox-container">
-        <h3>
+      <div class="flex flex-row items-center">
+        <h3 class="inline-flex items-center">
           Visualise term frequencies
           <mat-checkbox formControlName="stats" color="primary"></mat-checkbox>
         </h3>
         @if (form.controls["stats"].disabled) {
-          <em>Not available for the selected scope</em>
+          <em>
+            Not available for the selected scope or number of requested records
+            too big (>100).
+          </em>
         }
       </div>
     </form>
