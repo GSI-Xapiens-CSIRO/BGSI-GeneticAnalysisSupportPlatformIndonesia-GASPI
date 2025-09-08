@@ -112,16 +112,21 @@ export class ReportDialogRscmComponent {
 
     this.loading = true;
     try {
+      const piiValue = this.reportForm.get('pii')?.value;
+
       const pii = await this.PIIEncryptionService.encryptPIIData(
-        this.reportForm.value,
+        piiValue,
         false,
       );
+
+      const nonPii = this.reportForm.get('nonPii')?.value;
 
       this.cs
         .generateReport(this.props.projectName, this.props.requestId, {
           lang: this.props.lang,
           mode: this.props.mode,
           pii,
+          nonPii,
         })
         .pipe(catchError(() => of(null)))
         .subscribe((res: any) => {
