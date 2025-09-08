@@ -7,6 +7,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -81,20 +82,27 @@ export class ReportDialogRscmComponent {
 
   private createForm(): FormGroup {
     return this.fb.group({
-      patient_name: ['', [Validators.required, Validators.minLength(2)]],
-      date_of_birth: ['', [Validators.required]],
-      rekam_medis: ['', [Validators.required]],
-      gender: ['', [Validators.required]],
-      clinical_diagnosis: [
-        'Familial Hypercholesterolemia (FH)',
-        [Validators.required],
-      ],
-      symptoms: ['', [Validators.required]],
-      physician: ['dr. Dicky Tahapary, SpPD-KEMD., PhD', [Validators.required]],
-      genetic_counselor: [
-        'dr. Widya Eka Nugraha, M.Si. Med.',
-        [Validators.required],
-      ],
+      pii: this.fb.group({
+        patient_name: ['', [Validators.required, Validators.minLength(2)]],
+        date_of_birth: ['', [Validators.required]],
+        rekam_medis: ['', [Validators.required]],
+        gender: ['', [Validators.required]],
+      }),
+      nonPii: this.fb.group({
+        clinical_diagnosis: [
+          'Familial Hypercholesterolemia (FH)',
+          [Validators.required],
+        ],
+        symptoms: ['', [Validators.required]],
+        physician: [
+          'dr. Dicky Tahapary, SpPD-KEMD., PhD',
+          [Validators.required],
+        ],
+        genetic_counselor: [
+          'dr. Widya Eka Nugraha, M.Si. Med.',
+          [Validators.required],
+        ],
+      }),
     });
   }
 
@@ -106,13 +114,20 @@ export class ReportDialogRscmComponent {
 
     this.loading = true;
     try {
+      const piiValue = this.reportForm.get('pii')?.value;
+
       const pii = await this.PIIEncryptionService.encryptPIIData(
-        this.reportForm.value,
+        piiValue,
         false,
       );
 
+      const nonPii = this.reportForm.get('nonPii')?.value;
+
       this.cs
-        .generateReport(this.props.projectName, this.props.requestId, { pii })
+        .generateReport(this.props.projectName, this.props.requestId, {
+          pii,
+          nonPii,
+        })
         .pipe(catchError(() => of(null)))
         .subscribe(async (res: any) => {
           if (res && res.success) {
@@ -155,34 +170,41 @@ export class ReportDialogRscmComponent {
     });
   }
 
-  getErrorMessage(fieldName: string): string {
-    const control = this.reportForm.get(fieldName);
+  getErrorMessage(fieldPath: string): string {
+    const pathParts = fieldPath.split('.');
+    let control: AbstractControl | null = this.reportForm;
 
-    if (control?.hasError('required')) {
-      return `${this.getFieldLabel(fieldName)} is required`;
+    // Navigate to the nested control
+    for (const part of pathParts) {
+      if (!control) return '';
+      control = control.get(part);
     }
 
-    if (control?.hasError('minlength')) {
-      const minLength = control.errors?.['minlength'].requiredLength;
+    if (!control) return '';
+
+    if (control.hasError('required')) {
+      return `${this.getFieldLabel(fieldPath)} is required`;
+    }
+    if (control.hasError('minlength')) {
+      const requiredLength = control.getError('minlength').requiredLength;
       return `${this.getFieldLabel(
-        fieldName,
-      )} must be at least ${minLength} characters`;
+        fieldPath,
+      )} must be at least ${requiredLength} characters`;
     }
-
     return '';
   }
 
-  private getFieldLabel(fieldName: string): string {
+  private getFieldLabel(fieldPath: string): string {
     const labels: { [key: string]: string } = {
-      patient_name: 'Patient Name',
-      date_of_birth: 'Date of Birth',
-      rekam_medis: 'Rekam Medis',
-      gender: 'Gender',
-      clinical_diagnosis: 'Clinical Diagnosis',
-      symptoms: 'Symptoms',
-      physician: 'Physician',
-      genetic_counselor: 'Genetic Counselor',
+      'pii.patient_name': 'Patient Name',
+      'pii.date_of_birth': 'Date of Birth',
+      'pii.rekam_medis': 'Rekam Medis',
+      'pii.gender': 'Gender',
+      'nonPii.clinical_diagnosis': 'Clinical Diagnosis',
+      'nonPii.symptoms': 'Symptoms',
+      'nonPii.physician': 'Physician',
+      'nonPii.genetic_counselor': 'Genetic Counselor',
     };
-    return labels[fieldName] || fieldName;
+    return labels[fieldPath] || fieldPath;
   }
 }

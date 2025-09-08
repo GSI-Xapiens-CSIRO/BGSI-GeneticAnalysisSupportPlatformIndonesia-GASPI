@@ -11,8 +11,8 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <!-- Left Column - Patient & Sample Information -->
-        <div class="flex flex-col gap-4">
+        <!-- Left Column - Patient Information (PII) -->
+        <div class="flex flex-col gap-4" formGroupName="pii">
           <mat-form-field>
             <mat-label>Patient Name</mat-label>
             <input
@@ -21,28 +21,7 @@
               placeholder="Enter patient name"
               formControlName="patient_name"
             />
-            <mat-error>{{ getErrorMessage('patient_name') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Lab Number</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter lab number"
-              formControlName="lab_number"
-            />
-            <mat-error>{{ getErrorMessage('lab_number') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Gender</mat-label>
-            <mat-select formControlName="gender">
-              <mat-option *ngFor="let option of genderOptions" [value]="option.value">
-                {{ option.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>{{ getErrorMessage('gender') }}</mat-error>
+            <mat-error>{{ getErrorMessage('pii.patient_name') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -52,45 +31,33 @@
               type="date"
               formControlName="date_of_birth"
             />
-            <mat-error>{{ getErrorMessage('date_of_birth') }}</mat-error>
+            <mat-error>{{ getErrorMessage('pii.date_of_birth') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
-            <mat-label>Race</mat-label>
+            <mat-label>Rekam Medis</mat-label>
             <input
               matInput
               type="text"
-              placeholder="Enter race"
-              formControlName="race"
+              placeholder="Enter medical record number"
+              formControlName="rekam_medis"
             />
-            <mat-error>{{ getErrorMessage('race') }}</mat-error>
+            <mat-error>{{ getErrorMessage('pii.rekam_medis') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
-            <mat-label>Specimen Type</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter specimen type"
-              formControlName="specimen_type"
-            />
-            <mat-error>{{ getErrorMessage('specimen_type') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Sample ID</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter sample ID"
-              formControlName="sample_id"
-            />
-            <mat-error>{{ getErrorMessage('sample_id') }}</mat-error>
+            <mat-label>Gender</mat-label>
+            <mat-select formControlName="gender">
+              <mat-option *ngFor="let option of genderOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error>{{ getErrorMessage('pii.gender') }}</mat-error>
           </mat-form-field>
         </div>
 
-        <!-- Right Column - Clinical & Laboratory Information -->
-        <div class="flex flex-col gap-4">
+        <!-- Right Column - Clinical & Laboratory Information (Non-PII) -->
+        <div class="flex flex-col gap-4" formGroupName="nonPii">
           <mat-form-field>
             <mat-label>Referring Clinician</mat-label>
             <input
@@ -99,7 +66,7 @@
               placeholder="Enter referring clinician name"
               formControlName="referring_clinician"
             />
-            <mat-error>{{ getErrorMessage('referring_clinician') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.referring_clinician') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -109,7 +76,7 @@
               type="date"
               formControlName="sampling_date"
             />
-            <mat-error>{{ getErrorMessage('sampling_date') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.sampling_date') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -119,7 +86,7 @@
               type="date"
               formControlName="testing_date"
             />
-            <mat-error>{{ getErrorMessage('testing_date') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.testing_date') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -129,7 +96,7 @@
               type="date"
               formControlName="reporting_date"
             />
-            <mat-error>{{ getErrorMessage('reporting_date') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.reporting_date') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -140,7 +107,7 @@
               placeholder="Enter referring institution"
               formControlName="reffering_institution"
             />
-            <mat-error>{{ getErrorMessage('reffering_institution') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.reffering_institution') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field>
@@ -151,7 +118,7 @@
               placeholder="Enter testing laboratory"
               formControlName="testing_laboratory"
             />
-            <mat-error>{{ getErrorMessage('testing_laboratory') }}</mat-error>
+            <mat-error>{{ getErrorMessage('nonPii.testing_laboratory') }}</mat-error>
           </mat-form-field>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -83,19 +84,23 @@ export class ReportDialogRscmComponent {
 
   private createForm(): FormGroup {
     return this.fb.group({
-      patient_name: ['', [Validators.required, Validators.minLength(2)]],
-      lab_number: ['', [Validators.required, Validators.minLength(2)]],
-      gender: ['', [Validators.required]],
-      date_of_birth: ['', [Validators.required]],
-      race: ['', [Validators.required]],
-      specimen_type: ['', [Validators.required]],
-      sample_id: ['', [Validators.required]],
-      referring_clinician: ['', [Validators.required]],
-      sampling_date: ['', [Validators.required]],
-      testing_date: ['', [Validators.required]],
-      reporting_date: ['', [Validators.required]],
-      reffering_institution: ['', [Validators.required]],
-      testing_laboratory: ['', [Validators.required]],
+      pii: this.fb.group({
+        patient_name: ['', [Validators.required, Validators.minLength(2)]],
+        lab_number: ['', [Validators.required, Validators.minLength(2)]],
+        gender: ['', [Validators.required]],
+        date_of_birth: ['', [Validators.required]],
+        race: ['', [Validators.required]],
+        specimen_type: ['', [Validators.required]],
+        sample_id: ['', [Validators.required]],
+      }),
+      nonPii: this.fb.group({
+        referring_clinician: ['', [Validators.required]],
+        sampling_date: ['', [Validators.required]],
+        testing_date: ['', [Validators.required]],
+        reporting_date: ['', [Validators.required]],
+        reffering_institution: ['', [Validators.required]],
+        testing_laboratory: ['', [Validators.required]],
+      }),
     });
   }
 
@@ -152,39 +157,46 @@ export class ReportDialogRscmComponent {
     });
   }
 
-  getErrorMessage(fieldName: string): string {
-    const control = this.reportForm.get(fieldName);
+  getErrorMessage(fieldPath: string): string {
+    const pathParts = fieldPath.split('.');
+    let control: AbstractControl | null = this.reportForm;
 
-    if (control?.hasError('required')) {
-      return `${this.getFieldLabel(fieldName)} is required`;
+    // Navigate to the nested control
+    for (const part of pathParts) {
+      if (!control) return '';
+      control = control.get(part);
     }
 
-    if (control?.hasError('minlength')) {
-      const minLength = control.errors?.['minlength'].requiredLength;
+    if (!control) return '';
+
+    if (control.hasError('required')) {
+      return `${this.getFieldLabel(fieldPath)} is required`;
+    }
+    if (control.hasError('minlength')) {
+      const requiredLength = control.getError('minlength').requiredLength;
       return `${this.getFieldLabel(
-        fieldName,
-      )} must be at least ${minLength} characters`;
+        fieldPath,
+      )} must be at least ${requiredLength} characters`;
     }
-
     return '';
   }
 
-  private getFieldLabel(fieldName: string): string {
+  private getFieldLabel(fieldPath: string): string {
     const labels: { [key: string]: string } = {
-      patient_name: 'Patient Name',
-      lab_number: 'Lab Number',
-      gender: 'Gender',
-      date_of_birth: 'Date of Birth',
-      race: 'Race',
-      specimen_type: 'Specimen Type',
-      sample_id: 'Sample ID',
-      referring_clinician: 'Referring Clinician',
-      sampling_date: 'Sampling Date',
-      testing_date: 'Testing Date',
-      reporting_date: 'Reporting Date',
-      reffering_institution: 'Referring Institution',
-      testing_laboratory: 'Testing Laboratory',
+      'pii.patient_name': 'Patient Name',
+      'pii.lab_number': 'Lab Number',
+      'pii.gender': 'Gender',
+      'pii.date_of_birth': 'Date of Birth',
+      'pii.race': 'Race',
+      'pii.specimen_type': 'Specimen Type',
+      'pii.sample_id': 'Sample ID',
+      'nonPii.referring_clinician': 'Referring Clinician',
+      'nonPii.sampling_date': 'Sampling Date',
+      'nonPii.testing_date': 'Testing Date',
+      'nonPii.reporting_date': 'Reporting Date',
+      'nonPii.reffering_institution': 'Referring Institution',
+      'nonPii.testing_laboratory': 'Testing Laboratory',
     };
-    return labels[fieldName] || fieldName;
+    return labels[fieldPath] || fieldPath;
   }
 }
