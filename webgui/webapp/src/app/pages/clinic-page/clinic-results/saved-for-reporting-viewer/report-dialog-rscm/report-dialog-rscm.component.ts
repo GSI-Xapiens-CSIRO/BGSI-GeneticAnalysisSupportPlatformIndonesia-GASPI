@@ -86,9 +86,9 @@ export class ReportDialogRscmComponent {
         patient_name: ['', [Validators.required, Validators.minLength(2)]],
         date_of_birth: ['', [Validators.required]],
         rekam_medis: ['', [Validators.required]],
-        gender: ['', [Validators.required]],
       }),
       nonPii: this.fb.group({
+        gender: ['', [Validators.required]],
         clinical_diagnosis: [
           'Familial Hypercholesterolemia (FH)',
           [Validators.required],
