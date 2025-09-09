@@ -199,7 +199,7 @@ export class ReportDialogRscmComponent {
       'pii.patient_name': 'Patient Name',
       'pii.date_of_birth': 'Date of Birth',
       'pii.rekam_medis': 'Rekam Medis',
-      'pii.gender': 'Gender',
+      'nonPii.gender': 'Gender',
       'nonPii.clinical_diagnosis': 'Clinical Diagnosis',
       'nonPii.symptoms': 'Symptoms',
       'nonPii.physician': 'Physician',

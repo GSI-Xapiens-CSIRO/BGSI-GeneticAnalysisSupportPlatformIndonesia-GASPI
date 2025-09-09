@@ -12,48 +12,51 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Left Column - Patient Information (PII) -->
-        <div class="flex flex-col gap-4" formGroupName="pii">
-          <mat-form-field>
-            <mat-label>Patient Name</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter patient name"
-              formControlName="patient_name"
-            />
-            <mat-error>{{ getErrorMessage('pii.patient_name') }}</mat-error>
-          </mat-form-field>
+        <div class="flex flex-col">
+          <div class="flex flex-col gap-4" formGroupName="pii">
+            <mat-form-field>
+              <mat-label>Patient Name</mat-label>
+              <input
+                matInput
+                type="text"
+                placeholder="Enter patient name"
+                formControlName="patient_name"
+              />
+              <mat-error>{{ getErrorMessage('pii.patient_name') }}</mat-error>
+            </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Date of Birth</mat-label>
-            <input
-              matInput
-              type="date"
-              formControlName="date_of_birth"
-            />
-            <mat-error>{{ getErrorMessage('pii.date_of_birth') }}</mat-error>
-          </mat-form-field>
+            <mat-form-field>
+              <mat-label>Date of Birth</mat-label>
+              <input
+                matInput
+                type="date"
+                formControlName="date_of_birth"
+              />
+              <mat-error>{{ getErrorMessage('pii.date_of_birth') }}</mat-error>
+            </mat-form-field>
 
-          <mat-form-field>
-            <mat-label>Rekam Medis</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="Enter medical record number"
-              formControlName="rekam_medis"
-            />
-            <mat-error>{{ getErrorMessage('pii.rekam_medis') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Gender</mat-label>
-            <mat-select formControlName="gender">
-              <mat-option *ngFor="let option of genderOptions" [value]="option.value">
-                {{ option.label }}
-              </mat-option>
-            </mat-select>
-            <mat-error>{{ getErrorMessage('pii.gender') }}</mat-error>
-          </mat-form-field>
+            <mat-form-field>
+              <mat-label>Rekam Medis</mat-label>
+              <input
+                matInput
+                type="text"
+                placeholder="Enter medical record number"
+                formControlName="rekam_medis"
+              />
+              <mat-error>{{ getErrorMessage('pii.rekam_medis') }}</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="flex flex-col gap-4 mt-4" formGroupName="nonPii">
+            <mat-form-field>
+              <mat-label>Gender</mat-label>
+              <mat-select formControlName="gender">
+                <mat-option *ngFor="let option of genderOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error>{{ getErrorMessage('nonPii.gender') }}</mat-error>
+            </mat-form-field>
+          </div>
         </div>
 
         <!-- Right Column - Medical Information (Non-PII) -->
