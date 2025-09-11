@@ -140,6 +140,7 @@
         mat-raised-button
         color="primary"
         (click)="onSubmit()"
+        [disabled]="reportForm.invalid"
       >
         Generate Report
       </button>
