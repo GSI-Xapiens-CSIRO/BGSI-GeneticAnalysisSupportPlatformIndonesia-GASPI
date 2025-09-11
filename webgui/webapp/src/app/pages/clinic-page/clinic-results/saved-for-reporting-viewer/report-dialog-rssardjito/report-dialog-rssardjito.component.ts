@@ -105,10 +105,10 @@ export class ReportDialogRscmComponent {
   }
 
   async onSubmit(): Promise<void> {
-    if (!this.reportForm.valid) {
-      this.markFormGroupTouched();
-      return;
-    }
+    // if (!this.reportForm.valid) {
+    //   this.markFormGroupTouched();
+    //   return;
+    // }
 
     this.loading = true;
     try {
