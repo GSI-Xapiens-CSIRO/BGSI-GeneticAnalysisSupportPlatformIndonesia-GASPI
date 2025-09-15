@@ -83,14 +83,9 @@ export function validationReportsArray(listArray: any, listSelectedData: any) {
   function isEqual(valA: any, valB: any): boolean {
     if (Array.isArray(valA) && Array.isArray(valB)) {
       if (valA.length !== valB.length) return false;
-      // cek apakah semua elemen sama (strict order)
       return valA.every((v, i) => String(v).trim() === String(valB[i]).trim());
-
-      // ingnore order
-      // return [...valA].sort().join('|') === [...valB].sort().join('|');
     }
 
-    // default (primitive, string, number, boolean)
     return String(valA).trim() === String(valB).trim();
   }
 
@@ -120,7 +115,7 @@ export function validationReportsObject(listArray: any, obj: any) {
 
   const isMatchByKeysOfA = (a: any, b: any) =>
     Object.keys(a)
-      .filter((k) => !(hubName === 'RSJPD' && k === 'Zygosity')) // <-- ignore Zygosity hanya saat RSPPD
+      .filter((k) => !(hubName === 'RSJPD' && k === 'Zygosity'))
       .every((k) => b.hasOwnProperty(k) && isEqual(a[k], b[k]));
 
   return arrayA.some((a) => isMatchByKeysOfA(a, obj));
