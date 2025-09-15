@@ -75,6 +75,7 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
 
   receivedData: any = [];
   selectedData: any = [];
+  listReports: any = [];
 
   constructor(
     private fb: FormBuilder,
@@ -178,5 +179,9 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
 
   handleSelectedAnotation(data: any) {
     this.SvepResultsViewerComponent.filterByAnotation(data);
+  }
+
+  handleSetListReports(data: any) {
+    this.listReports = data;
   }
 }
