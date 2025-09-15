@@ -103,8 +103,6 @@ module "sbeacon" {
   svep-references-table-name             = var.svep-references-table-name
   clinic-temp-bucket-names               = local.clinic_temp_bucket_names
   clinic-temp-bucket-arns                = local.clinic_temp_bucket_arns
-  subnet_id                              = var.subnet_id
-  security_group_id                      = var.security_group_id
 
   common-tags = merge(var.common-tags, {
     "NAME" = "sbeacon-backend"
