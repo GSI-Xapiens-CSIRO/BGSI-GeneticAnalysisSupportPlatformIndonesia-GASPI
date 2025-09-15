@@ -338,7 +338,6 @@
                   [expanded]="expandedMap.get(row.id) ?? false"
                   (panelToggled)="onToggle(row.id, $event)"
                   [isSelected]="handleIsSelected(row)"
-                  [isBookmark]="checkIsMarked(row)"
                 />
               }
             </div>

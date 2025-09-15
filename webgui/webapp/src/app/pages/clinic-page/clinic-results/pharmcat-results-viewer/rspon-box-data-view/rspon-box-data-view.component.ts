@@ -26,7 +26,6 @@ export class RsponBoxDataViewComponent {
   @Input({ required: true }) row: any = null;
   @Input({ required: true }) selected: boolean = false;
   @Input({ required: true }) variantHasRows: boolean = false;
-  @Input() isBookmark: boolean = false;
   @Output() change = new EventEmitter<boolean>();
   @Output() filter = new EventEmitter<string[]>();
   togglePanel = false;

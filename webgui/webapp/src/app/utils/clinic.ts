@@ -1,5 +1,4 @@
 import { Sort } from '@angular/material/sort';
-import { environment } from 'src/environments/environment';
 
 export function clinicFilter<T extends Record<string, any>>(
   rows: T[],
@@ -74,49 +73,4 @@ export function clinicResort<T extends Record<string, any>>(
   } else {
     update(rows);
   }
-}
-
-export function validationReportsArray(listArray: any, listSelectedData: any) {
-  const arrayList: any[] = listArray;
-  const arrayBValues: any[] = Array.from(listSelectedData.values());
-
-  function isEqual(valA: any, valB: any): boolean {
-    if (Array.isArray(valA) && Array.isArray(valB)) {
-      if (valA.length !== valB.length) return false;
-      return valA.every((v, i) => String(v).trim() === String(valB[i]).trim());
-    }
-
-    return String(valA).trim() === String(valB).trim();
-  }
-
-  function isMatch(objA: any, objB: any): boolean {
-    return Object.keys(objA).every((key) => {
-      const av = objA[key];
-      const bv = objB[key];
-      return isEqual(av, bv);
-    });
-  }
-
-  const found = arrayList.some((a) => arrayBValues.some((b) => isMatch(a, b)));
-
-  return found;
-}
-export function validationReportsObject(listArray: any, obj: any) {
-  const hubName: string = environment.hub_name;
-  const arrayA: any[] = listArray;
-
-  function isEqual(valA: any, valB: any): boolean {
-    if (Array.isArray(valA) && Array.isArray(valB)) {
-      if (valA.length !== valB.length) return false;
-      return valA.every((v, i) => String(v).trim() === String(valB[i]).trim());
-    }
-    return String(valA).trim() === String(valB).trim();
-  }
-
-  const isMatchByKeysOfA = (a: any, b: any) =>
-    Object.keys(a)
-      .filter((k) => !(hubName === 'RSJPD' && k === 'Zygosity'))
-      .every((k) => b.hasOwnProperty(k) && isEqual(a[k], b[k]));
-
-  return arrayA.some((a) => isMatchByKeysOfA(a, obj));
 }

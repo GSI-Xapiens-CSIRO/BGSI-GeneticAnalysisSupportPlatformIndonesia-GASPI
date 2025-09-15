@@ -42,7 +42,6 @@ export class BoxDataComponent implements OnInit {
   @Input() rows: any = null;
   @Input() expanded = false;
   @Input() isSelected: boolean = false;
-  @Input() isBookmark: boolean = false;
   @Output() panelToggled = new EventEmitter<boolean>();
 
   exclamationMarkStatus = false;
