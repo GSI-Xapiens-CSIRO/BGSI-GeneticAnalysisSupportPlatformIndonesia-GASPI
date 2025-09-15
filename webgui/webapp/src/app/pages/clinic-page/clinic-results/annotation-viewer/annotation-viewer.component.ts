@@ -30,7 +30,6 @@ import { SpinnerService } from 'src/app/services/spinner.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { MatTooltip } from '@angular/material/tooltip';
-import { validationReportsArray } from 'src/app/utils/clinic';
 
 type ClinicalAnnotation = {
   name: string;
@@ -86,7 +85,6 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
   @Output() dataSent = new EventEmitter<any>(); // array of objects
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
-  @Input() listReports: any = []; // receive data from parent
   @ViewChild('paginator')
   paginator!: MatPaginator;
   protected annotations: ClinicalAnnotation[] = [];
@@ -235,15 +233,6 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   async openAddToReportingDialog(variants: any[]) {
-    const found = validationReportsArray(this.listReports, variants);
-    if (found) {
-      this.tstr.error(
-        'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
-        'Error',
-      );
-      return;
-    }
-
     const { AddToReportingDialogComponent } = await import(
       '../add-to-reporting-dialog/add-to-reporting-dialog.component'
     );
