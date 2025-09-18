@@ -10,4 +10,4 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 WORKDIR /usr/src/gaspifs
 COPY . .
 
-RUN cargo build --release
+RUN cargo build --release --features uploads
