@@ -203,6 +203,8 @@ export class UserNotebookListComponent implements OnInit {
       maxWidth: '95vw',
       maxHeight: '90vh',
     });
+
+    dialog.afterClosed().subscribe(() => {});
   }
 
   remove(notebook: InstanceName) {
