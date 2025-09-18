@@ -1,89 +1,136 @@
 <h1 mat-dialog-title>GaspiFS Commands Reference</h1>
 
 <div mat-dialog-content>
-    <div class="space-y-4">
-        <p>
-            GaspiFS is a virtual filesystem for managing your projects.
-            You can view projects, explore files within projects, and move files from project storage into your notebook.
-            Below is a list of available commands to help you work with your data efficiently.
-        </p>
+  <div class="space-y-4">
+    <p>
+      GaspiFS is a secure CLI for managing your projects. You can view projects,
+      explore files within projects, and move files from project storage into
+      your notebook. Below is a list of available commands to help you work with
+      your data efficiently.
+    </p>
+    <p>
+      Please note that you will have to login first to use the commands. If you
+      need to download files from a notebook, without interactive CLI access,
+      please use login command (details in Authentication tab) to authenticate
+      your session first. To do this, you can open a new terminal window and the
+      logged in session will be active in the notebook. Username and password
+      are the same GASPI credentials.
+    </p>
 
-        <mat-tab-group>
-            <mat-tab label="Projects">
-                <div class="mt-4 space-y-4">
-                    <h3>List Projects</h3>
-                    <p>Display all genomic projects you have access to with their names and descriptions.</p>
-                    <pre class="code-block">gaspifs projects</pre>
-                    <pre class="code-block">
+    <p>
+      To use CLI commands within the Notebook cells use the following syntax.
+      Note the exclamation mark at the beginning.
+    </p>
+    <pre class="code-block">
+!gaspifs projects
+    </pre>
+
+    <mat-tab-group>
+      <mat-tab label="Projects">
+        <div class="mt-4 space-y-4">
+          <h3>List Projects</h3>
+          <p>
+            Display all genomic projects you have access to with their names and
+            descriptions.
+          </p>
+          <pre class="code-block">gaspifs projects</pre>
+          <pre class="code-block">
 Project 1:
     Name: "Whole Genome Analysis"
     Description: "WGS data for rare disease study"
 Project 2:
     Name: "Exome Sequencing"
-    Description: "Clinical exome analysis pipeline"</pre>
-                </div>
-            </mat-tab>
+    Description: "Clinical exome analysis pipeline"</pre
+          >
+        </div>
+      </mat-tab>
 
-            <mat-tab label="Files">
-                <div class="mt-4 space-y-4">
-                    <h3>User Space Files</h3>
-                    <p>List files in your personal workspace (saved queries, analysis results).</p>
-                    <pre class="code-block">gaspifs files</pre>
-                    <pre class="code-block">
+      <mat-tab label="Files">
+        <div class="mt-4 space-y-4">
+          <h3>User Space Files</h3>
+          <p>
+            List files in your personal workspace (saved queries, analysis
+            results).
+          </p>
+          <pre class="code-block">gaspifs files</pre>
+          <pre class="code-block">
 File    1: "saved-queries/variant-filter.json"
-File    2: "saved-queries/population-analysis.json"</pre>
+File    2: "saved-queries/population-analysis.json"</pre
+          >
 
-                    <h3>Project Files</h3>
-                    <p>List genomic data files within a specific project. <strong>-p</strong> specifies the project name.</p>
-                    <pre class="code-block">gaspifs files -p "Whole Genome Analysis"</pre>
-                    <pre class="code-block">
+          <h3>Project Files</h3>
+          <p>
+            List genomic data files within a specific project.
+            <strong>-p</strong> specifies the project name.
+          </p>
+          <pre class="code-block">gaspifs files -p "Whole Genome Analysis"</pre>
+          <pre class="code-block">
 File    1: "samples.vcf.gz"
 File    2: "samples.vcf.gz.tbi"
 File    3: "metadata.json"
-File    4: "quality-control.txt"</pre>
-                </div>
-            </mat-tab>
-
-            <mat-tab label="Download">
-                <div class="mt-4 space-y-4">
-                    <h3>Download from Project</h3>
-                    <p>Download files from a specific genomic project to your workspace.. <strong>-p</strong> specifies the project, <strong>-f</strong> specifies the file, and <strong>-d</strong> specifies the destination directory.</p>
-                    <pre class="code-block">gaspifs download -f samples.vcf.gz -d files -p "Whole Genome Analysis"</pre>
-
-                    <h3>Download from User Space</h3>
-                    <p>Download files saved in your personal workspace. <strong>-f</strong> specifies the file, <strong>-d</strong> specifies the destination directory.</p>
-                    <pre class="code-block">gaspifs download -f "saved-queries/variant-filter.json" -d files</pre>
-                </div>
-            </mat-tab>
-
-            <mat-tab label="Authentication">
-                <div class="mt-4 space-y-4">
-                    <h3>Login</h3>
-                    <p>Authenticate with GaspiFS to start using commands and access your files.</p>
-                    <pre class="code-block">gaspifs login</pre>
-
-                    <h3>Logout</h3>
-                    <p>Sign out of GaspiFS to end your session and secure your access.</p>
-                    <pre class="code-block">gaspifs logout</pre>
-                </div>
-            </mat-tab>
-
-            <mat-tab label="Help">
-                <div class="mt-4 space-y-4">
-                    <h3>Get Help</h3>
-                    <p>Shows available commands within the terminal.</p>
-                    <pre class="code-block">gaspifs help</pre>
-                </div>
-            </mat-tab>
-        </mat-tab-group>
-
-        <div class="alert-warning" role="alert">
-            <span class="block sm:inline">Use quotes around project names and filenames that contain spaces.
-                File extensions like .vcf.gz, .json, .txt help identify data types.</span>
+File    4: "quality-control.txt"</pre
+          >
         </div>
+      </mat-tab>
 
-        <div class="flex flex-row space-x-1">
-            <button mat-raised-button mat-dialog-close color="primary">Close</button>
+      <mat-tab label="Download">
+        <div class="mt-4 space-y-4">
+          <h3>Download from Project</h3>
+          <p>
+            Download files from a specific genomic project to your workspace..
+            <strong>-p</strong> specifies the project,
+            <strong>-f</strong> specifies the file, and
+            <strong>-d</strong> specifies the destination directory.
+          </p>
+          <pre class="code-block">
+gaspifs download -f samples.vcf.gz -d files -p "Whole Genome Analysis"</pre
+          >
+
+          <h3>Download from User Space</h3>
+          <p>
+            Download files saved in your personal workspace.
+            <strong>-f</strong> specifies the file,
+            <strong>-d</strong> specifies the destination directory.
+          </p>
+          <pre class="code-block">
+gaspifs download -f "saved-queries/variant-filter.json" -d files</pre
+          >
         </div>
+      </mat-tab>
+
+      <mat-tab label="Authentication">
+        <div class="mt-4 space-y-4">
+          <h3>Login</h3>
+          <p>
+            Authenticate with GaspiFS to start using commands and access your
+            files.
+          </p>
+          <pre class="code-block">gaspifs login</pre>
+
+          <h3>Logout</h3>
+          <p>Sign out of GaspiFS to end your session and secure your access.</p>
+          <pre class="code-block">gaspifs logout</pre>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Help">
+        <div class="mt-4 space-y-4">
+          <h3>Get Help</h3>
+          <p>Shows available commands within the terminal.</p>
+          <pre class="code-block">gaspifs help</pre>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+
+    <div class="alert-warning" role="alert">
+      <span class="block sm:inline"
+        >Use quotes around project names and filenames that contain spaces. File
+        extensions like .vcf.gz, .json, .txt help identify data types.</span
+      >
     </div>
+
+    <div class="flex flex-row space-x-1">
+      <button mat-raised-button mat-dialog-close color="primary">Close</button>
+    </div>
+  </div>
 </div>
