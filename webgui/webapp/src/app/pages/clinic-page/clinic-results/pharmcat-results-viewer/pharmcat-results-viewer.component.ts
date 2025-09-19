@@ -34,6 +34,8 @@ import {
   clinicFilter,
   clinicMultiFilter,
   clinicResort,
+  validationReportsArray,
+  validationReportsObject,
 } from 'src/app/utils/clinic';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
@@ -65,6 +67,7 @@ import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
+import { Router } from '@angular/router';
 
 type PharmcatResult = {
   url?: string;
@@ -150,6 +153,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
 export class PharmcatResultsViewerComponent implements OnInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Input() listReports: any = []; // receive data from parent
+
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   protected results: PharmcatResult | null = null;
@@ -217,6 +222,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
     private tstr: ToastrService,
     private dg: MatDialog,
     private cdr: ChangeDetectorRef,
+    private router: Router,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly virtualScrollStrategy: TableVirtualScrollStrategy,
   ) {}
@@ -756,6 +762,20 @@ export class PharmcatResultsViewerComponent implements OnInit {
   }
 
   async openSaveForReportingDialog() {
+    const found = validationReportsArray(
+      this.listReports,
+      this.cs.selectedVariants.value,
+    );
+    console.log(this.listReports);
+    console.log(this.cs.selectedVariants.value);
+    if (found) {
+      this.tstr.error(
+        'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
+        'Error',
+      );
+      return;
+    }
+
     const { SaveForReportingDialogComponent } = await import(
       '../save-for-reporting-dialog/save-for-reporting-dialog.component'
     );
@@ -764,6 +784,10 @@ export class PharmcatResultsViewerComponent implements OnInit {
       data: { projectName: this.projectName, requestId: this.requestId },
     });
   }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
 
   ngOnChanges(changes: SimpleChanges): void {
     this.refetch(
@@ -854,4 +878,9 @@ export class PharmcatResultsViewerComponent implements OnInit {
     this.setFilter();
     this.setFilterVariants();
   }
+
+  checkIsMarked = (bObj: any) => {
+    const isMarked = validationReportsObject(this.listReports, bObj);
+    return isMarked;
+  };
 }
