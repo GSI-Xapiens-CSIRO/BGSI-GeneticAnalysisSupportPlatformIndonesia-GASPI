@@ -1,3 +1,4 @@
+import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +18,7 @@ import { timer } from 'rxjs';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    ClipboardModule,
     MatDialogModule,
     CommonModule,
   ],
@@ -38,6 +40,7 @@ export class UserFileListComponent implements OnInit {
   constructor(
     private dg: MatDialog,
     private uq: UserQuotaService,
+    private cb: Clipboard,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -87,20 +90,21 @@ export class UserFileListComponent implements OnInit {
     return { quotaSize };
   }
 
-  async copy(file: any) {
-    const url = await Storage.get(file.key, {
-      expires: 3600,
-      level: 'private',
-    });
+  copy(file: any) {
+    const command = `gaspifs download -f "${file.key}" -d files`;
+    const pending = this.cb.beginCopy(command);
 
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        console.log('URL copied to clipboard');
-      })
-      .catch((err) => {
-        console.error('Could not copy URL: ', err);
-      });
+    let remainingAttempts = 3;
+    const attempt = () => {
+      const result = pending.copy();
+      if (!result && --remainingAttempts) {
+        setTimeout(attempt);
+      } else {
+        pending.destroy();
+      }
+    };
+
+    attempt();
   }
 
   async delete(file: any) {

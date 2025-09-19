@@ -32,6 +32,42 @@ export class DportalService {
     );
   }
 
+  // data portal admin cli uploads actions
+  adminGetUploaders(project: string) {
+    console.log('get project uploaders');
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/upload`,
+        {},
+      ),
+    );
+  }
+
+  adminAddUploader(project: string, email: string, args: any) {
+    console.log('add project uploader');
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/users/${email}/upload`,
+        {
+          body: args,
+        },
+      ),
+    );
+  }
+
+  adminRemoveUploader(project: string, email: string, uploadId: string) {
+    console.log('remove project uploader');
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/users/${email}/upload/${uploadId}`,
+        {},
+      ),
+    );
+  }
+
   // data portal admin project actions
   adminCreateProject(name: string, description: string) {
     console.log('create project');

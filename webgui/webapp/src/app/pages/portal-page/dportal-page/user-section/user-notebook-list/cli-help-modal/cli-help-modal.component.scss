@@ -2,6 +2,14 @@
   @apply bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative my-2;
 }
 
+.cli-help-modal .tab-content > * {
+  margin: 0 0 1rem 0; /* uniform bottom margin */
+}
+
+.cli-help-modal .tab-content > *:last-child {
+  margin-bottom: 0; /* no extra space at the end */
+}
+
 .code-block {
   @apply bg-gray-100 p-2 rounded-md overflow-x-auto;
 }

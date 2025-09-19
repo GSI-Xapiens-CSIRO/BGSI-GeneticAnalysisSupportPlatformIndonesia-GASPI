@@ -139,26 +139,20 @@ export class UserProjectsListComponent implements OnInit {
   }
 
   copy(project: string, prefix: string) {
-    return this.dps
-      .getMyProjectFile(project, prefix)
-      .pipe(catchError(() => of(null)))
-      .subscribe((url: string | null) => {
-        if (!url) {
-          this.tstr.error('Unable to sign file.', 'Error');
-        } else {
-          const pending = this.cb.beginCopy(url);
-          let remainingAttempts = 3;
-          const attempt = () => {
-            const result = pending.copy();
-            if (!result && --remainingAttempts) {
-              setTimeout(attempt);
-            } else {
-              pending.destroy();
-            }
-          };
-          attempt();
-        }
-      });
+    const command = `gaspifs download -f "${prefix}" -p "${project}" -d files`;
+    const pending = this.cb.beginCopy(command);
+
+    let remainingAttempts = 3;
+    const attempt = () => {
+      const result = pending.copy();
+      if (!result && --remainingAttempts) {
+        setTimeout(attempt);
+      } else {
+        pending.destroy();
+      }
+    };
+
+    attempt();
   }
 
   refresh() {
