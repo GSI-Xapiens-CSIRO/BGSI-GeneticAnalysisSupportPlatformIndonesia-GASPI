@@ -21,4 +21,5 @@ import { LookupResultsViewerComponent } from '../lookup-results-viewer/lookup-re
 export class HybridResultsViewerComponent {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Input() listReports: any = []; // receive data from parent
 }

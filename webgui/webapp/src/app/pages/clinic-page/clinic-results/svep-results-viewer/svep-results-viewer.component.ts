@@ -30,7 +30,12 @@ import {
   Subject,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
-import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
+import {
+  clinicFilter,
+  clinicResort,
+  validationReportsArray,
+  validationReportsObject,
+} from 'src/app/utils/clinic';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
   FormControl,
@@ -62,6 +67,7 @@ import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { isEqual } from 'lodash';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { Router } from '@angular/router';
 
 type SVEPResult = {
   url?: string;
@@ -141,6 +147,7 @@ export class SvepResultsViewerComponent
   @Input({ required: true }) projectName!: string;
   @Input() listData: any = []; // receive data from parent
   @Input() selectedData: any = []; // receive data from parent
+  @Input() listReports: any = []; // receive data from parent
 
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -182,6 +189,7 @@ export class SvepResultsViewerComponent
     private dg: MatDialog,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
+    private router: Router,
   ) {}
 
   /**
@@ -401,6 +409,19 @@ export class SvepResultsViewerComponent
   }
 
   async openSaveForReportingDialog() {
+    //validation report
+    const found = validationReportsArray(
+      this.listReports,
+      this.cs.selectedVariants.value,
+    );
+    if (found) {
+      this.tstr.error(
+        'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
+        'Error',
+      );
+      return;
+    }
+
     const { SaveForReportingDialogComponent } = await import(
       '../save-for-reporting-dialog/save-for-reporting-dialog.component'
     );
@@ -619,4 +640,13 @@ export class SvepResultsViewerComponent
     const result = this.checkRow(this.listData, row);
     return result || false;
   }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
+
+  checkIsMarked = (bObj: any) => {
+    const isMarked = validationReportsObject(this.listReports, bObj);
+    return isMarked;
+  };
 }
