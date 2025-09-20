@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 
 import boto3
 from markupsafe import escape
@@ -15,16 +16,18 @@ def lambda_handler(event, context):
     print(f"Event received: {json.dumps(event)}")
     try:
         body_dict = event.get("body")
+        job_id = body_dict["job_id"]
         email = body_dict["email"]
         first_name = body_dict["first_name"]
         last_name = body_dict["last_name"]
         project_name = body_dict["project_name"]
         input_vcf = body_dict["input_vcf"]
         job_status = body_dict["job_status"]
+        pipeline_names = body_dict.get("pipeline_names")
 
         response = ssm_client.get_parameter(Name=BUI_SSM_PARAM_NAME)
         beacon_ui_url = response.get("Parameter", {}).get("Value", "")
-        svep_ui_url = f"{beacon_ui_url}/clinic/svep-results"
+        clinic_ui_url = f"{beacon_ui_url}/clinic/clinic-results?jobId={job_id}&projectName={project_name}&vcf_file={input_vcf}"
         beacon_img_url = f"{beacon_ui_url}/assets/images/sbeacon.png"
 
         subject = "Clinical Result of"
@@ -32,10 +35,14 @@ def lambda_handler(event, context):
 
         if job_status == "completed":
             subject += f" {project_name} has completed"
+            if pipeline_names:
+                subject += f" for {", ".join(pipeline_names)}"
 
-            body_message += f"<p><b>Please load the results on the VEP Results page </b> or click the link <a href='{svep_ui_url}'>here</a>.</p>"
+            body_message += f"<p><b>Please load the results on the Clinic Results page </b> or click the link <a href='{clinic_ui_url}'>here</a>.</p>"
         elif job_status == "failed":
             subject += f" {project_name} is failed"
+            if pipeline_names:
+                subject += f" for {", ".join(pipeline_names)}"
 
             body_message += "<p><b>We are sorry that the result generated failed</b>, please check your VCF file again.</p>"
         elif job_status == "pending":
@@ -112,12 +119,14 @@ def lambda_handler(event, context):
         }
 
     except ValueError as e:
+        traceback.print_exc()
         return {
             "statusCode": 400,
             "success": False,
             "message": str(e),
         }
     except Exception as e:
+        traceback.print_exc()
         return {
             "statusCode": 500,
             "success": False,

@@ -1,0 +1,15 @@
+<div class="p-2">
+  <mat-card>
+    <mat-card-content>
+      <mat-tab-group
+        [(selectedIndex)]="selectedIndex"
+        (selectedIndexChange)="onTabChange($event)"
+      >
+        <mat-tab label="HELP & FEATURES"> </mat-tab>
+        <mat-tab label="GLOSSARY"> </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>
+<br />
+<router-outlet></router-outlet>

@@ -5,6 +5,7 @@ import {
   Injectable,
   Input,
   OnChanges,
+  OnInit,
   signal,
   SimpleChanges,
   ViewChild,
@@ -29,7 +30,12 @@ import {
   Subject,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
-import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
+import {
+  clinicFilter,
+  clinicResort,
+  validationReportsArray,
+  validationReportsObject,
+} from 'src/app/utils/clinic';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
   FormControl,
@@ -40,7 +46,6 @@ import {
 } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { HelpTextComponent } from '../help-text/help-text.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -53,17 +58,30 @@ import {
 } from '@angular/cdk/scrolling';
 import { ToastrService } from 'ngx-toastr';
 import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
-
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { BoxDataComponent } from './box-data/box-data.component';
+import { COLUMNS } from '../hub_configs';
+import { environment } from 'src/environments/environment';
+import { isEqual } from 'lodash';
+import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
+import { Router } from '@angular/router';
+
 type SVEPResult = {
   url?: string;
   pages: { [key: string]: number };
   content: string;
   page: number;
   chromosome: string;
+  filters?: {
+    clinvar_exclude: string[];
+    consequence_rank: number;
+    genes: string[];
+    max_maf: number;
+    min_qual: number;
+  };
 };
 
 @Injectable()
@@ -98,7 +116,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatSelectModule,
     MatFormFieldModule,
-    HelpTextComponent,
     MatInputModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -109,6 +126,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
+    BoxDataComponent,
+    NoResultsAlertComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -121,65 +140,20 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   templateUrl: './svep-results-viewer.component.html',
   styleUrl: './svep-results-viewer.component.scss',
 })
-export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
+export class SvepResultsViewerComponent
+  implements OnInit, OnChanges, AfterViewInit
+{
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Input() listData: any = []; // receive data from parent
+  @Input() selectedData: any = []; // receive data from parent
+  @Input() listReports: any = []; // receive data from parent
+
   @ViewChild('paginator') paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
   protected results: SVEPResult | null = null;
-  protected columns: string[] = [
-    'selected',
-    'Rank',
-    'Region',
-    'Alt Allele',
-    'Consequence',
-    'Variant Name',
-    'Gene Name',
-    'Gene ID',
-    'Feature',
-    'Transcript ID & Version',
-    'Transcript Biotype',
-    'Exon Number',
-    'Amino Acid Change',
-    'Codon Change',
-    'Strand',
-    'Transcript Support Level',
-    'ref',
-    'gt',
-    'qual',
-    'filter',
-    'variationId',
-    'rsId',
-    'omimId',
-    'classification',
-    'conditions',
-    'clinSig',
-    'reviewStatus',
-    'lastEvaluated',
-    'accession',
-    'pubmed',
-    'Allele Frequency (African)',
-    'Allele Frequency (East Asian)',
-    'Allele Frequency (Finnish)',
-    'Allele Frequency (Non-Finnish European)',
-    'Allele Frequency (South Asian)',
-    'Allele Frequency (Admixed American)',
-    'Allele Frequency (Global)',
-    'Allele Count',
-    'Allele Number',
-    'SIFT (max)',
-    'Global Allele Frequency',
-    'KHV',
-    'Mis Z',
-    'Mis o/e',
-    'Mis o/e lower CI',
-    'Mis o/e upper CI',
-    'pLI',
-    'pLOF o/e',
-    'pLOF o/e upper CI',
-    'pLOF o/e lower CI',
-  ];
+  protected columns: string[] = COLUMNS[environment.hub_name].svepCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -202,6 +176,11 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
   protected resultsLength = 0;
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
+  rows: any[] = [];
+  genesExpanded: boolean = false; // Add this property
+
+  expandedMap = new Map<string, boolean>();
+  protected isLoading = false;
 
   constructor(
     protected cs: ClinicService,
@@ -210,11 +189,148 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     private dg: MatDialog,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
+    private router: Router,
   ) {}
+
+  /**
+   * Check if SVEP configuration is available and has data
+   */
+  hasSvepConfig(): boolean {
+    const filters = this.results?.filters;
+    const thresholds = environment.clinic_warning_thresholds;
+    return !!(filters || thresholds);
+  }
+
+  /**
+   * Get filters configuration
+   */
+  getFilters(): any {
+    return this.results?.filters || null;
+  }
+
+  /**
+   * Get clinic warning thresholds from environment
+   */
+  getClinicThresholds(): any {
+    return environment.clinic_warning_thresholds || null;
+  }
+
+  /**
+   * Get filter criteria for display
+   */
+  getFilterCriteria(): Array<{ label: string; value: any; type: string }> {
+    const filters = this.getFilters();
+    if (!filters) return [];
+
+    return [
+      {
+        label: 'ClinVar Exclude',
+        value: filters.clinvar_exclude,
+        type: 'array',
+      },
+      {
+        label: 'Consequence Rank',
+        value: filters.consequence_rank,
+        type: 'number',
+      },
+      { label: 'Max MAF', value: filters.max_maf, type: 'number' },
+      { label: 'Min Quality', value: filters.min_qual, type: 'number' },
+      {
+        label: 'Target Genes',
+        value: filters.genes?.length || 0,
+        type: 'count',
+      },
+    ];
+  }
+
+  /**
+   * Get quality thresholds for display
+   */
+  getQualityThresholds(): Array<{
+    label: string;
+    value: any;
+    description: string;
+  }> {
+    const thresholds = this.getClinicThresholds();
+    if (!thresholds) return [];
+
+    return [
+      {
+        label: 'Filter',
+        value: thresholds.filter,
+        description: 'Filter status threshold',
+      },
+      {
+        label: 'Quality Score (QUAL)',
+        value: thresholds.qual,
+        description: 'Minimum quality score',
+      },
+      {
+        label: 'Read Depth (DP)',
+        value: thresholds.dp,
+        description: 'Minimum read depth',
+      },
+      {
+        label: 'Genotype Quality (GQ)',
+        value: thresholds.gq,
+        description: 'Minimum genotype quality',
+      },
+      {
+        label: 'Mapping Quality (MQ)',
+        value: thresholds.mq,
+        description: 'Minimum mapping quality',
+      },
+      {
+        label: 'Quality by Depth (QD)',
+        value: thresholds.qd,
+        description: 'Minimum quality by depth',
+      },
+    ];
+  }
+
+  /**
+   * Get target genes (first 10 for preview)
+   */
+  getTargetGenesPreview(): string[] {
+    const filters = this.getFilters();
+    if (!filters?.genes) return [];
+    return filters.genes.slice(0, 10);
+  }
+
+  /**
+   * Get total genes count
+   */
+  getTotalGenesCount(): number {
+    const filters = this.getFilters();
+    return filters?.genes?.length || 0;
+  }
+
+  /**
+   * Toggle genes expanded state
+   */
+  toggleGenesExpanded(): void {
+    this.genesExpanded = !this.genesExpanded;
+  }
+
+  /**
+   * Get remaining genes (after first 10)
+   */
+  getRemainingGenes(): string[] {
+    const filters = this.getFilters();
+    if (!filters?.genes) return [];
+    return filters.genes.slice(10);
+  }
 
   resort(sort: Sort) {
     const snapshot = [...this.currentRenderedRows];
     clinicResort(snapshot, sort, (sorted) => this.dataRows.next(sorted));
+  }
+
+  ngOnInit(): void {
+    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value || '')),
+    );
   }
 
   ngAfterViewInit(): void {
@@ -238,10 +354,7 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
       // if chromosome or page change we clear position
       this.basePositionField.setValue('');
     });
-    this.filteredColumns = this.advancedFilter.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value || '')),
-    );
+    this.dataView.subscribe((rows) => (this.rows = rows));
   }
 
   pageChange(event: PageEvent) {
@@ -280,6 +393,11 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     }
   }
 
+  clearFilter() {
+    this.filterField.reset();
+    this.dataRows.next(this.originalRows);
+  }
+
   async openAnnotateDialog() {
     const { AddAnnotationDialogComponent } = await import(
       '../add-annotation-dialog/add-annotation-dialog.component'
@@ -291,6 +409,19 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
   }
 
   async openSaveForReportingDialog() {
+    //validation report
+    const found = validationReportsArray(
+      this.listReports,
+      this.cs.selectedVariants.value,
+    );
+    if (found) {
+      this.tstr.error(
+        'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
+        'Error',
+      );
+      return;
+    }
+
     const { SaveForReportingDialogComponent } = await import(
       '../save-for-reporting-dialog/save-for-reporting-dialog.component'
     );
@@ -319,6 +450,7 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     this.originalRows = [];
     this.dataRows.next([]);
     this.ss.start();
+    this.isLoading = true;
     this.cs
       .getClinicResults(requestId, projectName, chromosome, page, position)
       .pipe(catchError(() => of(null)))
@@ -330,11 +462,15 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
           this.updateTable(data);
         }
         this.ss.end();
+        this.isLoading = false;
       });
   }
 
   updateTable(result: SVEPResult): void {
     this.results = result;
+
+    // No hardcoding - filters comes from API response
+
     this.resultsLength = result.pages[result.chromosome];
     const lines = result.content.split('\n');
     this.originalRows = lines
@@ -348,7 +484,6 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
           });
         return row;
       });
-    console.log(lines);
     // this.dataRows.next(this.originalRows);
     this.setFilter();
     this.chromosomeField.setValue(result.chromosome, { emitEvent: false });
@@ -359,14 +494,43 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
 
   setFilter() {
     const filtered = this.originalRows.filter((item) => {
-      return this.columns.every((col) => {
+      // Only check columns that have filter values (AND condition)
+      return Object.keys(this.filterValues).every((col) => {
         const filterVal = this.filterValues[col];
         const itemVal = item[col]?.toString().toLowerCase() || '';
-        return filterVal ? itemVal.includes(filterVal.toLowerCase()) : true;
+
+        // If filter value exists and is not empty, check if item contains it
+        if (filterVal && filterVal.trim() !== '') {
+          return itemVal.includes(filterVal.toLowerCase());
+        }
+
+        // If no filter value, this column passes the filter
+        return true;
       });
     });
 
     this.dataRows.next(filtered);
+  }
+
+  findMatchingVariants(firstArray: any[], secondArray: any[]): any[] {
+    return firstArray.filter((item1) => {
+      return secondArray.some((item2) => {
+        return Object.keys(item2).every((key) => item1[key] === item2[key]);
+      });
+    });
+  }
+
+  filterByAnotation(data: any) {
+    //reset all filter
+    this.clearFilter();
+    this.filterValues = {};
+    const filteredByAnnot = this.findMatchingVariants(this.originalRows, data);
+
+    this.dataRows.next(filteredByAnnot);
+    const el = document.getElementById('myTarget');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   resetFilter() {
@@ -383,9 +547,11 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
     //add dinamic filter
     const filterKey = this.advancedFilter.value;
     if (this.filterValues.hasOwnProperty(filterKey) || filterKey === '') {
+      this.advancedFilter.reset(); //reset filter if the filter same
       return;
     }
     this.filterValues = { ...this.filterValues, [filterKey]: '' };
+    this.advancedFilter.reset(); //reset filed after filter selected
   }
 
   setMasterData() {
@@ -458,4 +624,29 @@ export class SvepResultsViewerComponent implements OnChanges, AfterViewInit {
       option.toLowerCase().includes(filterValue),
     );
   }
+
+  onToggle(rowId: string, expanded: boolean) {
+    this.expandedMap.set(rowId, expanded);
+  }
+
+  //function to check is row contains in listAnotation with dynamic attributes
+  checkRow(listData: any[], row: any): boolean {
+    return listData.some((variant) =>
+      Object.keys(variant).every((key) => variant[key] === row[key]),
+    );
+  }
+
+  handleIsSelected(row: any) {
+    const result = this.checkRow(this.listData, row);
+    return result || false;
+  }
+
+  handleRedirectFAQ = () => {
+    this.router.navigate(['/faq']);
+  };
+
+  checkIsMarked = (bObj: any) => {
+    const isMarked = validationReportsObject(this.listReports, bObj);
+    return isMarked;
+  };
 }

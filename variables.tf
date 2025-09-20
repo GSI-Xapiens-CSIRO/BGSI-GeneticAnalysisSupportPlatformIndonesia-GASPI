@@ -10,6 +10,14 @@ variable "common-tags" {
   description = "A set of tags to attach to every created resource."
 }
 
+variable "common-tags-backup" {
+  type        = map(string)
+  description = "Tags needed to enable and configure backups."
+  default = {
+    backup = "true"
+  }
+}
+
 variable "svep-references-table-name" {
   type        = string
   description = "Name of the sVEP references table"
@@ -137,8 +145,8 @@ variable "hub_name" {
   default     = "NONE"
 
   validation {
-    condition     = contains(["RSCM", "RSSARDJITO", "RSPON", "RSIGNG", "RSJPD"], var.hub_name)
-    error_message = "hub_name must be one of: RSCM, RSSARDJITO, RSPON, RSIGNG, RSJPD"
+    condition     = contains(["BGSI", "RSCM", "RSSARDJITO", "RSPON", "RSIGNG", "RSJPD"], var.hub_name)
+    error_message = "hub_name must be one of: BGSI, RSCM, RSSARDJITO, RSPON, RSIGNG, RSJPD"
   }
 }
 
@@ -157,7 +165,21 @@ variable "svep-filters" {
   nullable    = true
 }
 
-variable "pgxflow_configuration" {
+variable "clinic-warning-thresholds" {
+  type = object({
+    qual   = optional(number, 0)
+    filter = optional(string, "")
+    dp     = optional(number, 0)
+    gq     = optional(number, 0)
+    mq     = optional(number, 0)
+    qd     = optional(number, 0)
+  })
+  description = "Thresholds before warnings are shown in clinic results page"
+  default     = {}
+  nullable    = true
+}
+
+variable "pharmcat_configuration" {
   type = object({
     ORGANISATIONS = list(object({
       gene = string
@@ -167,6 +189,27 @@ variable "pgxflow_configuration" {
     DRUGS = list(string)
   })
   description = "List of gene-drug organisation associations, genes to filter, and drugs to filter"
-  default     = null
-  nullable    = true
+  default = {
+    ORGANISATIONS = []
+    GENES         = []
+    DRUGS         = []
+  }
+  nullable = true
+}
+
+variable "lookup_configuration" {
+  type = object({
+    assoc_matrix_filename = string
+    chr_header            = string
+    start_header          = string
+    end_header            = string
+  })
+  description = "Filename and header information (chr, start, end) for the association matrix"
+  default = {
+    assoc_matrix_filename = ""
+    chr_header            = ""
+    start_header          = ""
+    end_header            = ""
+  }
+  nullable = true
 }

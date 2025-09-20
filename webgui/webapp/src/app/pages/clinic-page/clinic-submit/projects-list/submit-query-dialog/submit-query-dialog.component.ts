@@ -15,6 +15,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
@@ -31,6 +32,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     ComponentSpinnerComponent,
   ],
@@ -45,8 +47,10 @@ export class SubmitQueryDialogComponent {
       Validators.maxLength(20),
       Validators.pattern(/^[a-zA-Z0-9 ]+$/), // Allow alphanumeric and space
     ]),
+    missingToRef: new FormControl(false),
   });
   protected loading = false;
+  protected showMissingToRefOption = false;
 
   constructor(
     protected cs: ClinicService,
@@ -58,7 +62,10 @@ export class SubmitQueryDialogComponent {
       file: string;
       list: () => void;
     },
-  ) {}
+  ) {
+    this.showMissingToRefOption =
+      environment.hub_name === 'RSPON' || environment.hub_name === 'RSJPD';
+  }
 
   submit() {
     if (this.data.file) {
@@ -66,16 +73,17 @@ export class SubmitQueryDialogComponent {
       this.loading = true;
 
       this.cs
-        .submitSvepJob(
+        .submitClinicJob(
           s3URI,
           this.data.projectName!,
           this.jobForm.value.jobName,
+          this.jobForm.value.missingToRef,
         )
         .pipe(
           catchError((e) => {
             const errorMessage =
               e.response?.data?.error?.errorMessage ||
-              'Something went wrong when initaiting the job. Please try again later.';
+              'Something went wrong when initiating the job. Please try again later.';
             this.tstr.error(errorMessage, 'Error');
             this.loading = false;
 
@@ -84,6 +92,19 @@ export class SubmitQueryDialogComponent {
         )
         .subscribe((response: any) => {
           if (response) {
+            const responses = Array.isArray(response) ? response : [response];
+            const allSuccessful = responses.every((res) => res && res.Success);
+            if (!allSuccessful) {
+              const failedResponse = responses.find(
+                (res) => !res || !res.Success,
+              );
+              const errorMessage =
+                failedResponse?.Response || 'Job submission failed';
+              this.tstr.error(errorMessage, 'Error');
+              this.loading = false;
+              return;
+            }
+
             this.tstr.success(
               'Displaying results takes time according to the size of your data. Once completed, we will send you a notification via email.',
               'Success',

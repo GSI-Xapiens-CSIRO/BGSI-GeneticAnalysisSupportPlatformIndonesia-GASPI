@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ResultsViewerComponent } from './svep-results-viewer.component';
+import { SvepResultsViewerComponent } from './svep-results-viewer.component';
 
 describe('ResultsViewerComponent', () => {
-  let component: ResultsViewerComponent;
-  let fixture: ComponentFixture<ResultsViewerComponent>;
+  let component: SvepResultsViewerComponent;
+  let fixture: ComponentFixture<SvepResultsViewerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ResultsViewerComponent],
+      imports: [SvepResultsViewerComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ResultsViewerComponent);
+    fixture = TestBed.createComponent(SvepResultsViewerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

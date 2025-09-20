@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { AuthService } from './services/auth.service';
 import { AsyncPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
   RouterLinkActive,
   RouterLink,
@@ -27,6 +28,7 @@ import { ProfileMenuComponent } from './components/profile-menu/profile-menu.com
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ListMenuComponent } from './components/list-menu/list-menu.component';
+import { HeartBeatComponent } from './components/heart-beat/heart-beat.component';
 
 @Component({
   selector: 'app-root',
@@ -37,22 +39,24 @@ import { ListMenuComponent } from './components/list-menu/list-menu.component';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    RouterLinkActive,
     RouterLink,
     RouterOutlet,
     AsyncPipe,
     GlobalSpinnerComponent,
     ProfileMenuComponent,
     ListMenuComponent,
+    HeartBeatComponent,
   ],
   providers: [SpinnerService],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  buildVersion: string = '';
   protected isCollapsed = false;
   private realodSubscription: Subscription | null = null;
 
   constructor(
     protected auth: AuthService,
+    private http: HttpClient,
     private router: Router,
     private el: ElementRef,
     private ss: SpinnerService,
@@ -94,6 +98,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.isCollapsed = true;
+    this.http.get('version.txt', { responseType: 'text' }).subscribe(
+      // Use empty string in case of getting full redirected xml if missing
+      (version) => (this.buildVersion = version.length < 64 ? version : ''),
+    );
   }
   @HostListener('window:resize', ['event'])
   onResize() {

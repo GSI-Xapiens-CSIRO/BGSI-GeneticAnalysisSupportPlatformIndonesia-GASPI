@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -17,7 +17,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { AdminService } from 'src/app/pages/admin-page/services/admin.service';
-import { catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  of,
+  Subscription,
+} from 'rxjs';
 import * as _ from 'lodash';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,7 +32,11 @@ import { SpinnerService } from 'src/app/services/spinner.service';
 import { AwsService } from 'src/app/services/aws.service';
 import { gigabytesToBytes } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { UserInfoService } from 'src/app/services/userinfo.service';
+
 import { ToastrService } from 'ngx-toastr';
+import { MatRadioModule } from '@angular/material/radio';
+import { NotebookRole, UserInstitutionType } from '../enums'; // adjust the path if needed
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -41,15 +51,19 @@ import { ToastrService } from 'ngx-toastr';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-create-user-dialog.component.html',
   styleUrls: ['./admin-create-user-dialog.component.scss'],
   providers: [AdminService],
 })
-export class AdminCreateUserComponent implements OnInit {
+export class AdminCreateUserComponent implements OnInit, OnDestroy {
   protected loading = false;
   protected newUserForm: FormGroup;
   protected costEstimation: number | null = 0;
+  noteBookRoleValue = NotebookRole;
+  institutionTypeValue = UserInstitutionType;
+  emailFormFieldSubscription: Subscription | undefined;
 
   constructor(
     public dialogRef: MatDialogRef<AdminCreateUserComponent>,
@@ -61,6 +75,7 @@ export class AdminCreateUserComponent implements OnInit {
     private tstr: ToastrService,
     private aws: AwsService,
     private uq: UserQuotaService,
+    private ui: UserInfoService,
   ) {
     this.newUserForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -71,11 +86,30 @@ export class AdminCreateUserComponent implements OnInit {
       // Quota
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
+      institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
+      institutionName: ['', Validators.required],
+      isMedicalDirector: [false],
     });
   }
 
   ngOnInit(): void {
     this.onChangeCalculateCost();
+    this.emailFormFieldSubscription = this.newUserForm.controls[
+      'email'
+    ]?.valueChanges.subscribe((value: string | null) => {
+      if (value && value !== value.toLowerCase()) {
+        this.newUserForm.controls['email']?.setValue(value.toLowerCase(), {
+          emitEvent: false,
+        });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.emailFormFieldSubscription) {
+      this.emailFormFieldSubscription.unsubscribe();
+    }
   }
 
   onChangeCalculateCost() {
@@ -103,9 +137,11 @@ export class AdminCreateUserComponent implements OnInit {
   createUser(): void {
     const form = this.newUserForm.value;
     const groups = _.pick(form, ['administrators', 'managers']);
+    const attributes = _.pick(form, ['isMedicalDirector']);
+
     this.ss.start();
     this.as
-      .createUser(form.firstName, form.lastName, form.email, groups)
+      .createUser(form.firstName, form.lastName, form.email, groups, attributes)
       .pipe(
         catchError((e) => {
           if (
@@ -125,11 +161,22 @@ export class AdminCreateUserComponent implements OnInit {
         this.ss.end();
         if (response) {
           this.addUserQuota(response?.uid ?? form.email);
+          this.addUserInstitution(response?.uid ?? form.email);
           this.newUserForm.reset();
           this.dialogRef.close({ reload: true });
           this.tstr.success('User created successfully!', 'Success');
         }
       });
+  }
+
+  addUserInstitution(sub: string): void {
+    this.ui
+      .storeUserInfo(
+        sub,
+        this.newUserForm.value.institutionType,
+        this.newUserForm.value.institutionName,
+      )
+      .pipe(catchError(() => of(null)));
   }
 
   addUserQuota(sub: string): void {
@@ -139,6 +186,7 @@ export class AdminCreateUserComponent implements OnInit {
         quotaQueryCount: this.newUserForm.value.quotaQueryCount,
         usageSize: 0,
         usageCount: 0,
+        notebookRole: this.newUserForm.value.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }

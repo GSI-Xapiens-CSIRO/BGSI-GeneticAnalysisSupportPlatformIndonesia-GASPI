@@ -2,6 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'list-menu',
@@ -11,5 +12,6 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrl: './list-menu.component.scss',
 })
 export class ListMenuComponent {
+  protected clinicMode: string = environment.clinic_mode;
   constructor(protected auth: AuthService) {}
 }

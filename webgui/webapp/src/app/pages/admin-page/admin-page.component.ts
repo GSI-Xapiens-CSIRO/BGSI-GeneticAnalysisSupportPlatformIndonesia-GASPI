@@ -22,7 +22,12 @@ import {
   PageEvent,
 } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableModule,
+  MatTableDataSource,
+} from '@angular/material/table';
+import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { ComponentSpinnerComponent } from '../../components/component-spinner/component-spinner.component';
@@ -35,6 +40,8 @@ import { bytesToGigabytes, formatBytes } from 'src/app/utils/file';
 import { MatIconModule } from '@angular/material/icon';
 import { AwsService } from 'src/app/services/aws.service';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
+import { UserInstitutionType } from './components/enums';
+import { UserInfoService } from 'src/app/services/userinfo.service';
 // import { testUsers } from './test_responses/test_users';
 
 // Docs: https://material.angular.io/components/paginator/examples
@@ -79,6 +86,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatSelectModule,
     MatOptionModule,
     MatTableModule,
+    MatSortModule,
     MatPaginatorModule,
     MatIconModule,
     ToastrModule,
@@ -96,13 +104,17 @@ export class AdminPageComponent implements OnInit {
     'Size Quota/Usage',
     'Query Quota/Usage',
     'Est Cost',
+    'Institution Type',
+    'Institution Name',
     'Confirmed',
     'MFA Active',
   ];
-  protected usersTableDataSource: any = [];
+  protected usersTableDataSource = new MatTableDataSource<any>([]);
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild(MatSort)
+  sort!: MatSort;
   private pageTokens = new Map<number, string>();
 
   constructor(
@@ -145,6 +157,7 @@ export class AdminPageComponent implements OnInit {
         this.listUsers(event.pageIndex);
       }
     });
+    this.usersTableDataSource.sort = this.sort;
   }
 
   async openDialog(row: any, res: any) {}
@@ -173,6 +186,7 @@ export class AdminPageComponent implements OnInit {
     };
 
     dialog.afterClosed().subscribe((data) => {
+      console.log('Dialog closed with data:', data);
       if (_.get(data, 'reload', false)) {
         this.resetPagination();
         this.listUsers(0);
@@ -253,11 +267,17 @@ export class AdminPageComponent implements OnInit {
             return;
           }
 
+          console.log('Response:', response);
+
           const users = _.map(_.get(response, 'users', []), (user: any) => {
             const usageCount = user.Usage?.usageCount ?? 0;
             const usageSize = user.Usage?.usageSize ?? 0;
             const userQuotaCount = user.Usage?.quotaQueryCount;
             const userSize = user.Usage?.quotaSize;
+            const userInfo = user.UserInfo || {
+              institutionType: '',
+              institutionName: '',
+            };
 
             return {
               Sub: _.get(_.find(user.Attributes, { Name: 'sub' }), 'Value', ''),
@@ -289,6 +309,8 @@ export class AdminPageComponent implements OnInit {
               Confirmed:
                 _.get(user, 'UserStatus') === 'CONFIRMED' ? 'Yes' : 'No',
               'MFA Active': _.get(user, 'MFA', []).length > 0 ? 'Yes' : 'No',
+              'Institution Type': _.capitalize(userInfo.institutionType),
+              'Institution Name': userInfo.institutionName,
               usageCount,
               usageSize,
               userQuotaCount,
@@ -308,7 +330,7 @@ export class AdminPageComponent implements OnInit {
           );
 
           // reassign data
-          this.usersTableDataSource = users;
+          this.usersTableDataSource.data = users;
           // set next page token
           this.pageTokens.set(page + 1, response.pagination_token);
         }
@@ -318,25 +340,26 @@ export class AdminPageComponent implements OnInit {
   }
 
   updateData(userData: any, userEmail: string, costEstimation: number | null) {
-    const indexData = this.usersTableDataSource.findIndex(
+    const indexData = this.usersTableDataSource.data.findIndex(
       (e: any) => e.Email === userEmail,
     );
 
     if (indexData > -1) {
-      this.usersTableDataSource[indexData]['Size Quota/Usage'] =
+      this.usersTableDataSource.data[indexData]['Size Quota/Usage'] =
         this.formatData(
           userData.quotaSize ?? 0,
-          this.usersTableDataSource[indexData].usageSize ?? 0,
+          this.usersTableDataSource.data[indexData].usageSize ?? 0,
           true,
           true,
         );
-      this.usersTableDataSource[indexData]['Query Quota/Usage'] =
+      this.usersTableDataSource.data[indexData]['Query Quota/Usage'] =
         this.formatData(
           userData.quotaQueryCount ?? 0,
-          this.usersTableDataSource[indexData].usageCount ?? 0,
+          this.usersTableDataSource.data[indexData].usageCount ?? 0,
           false,
         );
-      this.usersTableDataSource[indexData]['Est Cost'] = `$${costEstimation}`;
+      this.usersTableDataSource.data[indexData]['Est Cost'] =
+        `$${costEstimation}`;
       return;
     }
   }

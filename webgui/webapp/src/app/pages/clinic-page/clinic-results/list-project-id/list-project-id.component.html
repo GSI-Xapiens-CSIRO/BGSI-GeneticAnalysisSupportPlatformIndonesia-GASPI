@@ -36,35 +36,46 @@
           </div>
         </div>
         <br />
-        <table mat-table [dataSource]="dataSource">
-          <!-- Name Column -->
+        <table
+          mat-table
+          matSort
+          (matSortChange)="resort($event)"
+          [dataSource]="dataSource"
+        >
+          <!-- VCF Filename Column -->
           <ng-container matColumnDef="input_vcf">
-            <th mat-header-cell *matHeaderCellDef>VCF File</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>VCF File</th>
             <td mat-cell *matCellDef="let element">{{ element.input_vcf }}</td>
           </ng-container>
 
           <!-- Description Column -->
-          <ng-container matColumnDef="job_status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="flex flex-row items-center gap-2">
-                @if (element.job_status === JobStatus.FAILED) {
-                  <div
-                    (click)="
-                      handleError(element.failed_step, element.error_message)
-                    "
-                  >
-                    <mat-icon color="warn">error</mat-icon>
-                  </div>
-                }
-                <div>{{ element.job_status }}</div>
-              </div>
-            </td>
-          </ng-container>
+          @for (statusField of config.status_fields; track statusField) {
+            <ng-container [matColumnDef]="statusField">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{getStatusDisplayName(statusField)}}</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="flex flex-row items-center gap-2">
+                  @if (element[statusField] === JobStatus.FAILED) {
+                    <div
+                      (click)="
+                        handleError(element)
+                      "
+                    >
+                      <mat-icon color="warn">error</mat-icon>
+                    </div>
+                  }
+                  <div>{{ element[statusField] }}</div>
+                </div>
+              </td>
+            </ng-container>
+          }
+
+          <!-- Job Name Column -->
           <ng-container matColumnDef="job_name">
-            <th mat-header-cell *matHeaderCellDef>Job Name</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Name</th>
             <td mat-cell *matCellDef="let element">{{ element.job_name }}</td>
           </ng-container>
+
+          <!-- Job ID Column -->
           <ng-container matColumnDef="job_id">
             <th mat-header-cell *matHeaderCellDef>Job ID</th>
             <td mat-cell *matCellDef="let element">
@@ -73,21 +84,21 @@
                   class="flex my-1"
                   aria-label="Example tooltip"
                   [style.color]="
-                    element.job_status !== JobStatus.COMPLETED
-                      ? 'gray'
-                      : '#16B3AC'
+                    isAnyStatus(element, JobStatus.COMPLETED)
+                      ? '#16B3AC'
+                      : 'gray'
                   "
                 >
                   <div
                     (click)="
-                      element.job_status === JobStatus.COMPLETED &&
+                      isAnyStatus(element, JobStatus.COMPLETED) &&
                         loadResult(element.job_id, element.input_vcf)
                     "
-                    [matTooltip]="tooltipMessage(element.job_status)"
+                    [matTooltip]="tooltipMessage(element)"
                     [style.cursor]="
-                      element.job_status !== JobStatus.COMPLETED
-                        ? 'not-allowed'
-                        : 'pointer'
+                      isAnyStatus(element, JobStatus.COMPLETED)
+                        ? 'pointer'
+                        : 'not-allowed'
                     "
                   >
                     {{ element.job_id }}
@@ -96,18 +107,44 @@
               </div>
             </td>
           </ng-container>
+
+          <!-- Missing to Reference Column -->
+           @if (["RSPON", "RSJPD"].includes(hubName)) {
+            <ng-container matColumnDef="missing_to_ref">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Treat Missing as Ref
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ getMissingToRefDisplay(element.missing_to_ref) }}
+              </td>
+            </ng-container>
+          }
+
+          <!-- Created At Column -->
+          <ng-container matColumnDef="created_at">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              Created At
+            </th>
+            <td mat-cell *matCellDef="let element">{{ element.created_at }}</td>
+          </ng-container>
+
+          <!-- Action Column -->
           <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let element">
               @if (
-                element.job_status === JobStatus.FAILED &&
-                (auth.userGroups | async)!.has("administrators")
+                (isAnyStatus(element, JobStatus.FAILED) ||
+                  isAnyStatus(element, JobStatus.EXPIRED)) &&
+                ((auth.userGroups | async)!.has("administrators") ||
+                  (auth.userGroups | async)!.has("managers"))
               ) {
                 <button
                   mat-mini-fab
                   color="warn"
                   class="flex items-center"
-                  (click)="deleteJob(projectName, element.job_id)"
+                  (click)="
+                    deleteJob(projectName, element.job_id, element.job_name)
+                  "
                   matTooltip="Delete file"
                 >
                   <mat-icon>delete</mat-icon>
