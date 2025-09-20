@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 import os
-
+from urllib.parse import urlparse
 import boto3
 
 ses_client = boto3.client("ses")
@@ -36,7 +36,7 @@ def send_inspector_alert(event):
     vuln_details = detail.get("packageVulnerabilityDetails", {})
     cve_id = vuln_details.get("vulnerabilityId", "Unknown CVE")
     reference_urls = vuln_details.get("referenceUrls", [])
-    nvd_url = next((url for url in reference_urls if "nvd.nist.gov" in url), "No NVD link available")
+    nvd_url = next((url for url in reference_urls if urlparse(url).hostname == "nvd.nist.gov"), "No NVD link available")
     
     vulnerable_packages = vuln_details.get("vulnerablePackages", [])
     package_info = []

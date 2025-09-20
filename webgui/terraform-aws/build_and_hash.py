@@ -23,12 +23,21 @@ ENVIRONMENT = """export const environment = {{
     endpoint: '{api_endpoint_sbeacon}',
     region: '{region}',
   }},
-  api_endpoint_svep: {{
-    name: 'svep',
-    endpoint: '{api_endpoint_svep}',
+  api_endpoint_clinic: {{
+    name: '{clinic_mode}',
+    endpoint: '{api_endpoint_clinic}',
     region: '{region}',
   }},
+  clinic_mode: '{clinic_mode}',
   hub_name: '{hub_name}',
+  clinic_warning_thresholds: {{
+    qual: {clinic_warning_qual},
+    filter: '{clinic_warning_filter}',
+    dp: {clinic_warning_dp},
+    gq: {clinic_warning_gq},
+    mq: {clinic_warning_mq},
+    qd: {clinic_warning_qd},
+  }}
 }};"""
 
 
@@ -84,40 +93,49 @@ def setup_env(
     user_pool_web_client_id: str,
     data_portal_bucket: str,
     api_endpoint_sbeacon: str,
-    api_endpoint_svep: str,
+    api_endpoint_clinic: str,
     dir: str,
     hub_name: str,
+    clinic_mode: str,
+    clinic_warning_dp: float,
+    clinic_warning_filter: str,
+    clinic_warning_gq: float,
+    clinic_warning_mq: float,
+    clinic_warning_qual: float,
+    clinic_warning_qd: float,
 ):
+    common_format_values = {
+        "base_range": base_range,
+        "region": region,
+        "user_pool_id": user_pool_id,
+        "identity_pool_id": identity_pool_id,
+        "data_portal_bucket": data_portal_bucket,
+        "user_pool_web_client_id": user_pool_web_client_id,
+        "api_endpoint_sbeacon": api_endpoint_sbeacon,
+        "api_endpoint_clinic": api_endpoint_clinic,
+        "hub_name": hub_name,
+        "clinic_mode": clinic_mode,
+        "clinic_warning_dp": clinic_warning_dp,
+        "clinic_warning_filter": clinic_warning_filter,
+        "clinic_warning_gq": clinic_warning_gq,
+        "clinic_warning_mq": clinic_warning_mq,
+        "clinic_warning_qual": clinic_warning_qual,
+        "clinic_warning_qd": clinic_warning_qd,
+    }
     with open(
         os.path.join(dir, "src/environments/environment.development.ts"), "w"
     ) as f:
         f.write(
             ENVIRONMENT.format(
                 production="false",
-                base_range=base_range,
-                region=region,
-                user_pool_id=user_pool_id,
-                identity_pool_id=identity_pool_id,
-                data_portal_bucket=data_portal_bucket,
-                user_pool_web_client_id=user_pool_web_client_id,
-                api_endpoint_sbeacon=api_endpoint_sbeacon,
-                api_endpoint_svep=api_endpoint_svep,
-                hub_name=hub_name,
+                **common_format_values,
             )
         )
     with open(os.path.join(dir, "src/environments/environment.ts"), "w") as f:
         f.write(
             ENVIRONMENT.format(
                 production="true",
-                base_range=base_range,
-                region=region,
-                user_pool_id=user_pool_id,
-                identity_pool_id=identity_pool_id,
-                data_portal_bucket=data_portal_bucket,
-                user_pool_web_client_id=user_pool_web_client_id,
-                api_endpoint_sbeacon=api_endpoint_sbeacon,
-                api_endpoint_svep=api_endpoint_svep,
-                hub_name=hub_name,
+                **common_format_values,
             )
         )
 
@@ -134,9 +152,16 @@ if __name__ == "__main__":
     identity_pool_id = args["identity_pool_id"]
     user_pool_web_client_id = args["user_pool_web_client_id"]
     api_endpoint_sbeacon = args["api_endpoint_sbeacon"]
-    api_endpoint_svep = args["api_endpoint_svep"]
+    api_endpoint_clinic = args["api_endpoint_clinic"]
     data_portal_bucket = args["data_portal_bucket"]
     hub_name = args["hub_name"]
+    clinic_mode = args.get("clinic_mode")
+    clinic_warning_dp = float(args["clinic_warning_dp"])
+    clinic_warning_filter = args["clinic_warning_filter"]
+    clinic_warning_gq = float(args["clinic_warning_gq"])
+    clinic_warning_mq = float(args["clinic_warning_mq"])
+    clinic_warning_qual = float(args["clinic_warning_qual"])
+    clinic_warning_qd = float(args["clinic_warning_qd"])
 
     setup_env(
         base_range,
@@ -146,9 +171,16 @@ if __name__ == "__main__":
         user_pool_web_client_id,
         data_portal_bucket,
         api_endpoint_sbeacon,
-        api_endpoint_svep,
+        api_endpoint_clinic,
         webapp_dir,
         hub_name,
+        clinic_mode,
+        clinic_warning_dp,
+        clinic_warning_filter,
+        clinic_warning_gq,
+        clinic_warning_mq,
+        clinic_warning_qual,
+        clinic_warning_qd,
     )
     npm_install(install_cmd, webapp_dir)
     build(build_cmd, webapp_dir)

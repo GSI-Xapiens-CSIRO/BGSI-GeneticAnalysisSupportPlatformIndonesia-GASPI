@@ -1,0 +1,101 @@
+@if (!requestId) {
+  <mat-card>
+    <mat-card-content>
+      <div class="mx-1 lg:mx-[20px]">
+        <h2 class="text-left text-primary-60">View Results</h2>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Projects</mat-label>
+          <input
+            type="text"
+            placeholder="Pick one"
+            aria-label="Number"
+            matInput
+            [formControl]="projectNameFormControl"
+            [matAutocomplete]="auto"
+          />
+          <mat-autocomplete #auto="matAutocomplete">
+            @for (option of filteredOptions | async; track option) {
+              <mat-option [value]="option.name">{{ option.name }}</mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+        <div class="flex flex-row">
+          <button
+            [disabled]="projectNameFormControl.invalid"
+            class="w-[110px]"
+            mat-raised-button
+            color="primary"
+            (click)="loadListData()"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+}
+
+@if (projectName && !requestId) {
+  <list-project-id [projectName]="projectName" />
+}
+
+@if (requestId && projectName) {
+  <mat-card class="mb-4">
+    <mat-card-content>
+      <div class="flex flex-row gap-4 items-center">
+        <div
+          class="flex justify-center items-center bg-primary-50 rounded-full p-1 cursor-pointer"
+          (click)="backToList()"
+        >
+          <mat-icon class="white-icon">keyboard_backspace</mat-icon>
+        </div>
+        <div class="text-base">
+          Result of the file
+          <b class="text-primary-60 text-xl">{{ vcfFile }}</b> from the
+          <b class="text-primary-60 text-xl">{{ projectName }}</b> from JOB ID:
+          <b class="text-primary-60 text-xl">{{ requestId }}</b>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
+    <app-svep-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listData]="receivedData"
+      [selectedData]="selectedData"
+      [listReports]="listReports"
+    />
+  } @else if (["RSPON"].includes(hubName)) {
+    <app-pharmcat-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
+  } @else if (["RSIGNG"].includes(hubName)) {
+    <app-lookup-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
+  } @else if (["RSJPD"].includes(hubName)) {
+    <app-hybrid-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
+  }
+
+  <app-annotation-viewer
+    [requestId]="requestId"
+    [projectName]="projectName"
+    (dataSent)="handleChildData($event)"
+    (selectAnotation)="handleSelectedAnotation($event)"
+    [listReports]="listReports"
+  />
+  <app-saved-for-reporting-viewer
+    [requestId]="requestId"
+    [projectName]="projectName"
+    (listReports)="handleSetListReports($event)"
+  />
+}

@@ -1,0 +1,380 @@
+<mat-card class="mt-4" [class.hide]="variants.length == 0">
+  <mat-card-content>
+    <div class="flex flex-row justify-between items-center">
+      <h2>Variants selected for reporting</h2>
+      <button
+        mat-mini-fab
+        color="primary"
+        class="flex items-center"
+        (click)="refresh()"
+      >
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div
+      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
+    >
+      @for (variant of variants; track $index) {
+        <div>
+          <div class="flex flex-row justify-between items-center">
+            <h3>
+              @if (variant.validatedByMedicalDirector) {
+                <span matTooltip="Validated by medical director">✅</span>
+              } @else {
+                <span matTooltip="Not validated by medical director">❌</span>
+              }
+              {{ variant.comment }}
+            </h3>
+
+            <div class="flex flex-row space-x-2 items-center">
+              @if (
+                (auth.user | async)?.attributes[
+                  "custom:is_medical_director"
+                ] === "true"
+              ) {
+                @if (!variant.validatedByMedicalDirector) {
+                  <button
+                    mat-mini-fab
+                    matTooltip="Validate variant"
+                    color="primary"
+                    class="flex items-center"
+                    (click)="addValidation(variant.name)"
+                  >
+                    <mat-icon>assignment_turned_in</mat-icon>
+                  </button>
+                } @else {
+                  <button
+                    mat-mini-fab
+                    matTooltip="Invalidate variant"
+                    color="primary"
+                    class="flex items-center"
+                    (click)="removeValidation(variant.name)"
+                  >
+                    <mat-icon>assignment_late</mat-icon>
+                  </button>
+                }
+              }
+              <button
+                mat-mini-fab
+                color="primary"
+                class="flex items-center"
+                (click)="deleteSavedVariants(variant.name)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+          @for (info of variant.variants; track $index; let itemLast = $last) {
+            @for (item of info | keyvalue; track $index) {
+              {{ item.key }}: {{ item.value }}
+              @if (!$last) {
+                |
+              }
+            }
+            <br />
+            @if (variant.annotations[$index]) {
+              <span class="ml-4"
+                >- Annotations: {{ variant.annotations[$index] }}</span
+              >
+              <br />
+            }
+            @if (!itemLast) {
+              <hr class="bg-primary-50 h-0.5 border-0" />
+            }
+          }
+          <span class="text-xs"
+            >Saved by: {{ variant.user?.firstName }}
+            {{ variant.user?.lastName }} ({{ variant.user?.email }})</span
+          >
+          <br />
+          <span class="text-xs"
+            >Saved at:
+            {{ variant.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
+          >
+          <br />
+          @if (variant.validatedByMedicalDirector) {
+            <span class="text-xs">
+              Validation comment: {{ variant.validationComment }}
+            </span>
+            <br />
+            <span class="text-xs"
+              >Validated by: {{ variant.validator?.firstName }}
+              {{ variant.validator?.lastName }} ({{
+                variant.validator?.email
+              }})</span
+            >
+            <br />
+            <span class="text-xs"
+              >Validated at:
+              {{ variant.validatedAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
+            >
+            <br />
+          }
+        </div>
+        @if (!$last) {
+          <div class="w-full h-1 bg-primary-60 my-1"></div>
+        }
+      } @empty {
+        <div class="text-center">No variants available</div>
+      }
+    </div>
+    <mat-paginator
+      class="block"
+      #paginator
+      [pageSizeOptions]="[5, 10, 50]"
+      [pageSize]="pageSize"
+      length="9999"
+      (page)="pageChange($event)"
+    ></mat-paginator>
+    <div class="flex flex-row justify-between items-center">
+      @if (noValidatedVariants()) {
+        <div class="text-left">
+          No validated variants available for reporting
+          <br />
+          Please get in touch with medical directory for validations
+        </div>
+      } @else if (hub) {
+        @switch (hub) {
+          @case ("RSCM") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSCM()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSJPD") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSJPD()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSIGNG") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSIGNG()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSPON") {
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSPON()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSSARDJITO") {
+            <div class="flex flex-col space-y-1">
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'crd')"
+                >
+                  CRD Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'crd')"
+                >
+                  CRD Positive (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'md')"
+                >
+                  MD Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'md')"
+                >
+                  MD Positive (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'generic')"
+                >
+                  Generic Positive (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'generic')"
+                >
+                  Generic Positive (ID)
+                </button>
+              </div>
+            </div>
+          }
+        }
+      } @else {
+        <p>Lab configuration is not set. Please contact the administrator.</p>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card class="mt-4" [class.hide]="variants.length !== 0">
+  <mat-card-content>
+    <h2>No variants selected for reporting</h2>
+    @if (hub && (hub === "RSCM" || hub === "RSSARDJITO")) {
+      @if (
+        (auth.user | async)?.attributes["custom:is_medical_director"] === "true"
+      ) {
+        <div class="mb-2">
+          @if (!jobEntry?.validatedByMedicalDirector) {
+            <button
+              mat-mini-fab
+              matTooltip="Validate variant"
+              color="primary"
+              class="flex items-center"
+              (click)="addValidation()"
+            >
+              <mat-icon>assignment_turned_in</mat-icon>
+            </button>
+          } @else {
+            <button
+              mat-mini-fab
+              matTooltip="Invalidate variant"
+              color="primary"
+              class="flex items-center"
+              (click)="removeValidation()"
+            >
+              <mat-icon>assignment_late</mat-icon>
+            </button>
+          }
+        </div>
+      }
+      @if (jobEntry && jobEntry.validatedByMedicalDirector) {
+        <div matTooltip="Validated by medical director">
+          ✅ validated by medical director for negative reporting
+          <br />
+          <span class="text-xs">
+            Validation comment: {{ jobEntry.validationComment }}
+          </span>
+          <br />
+          <span class="text-xs"
+            >Validated by: {{ jobEntry.validator?.firstName }}
+            {{ jobEntry.validator?.lastName }} ({{
+              jobEntry.validator?.email
+            }})</span
+          >
+          <br />
+          <span class="text-xs"
+            >Validated at:
+            {{ jobEntry.validatedAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
+          >
+          <br />
+        </div>
+        @switch (hub) {
+          @case ("RSCM") {
+            <p>
+              Generating report will create the negative findings report for the
+              individual.
+            </p>
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="generateReportRSCM()"
+            >
+              Generate Report
+            </button>
+          }
+          @case ("RSSARDJITO") {
+            <p>
+              Generating report will create the negative findings report for the
+              individual.
+            </p>
+            <div class="flex flex-col space-y-1">
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'crd')"
+                >
+                  CRD Negative (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'crd')"
+                >
+                  CRD Negative (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'md')"
+                >
+                  MD Negative (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'md')"
+                >
+                  MD Negative (ID)
+                </button>
+              </div>
+              <div class="flex flex-row space-x-1">
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('en', 'generic')"
+                >
+                  Generic Negative (EN)
+                </button>
+                <button
+                  class="w-[200px]"
+                  mat-raised-button
+                  color="primary"
+                  (click)="generateReportRSSARDJITO('id', 'generic')"
+                >
+                  Generic Negative (ID)
+                </button>
+              </div>
+            </div>
+          }
+        }
+      } @else {
+        <div class="text-left">
+          ❌ Not validated to perform negative reporting
+          <br />
+          Please get in touch with medical directory for validations
+        </div>
+      }
+    } @else if (!hub) {
+      <p>Lab configuration is not set. Please contact the administrator.</p>
+    }
+  </mat-card-content>
+</mat-card>
+<a #downloadLink class="invisible" download="report.pdf"></a>

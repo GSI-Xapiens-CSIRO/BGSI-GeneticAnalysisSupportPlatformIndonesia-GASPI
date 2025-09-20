@@ -41,6 +41,8 @@ export class QueryResultViewerContainerComponent implements OnChanges {
   query: any;
   @Input()
   scope: any;
+  @Input()
+  projects: any;
 
   protected _ = _;
   protected granularity = '';

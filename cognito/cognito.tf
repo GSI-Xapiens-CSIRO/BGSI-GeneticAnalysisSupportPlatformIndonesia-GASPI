@@ -49,6 +49,14 @@ resource "aws_cognito_user_pool" "gaspi_user_pool" {
     string_attribute_constraints {}
   }
 
+  schema {
+    name                     = "is_medical_director"
+    attribute_data_type      = "Boolean"
+    developer_only_attribute = false
+    mutable                  = true
+    required                 = false
+  }
+
   email_configuration {
     configuration_set     = aws_ses_configuration_set.ses_feedback_config.name
     email_sending_account = "DEVELOPER"
@@ -171,17 +179,6 @@ data "aws_iam_policy_document" "admin_group_role_policy" {
     resources = [
       "arn:aws:s3:::${var.dataportal-bucket-prefix}*/private/$${cognito-identity.amazonaws.com:sub}/*",
     ]
-  }
-
-  # Allow access to AWS Pricing API
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "pricing:*",
-    ]
-
-    resources = ["*"]
   }
 }
 
@@ -325,7 +322,8 @@ resource "aws_cognito_user" "guest" {
   lifecycle {
     ignore_changes = [
       password,
-      attributes["identity_id"]
+      attributes["identity_id"],
+      attributes["is_medical_director"],
     ]
   }
 }
@@ -346,7 +344,8 @@ resource "aws_cognito_user" "admin" {
   lifecycle {
     ignore_changes = [
       password,
-      attributes["identity_id"]
+      attributes["identity_id"],
+      attributes["is_medical_director"],
     ]
   }
 }

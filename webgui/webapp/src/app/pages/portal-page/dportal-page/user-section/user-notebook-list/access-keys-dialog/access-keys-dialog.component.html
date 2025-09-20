@@ -57,8 +57,10 @@
     </div>
 
     <mat-tab-group [(selectedIndex)]="selectedIndex">
-      <mat-tab *ngFor="let tab of cmdTabs" [label]="tab.label">
-        <div *ngIf="selectedTab === tab.tab">
+      @for (tab of cmdTabs; track tab) {
+        <div>
+          <mat-tab [label]="tab.label">
+            @if (selectedTab === tab.tab) {
           <pre class="code-block" [innerHTML]="tab.html"></pre>
 
           <div class="flex flex-row space-x-1">
@@ -73,8 +75,10 @@
               Copy Script
             </button>
           </div>
+            }
+          </mat-tab>
         </div>
-      </mat-tab>
+      }
     </mat-tab-group>
 
   }

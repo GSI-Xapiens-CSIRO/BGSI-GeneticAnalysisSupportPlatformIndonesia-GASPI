@@ -1,0 +1,49 @@
+<h1 mat-dialog-title>Clinical Workflow</h1>
+<app-component-spinner [loading]="loading"></app-component-spinner>
+
+<div mat-dialog-content>
+  <div
+    class="flex flex-col p-2 mt-2"
+  >
+    <div class="text-base">
+      Run the clinical workflow for the project <b class="text-primary-60">{{ data.projectName }}</b> using the file <b class="text-primary-60">{{ data.file }}</b>.
+    </div>
+    <div class="my-2">
+      Enter a job name to proceed the clinical workflow.
+    </div>
+    <form [formGroup]="jobForm">
+      <mat-form-field class="w-full my-1">
+        <mat-label>Job Name</mat-label>
+        <input
+          matInput
+          formControlName="jobName"
+          type="text"
+          required
+          autocomplete="off"
+        />
+        <mat-error >Enter a Job name of 3-20 alphanumeric characters.</mat-error
+      >
+      </mat-form-field>
+      @if (showMissingToRefOption) {
+        <div>
+          <mat-checkbox formControlName="missingToRef">
+            Treat missing variants as reference
+          </mat-checkbox>
+        </div>
+      }
+    </form>
+  </div>
+  <div class="flex flex-row space-x-1 items-center my-2">
+    <button mat-raised-button mat-dialog-close color="primary">Close</button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      class="w-[110px]"
+      [disabled]="jobForm.invalid"
+      (click)="this.submit()"
+    >
+      Submit
+    </button>
+  </div>
+</div>
