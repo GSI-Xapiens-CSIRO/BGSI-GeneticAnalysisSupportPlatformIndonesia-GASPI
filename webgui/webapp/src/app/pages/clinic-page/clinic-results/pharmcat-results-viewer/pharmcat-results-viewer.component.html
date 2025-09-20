@@ -1,9 +1,12 @@
 <mat-card class="mt-4">
   <mat-card-content>
     <!-- No Results Alert -->
-    @if (!diplotypeHasRows && !variantHasRows && !isLoading) {
+    @if (!diplotypeHasRows && !isLoading) {
       <app-no-results-alert
         [message]="results?.noResultsMessage"
+        [additionalReasons]="[
+          'PharmCAT cannot determine a suitable star allele assignment.'
+        ]"
       ></app-no-results-alert>
     }
 
@@ -368,6 +371,7 @@
                   [variantHasRows]="variantHasRows"
                   (change)="handleSelectionChange(row, $event)"
                   (filter)="filterRelatedVariants($event)"
+                  [isBookmark]="checkIsMarked(row)"
                 />
               }
             </div>

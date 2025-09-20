@@ -13,7 +13,16 @@
           >
             <div class="flex flex-1 flex-row items-center gap-2">
               <div class="flex flex-col gap-1">
-                <div class="title-accordion">{{ row["Gene"] }}</div>
+                <div class="flex flex-row items-center">
+                  <div class="title-accordion">{{ row["Gene"] }}</div>
+                  @if (isBookmark) {
+                    <div
+                      matTooltip="This variant(s) was already selected for reporting, please see the 'Variant selected for reporting' below"
+                    >
+                      <mat-icon class="text-gray-400">bookmark</mat-icon>
+                    </div>
+                  }
+                </div>
                 <div>
                   {{ row["Organisation"] }}
                 </div>

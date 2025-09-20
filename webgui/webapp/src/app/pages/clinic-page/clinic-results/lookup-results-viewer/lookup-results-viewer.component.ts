@@ -26,7 +26,12 @@ import {
   tap,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
-import { clinicFilter, clinicResort } from 'src/app/utils/clinic';
+import {
+  clinicFilter,
+  clinicResort,
+  validationReportsArray,
+  validationReportsObject,
+} from 'src/app/utils/clinic';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
   FormControl,
@@ -120,6 +125,7 @@ export class LookupResultsViewerComponent
 {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Input() listReports: any = []; // receive data from parent
   @ViewChild(MatSort) sort!: MatSort;
 
   readonly panelOpenState = signal(false);
@@ -457,6 +463,18 @@ export class LookupResultsViewerComponent
   }
 
   async openSaveForReportingDialog() {
+    const found = validationReportsArray(
+      this.listReports,
+      this.cs.selectedVariants.value,
+    );
+    if (found) {
+      this.tstr.error(
+        'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
+        'Error',
+      );
+      return;
+    }
+
     const { SaveForReportingDialogComponent } = await import(
       '../save-for-reporting-dialog/save-for-reporting-dialog.component'
     );
@@ -643,5 +661,10 @@ export class LookupResultsViewerComponent
 
   handleRedirectFAQ = () => {
     this.router.navigate(['/faq']);
+  };
+
+  checkIsMarked = (bObj: any) => {
+    const isMarked = validationReportsObject(this.listReports, bObj);
+    return isMarked;
   };
 }

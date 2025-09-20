@@ -260,16 +260,25 @@
                 Status
               </th>
               <td mat-cell *matCellDef="let element" class="text-center">
-                @if (shouldShowFlag(element)) {
-                  <div
-                    class="flex justify-center items-center rounded-full cursor-pointer"
-                    [matTooltip]="getFlagMessage(element)"
-                    style="width: 24px; height: 24px; margin: 0 auto"
-                    [style.background]="getFlagColor(element)"
-                  >
-                    <mat-icon class="text-white">priority_high</mat-icon>
-                  </div>
-                }
+                <div class="flex flex-row gap-2 items-center">
+                  @if (shouldShowFlag(element)) {
+                    <div
+                      class="flex justify-center items-center rounded-full cursor-pointer"
+                      [matTooltip]="getFlagMessage(element)"
+                      style="width: 24px; height: 24px; margin: 0 auto"
+                      [style.background]="getFlagColor(element)"
+                    >
+                      <mat-icon class="text-white">priority_high</mat-icon>
+                    </div>
+                  }
+                  @if (checkIsMarked(element)) {
+                    <div
+                      matTooltip="This variant(s) was already selected for reporting, please see the 'Variant selected for reporting' below"
+                    >
+                      <mat-icon class="text-gray-400">bookmark</mat-icon>
+                    </div>
+                  }
+                </div>
               </td>
             </ng-container>
 
