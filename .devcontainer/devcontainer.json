@@ -24,7 +24,9 @@
         "usernamehw.errorlens",
         "esbenp.prettier-vscode",
         "Angular.ng-template",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "bradlc.vscode-tailwindcss",
+        "rust-lang.rust-analyzer"
       ]
     }
   }

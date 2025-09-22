@@ -193,12 +193,16 @@ export class UserNotebookListComponent implements OnInit {
       });
   }
 
-  async keys() {
-    const { AccessKeysDialogComponent } = await import(
-      './access-keys-dialog/access-keys-dialog.component'
+  async cliHelp() {
+    const { CliHelpModalComponent } = await import(
+      './cli-help-modal/cli-help-modal.component'
     );
 
-    const dialog = this.dg.open(AccessKeysDialogComponent);
+    const dialog = this.dg.open(CliHelpModalComponent, {
+      width: '1200px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+    });
 
     dialog.afterClosed().subscribe(() => {});
   }
