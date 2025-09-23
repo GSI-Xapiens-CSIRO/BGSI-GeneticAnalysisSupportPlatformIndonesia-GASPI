@@ -10,6 +10,6 @@
 	path = pgxflow
 	url = https://github.com/GSI-Xapiens-CSIRO/pgxflow-BGSi.git
 
-[submodule "clinical_reports"]
-	path = clinical_reports
-	url = https://github.com/GSI-Xapiens-CSIRO/clinical_reports.git
+[submodule "report_templates"]
+	path = report_templates
+	url = https://github.com/GSI-Xapiens-CSIRO/report_templates.git
