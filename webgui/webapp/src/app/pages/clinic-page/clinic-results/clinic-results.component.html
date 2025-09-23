@@ -64,21 +64,25 @@
       [projectName]="projectName"
       [listData]="receivedData"
       [selectedData]="selectedData"
+      [listReports]="listReports"
     />
   } @else if (["RSPON"].includes(hubName)) {
     <app-pharmcat-results-viewer
       [requestId]="requestId"
       [projectName]="projectName"
+      [listReports]="listReports"
     />
   } @else if (["RSIGNG"].includes(hubName)) {
     <app-lookup-results-viewer
       [requestId]="requestId"
       [projectName]="projectName"
+      [listReports]="listReports"
     />
   } @else if (["RSJPD"].includes(hubName)) {
     <app-hybrid-results-viewer
       [requestId]="requestId"
       [projectName]="projectName"
+      [listReports]="listReports"
     />
   }
 
@@ -87,9 +91,11 @@
     [projectName]="projectName"
     (dataSent)="handleChildData($event)"
     (selectAnotation)="handleSelectedAnotation($event)"
+    [listReports]="listReports"
   />
   <app-saved-for-reporting-viewer
     [requestId]="requestId"
     [projectName]="projectName"
+    (listReports)="handleSetListReports($event)"
   />
 }
