@@ -18,3 +18,5 @@ dataportal-bucket-prefix="gasi-dataportal-"
 
 # ses email
 ses-source-email="admin@example.com"
+
+hub_name="hub_name"
