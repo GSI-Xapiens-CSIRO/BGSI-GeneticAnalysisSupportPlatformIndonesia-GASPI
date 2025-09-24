@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   ElementRef,
+  EventEmitter,
   Injectable,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -102,6 +104,7 @@ export class SavedForReportingViewerComponent
 {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Output() listReports = new EventEmitter<any>(); // array of objects
   @ViewChild('paginator')
   paginator!: MatPaginator;
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
@@ -401,6 +404,18 @@ export class SavedForReportingViewerComponent
       });
   }
 
+  handleListVariants(data: any, shouldEmit: boolean = false) {
+    const output = data.reduce((acc: any, item: any) => {
+      if (Array.isArray(item.variants)) acc.push(...item.variants);
+      return acc;
+    }, [] as any[]);
+
+    // Only emit when explicitly requested (fresh data load, not during search/filter)
+    if (shouldEmit) {
+      this.listReports.emit(output);
+    }
+  }
+
   list(page: number) {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
@@ -428,6 +443,7 @@ export class SavedForReportingViewerComponent
             return;
           }
           this.variants = res.variants;
+          this.handleListVariants(res.variants, true);
           // set next page token
           this.pageTokens.set(page + 1, res.last_evaluated_key);
         }

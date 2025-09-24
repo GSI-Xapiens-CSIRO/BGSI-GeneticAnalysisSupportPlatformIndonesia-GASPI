@@ -28,7 +28,16 @@
                 </div>
               }
               <div class="flex flex-col gap-1">
-                <div class="title-accordion">{{ row["Gene Name"] }}</div>
+                <div class="flex flex-row gap-2 items-center">
+                  <div class="title-accordion">{{ row["Gene Name"] }}</div>
+                  @if (isBookmark) {
+                    <div
+                      matTooltip="This variant(s) was already selected for reporting, please see the 'Variant selected for reporting' below"
+                    >
+                      <mat-icon class="text-gray-400">bookmark</mat-icon>
+                    </div>
+                  }
+                </div>
                 <div>
                   {{ row["Variant Name"] }}
                 </div>
@@ -199,7 +208,8 @@
               <div class="flex flex-row text-sm text-primary-50 mb-2 gap-4">
                 <div
                   (click)="handleRedirectGnomad(row, 'gnomad_r4')"
-                  class="flex-1row-value link-click">
+                  class="flex-1row-value link-click"
+                >
                   gnomAD
                 </div>
                 <div
@@ -367,7 +377,8 @@
               <div class="row-content">
                 <div>pLOF o/e</div>
                 <div class="row-value">
-                  {{ row["pLOF o/e"] }} ({{ row["pLOF o/e lower CI"] }} - {{ row["pLOF o/e upper CI"] }})
+                  {{ row["pLOF o/e"] }} ({{ row["pLOF o/e lower CI"] }} -
+                  {{ row["pLOF o/e upper CI"] }})
                 </div>
               </div>
             </div>

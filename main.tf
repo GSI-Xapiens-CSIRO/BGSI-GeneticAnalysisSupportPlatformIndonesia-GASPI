@@ -183,3 +183,11 @@ module "error-catcher" {
     aws = aws.error-catcher
   }
 }
+
+module "gaspifs" {
+  source                      = "./gaspifs"
+  region                      = var.region
+  gaspifs_binary_destination  = "s3://${module.sbeacon.data-portal-bucket}/binaries/gaspifs"
+  cognito_user_pool_client_id = module.cognito.cognito_client_id
+  cli_backend_api_url         = module.sbeacon.api_url
+}
