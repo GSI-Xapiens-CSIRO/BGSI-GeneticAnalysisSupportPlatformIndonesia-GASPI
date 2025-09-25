@@ -20,3 +20,4 @@ dataportal-bucket-prefix="gasi-dataportal-"
 ses-source-email="admin@example.com"
 
 hub_name="hub_name"
+svep-filters=[]
