@@ -8,12 +8,13 @@ import { AdvancedQueryResultsViewerComponent } from '../advanced-query-results-v
 import { VisualQueryResultsViewerComponent } from '../visual-query-results-viewer/visual-query-results-viewer.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
-import { DportalService } from 'src/app/services/dportal.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { catchError, from, of } from 'rxjs';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { catchError, firstValueFrom, from, of } from 'rxjs';
 import { Storage } from 'aws-amplify';
+import { getTotalStorageSize } from 'src/app/utils/file';
+import { UserQuotaService } from 'src/app/services/userquota.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-query-result-viewer-container',
@@ -29,7 +30,6 @@ import { Storage } from 'aws-amplify';
     TabularQueryResultsViewerComponent,
     TextQueryResultsViewerComponent,
     MatButtonModule,
-    MatSnackBarModule,
   ],
 })
 export class QueryResultViewerContainerComponent implements OnChanges {
@@ -41,6 +41,8 @@ export class QueryResultViewerContainerComponent implements OnChanges {
   query: any;
   @Input()
   scope: any;
+  @Input()
+  projects: any;
 
   protected _ = _;
   protected granularity = '';
@@ -50,7 +52,8 @@ export class QueryResultViewerContainerComponent implements OnChanges {
   constructor(
     private dg: MatDialog,
     private ss: SpinnerService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
+    private uq: UserQuotaService,
   ) {}
 
   ngOnChanges(): void {
@@ -69,6 +72,7 @@ export class QueryResultViewerContainerComponent implements OnChanges {
       type: 'text/json;charset=utf-8;',
     });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = 'data.json';
@@ -77,7 +81,49 @@ export class QueryResultViewerContainerComponent implements OnChanges {
     document.body.removeChild(a);
   }
 
+  // Calculate total size from storage and current query result
+  async totalStorage(queryResults: any) {
+    // Get files in the storage
+    const res = await Storage.list(``, {
+      pageSize: 'ALL',
+      level: 'private',
+    });
+
+    // Get total size from storage
+    const bytesTotal = getTotalStorageSize(res.results);
+
+    // Get size from current query result
+    const blob = new Blob([JSON.stringify(queryResults, null, 2)], {
+      type: 'text/json;charset=utf-8;',
+    });
+
+    return bytesTotal + blob.size;
+  }
+
+  updateUserQuota(userQuota: any, currentTotalSize: number) {
+    this.uq
+      .upsertUserQuota(userQuota.userSub, userQuota.costEstimation, {
+        quotaSize: userQuota.quotaSize,
+        quotaQueryCount: userQuota.quotaQueryCount,
+        usageSize: currentTotalSize,
+        usageCount: userQuota.usageCount,
+      })
+      .pipe(catchError(() => of(null)));
+  }
+
   async save(content: any) {
+    const userQuota = await firstValueFrom(this.uq.getCurrentUsage());
+    const currentTotalSize = await this.totalStorage(content);
+
+    // Check if the current total size is greater than the user's quota size
+    if (currentTotalSize >= userQuota.quotaSize) {
+      this.tstr.error(
+        'Cannot Save Query because Quota Limit reached. Please contact administrator to increase your quota.',
+        'Error',
+      );
+      return;
+    }
+
     const { TextInputDialogComponent } = await import(
       '../../../../../components/text-input-dialog/text-input-dialog.component'
     );
@@ -91,6 +137,7 @@ export class QueryResultViewerContainerComponent implements OnChanges {
         placeholder: 'My query results',
       },
     });
+
     dialog.afterClosed().subscribe((name) => {
       if (name) {
         this.ss.start();
@@ -103,8 +150,10 @@ export class QueryResultViewerContainerComponent implements OnChanges {
           .pipe(catchError(() => of(null)))
           .subscribe((res) => {
             if (!res) {
-              this.sb.open('Saving failed', 'Okay', { duration: 60000 });
+              this.tstr.error('Saving failed', 'Error');
             }
+
+            this.updateUserQuota(userQuota, currentTotalSize);
             this.ss.end();
           });
       }

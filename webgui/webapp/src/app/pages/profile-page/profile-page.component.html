@@ -4,7 +4,7 @@
     <div class="flex space-x-[10px]">
       <h4 class="w-[200px]">Username:</h4>
       <h4 class="w-[250px] whitespace-nowrap overflow-x-auto">
-        {{ user.email }}
+        {{ user?.email }}
       </h4>
     </div>
     <form action="" [formGroup]="userDetailsForm">
@@ -49,15 +49,40 @@
 <br />
 <mat-card>
   <mat-card-content>
+    <h3>Multi Factor Authentication</h3>
+    @if (mfaActivated) {
+      <h5 class="text-green-600">You have successfully activate MFA.</h5>
+    } @else {
+      <h5 class="text-red-600">
+        You have not activate MFA. Please activate MFA immediately.
+      </h5>
+      <button
+        class="w-[100px]"
+        (click)="activateMfa()"
+        mat-raised-button
+        color="primary"
+      >
+        Activate
+      </button>
+    }
+  </mat-card-content>
+</mat-card>
+<br />
+<mat-card>
+  <mat-card-content>
     <h3>Update password</h3>
-    <form action="" [formGroup]="userPasswordForm">
+    <form
+      action=""
+      [formGroup]="userPasswordForm"
+      class="flex flex-col space-y-[10px]"
+    >
       <div class="flex space-x-[10px]">
         <h4 class="w-[200px]">Old password:</h4>
         <mat-form-field class="w-[250px]">
           <mat-label>Old password</mat-label>
           <input formControlName="oldPassword" matInput type="password" />
           @if (userPasswordForm.controls["oldPassword"].hasError("minlength")) {
-            <mat-error>Must be longer than 6 characters</mat-error>
+            <mat-error>Must be at least 8 characters</mat-error>
           }
         </mat-form-field>
       </div>
@@ -84,12 +109,25 @@
           <mat-error>Confirmation mismatch</mat-error>
         </mat-form-field>
       </div>
+      @if (userPasswordForm.value.newPassword?.length > 0) {
+        <div class="flex space-x-[10px] items-center">
+          <h4 class="w-[200px]">Password strength:</h4>
+          <div class="w-[250px]">
+            <app-password-strength-bar
+              [password]="userPasswordForm.value.newPassword"
+            />
+          </div>
+        </div>
+      }
     </form>
     <div class="flex space-x-[10px]">
       <button
         class="w-[100px]"
         (click)="updatePassword()"
-        [disabled]="userPasswordForm.invalid"
+        [disabled]="
+          userPasswordForm.invalid ||
+          !isStrongPassword(userPasswordForm.value.newPassword)
+        "
         form="filters"
         mat-raised-button
         color="primary"

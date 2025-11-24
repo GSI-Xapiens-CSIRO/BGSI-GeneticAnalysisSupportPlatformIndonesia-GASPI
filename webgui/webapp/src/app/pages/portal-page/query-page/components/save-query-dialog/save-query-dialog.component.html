@@ -1,27 +1,42 @@
-<h1 mat-dialog-title>Please provide a query description</h1>
-<div mat-dialog-content>
-  <mat-form-field style="width: 400px; margin-top: 5px">
-    <mat-label>Description</mat-label>
-    <textarea
-      matInput
-      [(ngModel)]="data.text"
-      placeholder="Eg: Individuals with SNOMED:ABC condition"
-    ></textarea>
-  </mat-form-field>
-  <div>
+<h1 mat-dialog-title>Enter your query details</h1>
+<div mat-dialog-content [formGroup]="form" class="flex flex-col">
+  <div class="pt-1">
+    <mat-form-field class="w-full">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" placeholder="Eg: XYZ Query" />
+      <mat-error *ngIf="form.get('name')?.hasError('required')">
+        Name is required
+      </mat-error>
+      <mat-error *ngIf="form.get('name')?.hasError('maxlength')">
+        Name must be at most 30 characters long
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="pt-1">
+    <mat-form-field class="w-full">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Eg: Individuals with SNOMED:ABC condition"
+      ></textarea>
+      <mat-error *ngIf="form.get('description')?.hasError('required')">
+        Description is required
+      </mat-error>
+      <mat-error *ngIf="form.get('description')?.hasError('maxlength')">
+        Description must be at most 200 characters long
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="flex flex-row space-x-1">
+    <button mat-raised-button color="primary" (click)="cancel()">Cancel</button>
     <button
       mat-raised-button
       color="primary"
-      (click)="cancel()"
-      style="margin-right: 10px"
-    >
-      Cancel
-    </button>
-    <button
-      [disabled]="!data.text"
-      mat-raised-button
-      color="primary"
-      [mat-dialog-close]="data.text"
+      [disabled]="form.invalid"
+      [mat-dialog-close]="form.value"
     >
       Save
     </button>

@@ -1,12 +1,20 @@
 <form [formGroup]="dataSubmissionForm">
-  <br />
+  <div class="flex flex-col gap-2 p-4 my-4 font-medium text-yellow-800 rounded-lg bg-yellow-100" role="alert">
+    <div>
+      Multi-sampled VCF is for the Data Portal functionalities, and only single-sampled and compressed VCF works for the Clinical workflow.
+    </div>
+    <div>
+      Please make sure that neither the filename nor the file content contains any sensitive personal information!
+    </div>
+  </div>
+
   <div class="flex flex-col space-y-2 w-full">
     <mat-form-field class="w-full">
       <mat-label>Project name</mat-label>
       <input matInput formControlName="projectName" placeholder="Project 1" />
       <mat-error>
-        A unique name is required. White spaces not allowed at start or end of
-        this name.</mat-error
+        Choose a unique name of 6 to 64 alphanumeric characters. Whitespaces in
+        the middle are allowed.</mat-error
       >
     </mat-form-field>
     <mat-form-field class="w-full">
@@ -16,7 +24,9 @@
         formControlName="projectDescription"
         placeholder="Enter project description"
       ></textarea>
-      <mat-error> A description is required. </mat-error>
+      <mat-error>
+        A description of upto 5000 characters is required.
+      </mat-error>
     </mat-form-field>
     <app-file-dropper
       (dropped)="patchFiles($event)"
@@ -29,7 +39,7 @@
     <div class="flex flex-row items-center space-x-2 mb-1">
       <button
         mat-mini-fab
-        color="primary"
+        color="warn"
         type="button"
         (click)="removeFile($index)"
         [disabled]="dataSubmissionForm.disabled"

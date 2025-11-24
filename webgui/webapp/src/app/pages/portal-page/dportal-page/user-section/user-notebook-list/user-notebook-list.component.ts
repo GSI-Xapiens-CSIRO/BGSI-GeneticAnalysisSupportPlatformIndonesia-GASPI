@@ -1,35 +1,48 @@
-import {
-  Component,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-  ViewChildren,
-} from '@angular/core';
+import { Component, OnInit, ViewChildren } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { instanceTypes, volumeSizes } from './data';
+import {
+  cpuInstanceTypes,
+  gpuInstanceTypes,
+  InstanceGroups,
+  instanceGroups,
+  VolumeSizes,
+  volumeSizes,
+} from './data';
 import {
   FormBuilder,
   FormGroup,
-  FormGroupDirective,
   FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { DportalService } from 'src/app/services/dportal.service';
-import { catchError, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  firstValueFrom,
+  of,
+  timer,
+} from 'rxjs';
 import { NotebookItemComponent } from './notebook-item/notebook-item.component';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   MatExpansionModule,
   MatExpansionPanel,
 } from '@angular/material/expansion';
 import { MatDialog } from '@angular/material/dialog';
 import { AwsService } from 'src/app/services/aws.service';
+import { ToastrService } from 'ngx-toastr';
+import { AuthService } from 'src/app/services/auth.service';
+import { UserQuotaService } from 'src/app/services/userquota.service';
+import { NotebookRole } from 'src/app/pages/admin-page/components/enums';
+import { Router, NavigationEnd } from '@angular/router';
+import { MatTooltip } from '@angular/material/tooltip';
 
 export type InstanceName = string;
 
@@ -52,8 +65,8 @@ export interface InstanceStartInfo {
     ReactiveFormsModule,
     MatInputModule,
     NotebookItemComponent,
-    MatSnackBarModule,
     MatExpansionModule,
+    MatTooltip,
   ],
   templateUrl: './user-notebook-list.component.html',
   styleUrl: './user-notebook-list.component.scss',
@@ -61,8 +74,8 @@ export interface InstanceStartInfo {
 export class UserNotebookListComponent implements OnInit {
   @ViewChildren('notebook') notebookItems?: NotebookItemComponent[];
   notebooks: InstanceName[] = [];
-  instanceTypes = instanceTypes;
-  volumeSizes = volumeSizes;
+  instanceGroups: InstanceGroups = instanceGroups;
+  volumeSizes: VolumeSizes = volumeSizes;
   instanceForm: FormGroup;
   loading = false;
   estimatedPrice: number | null = null;
@@ -70,9 +83,11 @@ export class UserNotebookListComponent implements OnInit {
   constructor(
     fb: FormBuilder,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private dg: MatDialog,
     private aws: AwsService,
+    private uq: UserQuotaService,
+    private router: Router,
   ) {
     this.instanceForm = fb.group({
       instanceName: fb.control('', [
@@ -90,19 +105,60 @@ export class UserNotebookListComponent implements OnInit {
     this.list();
 
     this.onChangesCalculatePrice();
+
+    timer(500).subscribe(() => this.generateInstanceName());
+  }
+
+  refresh() {
+    this.list();
+    timer(500).subscribe(() => this.generateInstanceName());
+  }
+
+  // Generate instance name based on the current role
+  async generateInstanceName() {
+    const { notebookRole } = await firstValueFrom(this.uq.getCurrentUsage());
+    const isBasicRole = notebookRole === NotebookRole.BASIC;
+
+    if (isBasicRole) {
+      const basicRoleCpu = cpuInstanceTypes.filter((i) => {
+        if (isBasicRole) {
+          return i.name === 'ml.t3.medium';
+        }
+
+        // Advanced roles can use any CPU instance
+        return true; // For other roles, include all CPU instances
+      });
+
+      this.instanceGroups = [
+        { name: 'CPU Generic', instances: basicRoleCpu, gpu: false },
+      ];
+
+      this.volumeSizes = volumeSizes.filter((v) => v.size === 5);
+
+      this.instanceForm.patchValue({
+        instanceType: this.instanceGroups[0].instances[0].name,
+        volumeSize: this.volumeSizes[0].size,
+      });
+    }
   }
 
   onChangesCalculatePrice() {
-    this.instanceForm.valueChanges.subscribe((values) => {
-      if (values.instanceType && values.volumeSize) {
-        this.aws
-          .calculateTotalPricePerMonth(values.instanceType, values.volumeSize)
-          .pipe(catchError(() => of(null)))
-          .subscribe((price) => {
-            this.estimatedPrice = price;
-          });
-      }
-    });
+    this.instanceForm.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe((values) => {
+        if (values.instanceType && values.volumeSize) {
+          this.aws
+            .calculateTotalPricePerMonth(
+              values.instanceType,
+              values.volumeSize,
+              '',
+            )
+            .pipe(catchError(() => of(null)))
+            .subscribe((price) => {
+              this.estimatedPrice = price;
+            });
+        }
+      });
   }
 
   list() {
@@ -129,22 +185,24 @@ export class UserNotebookListComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         if (!res) {
-          this.sb.open('Failed to create notebook', 'Close', {
-            duration: 60000,
-          });
+          this.tstr.error('Failed to create notebook', 'Error');
         }
         this.list();
-        this.instanceForm.reset();
+        this.resetForm();
         panel.close();
       });
   }
 
-  async keys() {
-    const { AccessKeysDialogComponent } = await import(
-      './access-keys-dialog/access-keys-dialog.component'
+  async cliHelp() {
+    const { CliHelpModalComponent } = await import(
+      './cli-help-modal/cli-help-modal.component'
     );
 
-    const dialog = this.dg.open(AccessKeysDialogComponent);
+    const dialog = this.dg.open(CliHelpModalComponent, {
+      width: '1200px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+    });
 
     dialog.afterClosed().subscribe(() => {});
   }

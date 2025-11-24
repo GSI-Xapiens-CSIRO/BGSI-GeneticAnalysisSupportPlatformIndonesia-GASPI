@@ -1,0 +1,78 @@
+<h1 mat-dialog-title>Add new user to: {{ data.project }}</h1>
+<div mat-dialog-content>
+  <mat-form-field class="w-full py-1" [subscriptSizing]="'dynamic'">
+    <mat-label>Email</mat-label>
+    <mat-chip-grid #chipGrid aria-label="Enter fruits">
+      @for (user of users; track user) {
+        <mat-chip-row (removed)="remove(user)" color="primary">
+          {{ user.email }}
+          <button matChipRemove color="primary">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip-row>
+      }
+      <input
+        matInput
+        #emailInput
+        [placeholder]="users.length === 0 ? 'eg: user@example.com' : ''"
+        [formControl]="emailControl"
+        [matChipInputFor]="chipGrid"
+        [matChipInputAddOnBlur]="false"
+        [matChipInputSeparatorKeyCodes]="[]"
+        [matAutocomplete]="usersAuto"
+        autocomplete="off"
+      />
+    </mat-chip-grid>
+    <mat-autocomplete
+      #usersAuto="matAutocomplete"
+      (optionSelected)="add($event)"
+    >
+      @for (user of usersAutocomplete; track user) {
+        <mat-option [value]="user"
+          >{{ user.firstName }} {{ user.lastName }} ({{
+            user.email
+          }})</mat-option
+        >
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+  <input
+    type="file"
+    (change)="csv($event)"
+    accept=".txt"
+    class="hidden"
+    #fileInput
+  />
+  <p>Import from files must be accompanies with one email address per line.</p>
+  <div class="flex flex-row space-x-1">
+    <button
+      mat-raised-button
+      type="button"
+      mat-dialog-close
+      color="primary"
+      class="w-[110px]"
+    >
+      close
+    </button>
+    <button
+      mat-raised-button
+      type="button"
+      color="primary"
+      class="w-[110px]"
+      (click)="fileInput.click()"
+    >
+      Load File
+    </button>
+    <button
+      mat-raised-button
+      type="button"
+      autocomplete="off"
+      color="primary"
+      class="w-[110px]"
+      [disabled]="users.length === 0"
+      (click)="submit()"
+    >
+      Submit
+    </button>
+  </div>
+</div>

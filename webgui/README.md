@@ -23,7 +23,7 @@ export const environment = {
 };
 ```
 
-Change to `webapp/` directory and run the following commands to get started. While `npm` workds, we recommend using `pnpm` for a better experience.
+Change to `webapp/` directory and run the following commands to get started. While `npm` works, we recommend using `pnpm` for a better experience.
 
 ```bash
 pnpm install
@@ -66,26 +66,10 @@ You can create a `tfvars` file named `terraform.tfvars` to provide variables to 
 
 ```tfvars
 region = "us-east-1"
+
 common-tags = {
   Tag1 = "tag-1"
 }
-```
-
-Be sure to create a `terraform workspace` before deployment. This helps you to have multiple deployments with same backend for testing, staging and production.
-
-View the active workspace
-```bash
-terraform workspace show
-```
-
-List the current set of workspaces
-```bash
-terraform workspace list
-```
-
-Create a workshop and activate it
-```bash
-terraform workspace new dev
 ```
 
 Deployment plan can be obtained using following command.

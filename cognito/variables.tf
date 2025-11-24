@@ -32,3 +32,13 @@ variable "dataportal-bucket-prefix" {
   type        = string
   description = "Prefix for bucket names"
 }
+
+variable "ses-source-email" {
+  type        = string
+  description = "Address from which to send emails"
+}
+
+variable "bui-ssm-parameter-name" {
+  type        = string
+  description = "Name of the ssm parameter storing cloudfront URL"
+}

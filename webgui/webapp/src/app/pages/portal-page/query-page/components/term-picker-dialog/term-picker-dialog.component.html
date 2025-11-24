@@ -15,7 +15,7 @@
         @for (column of columns; track column) {
           <ng-container [matColumnDef]="column">
             <th
-              [style.width]="column === 'selected' ? '100px' : ''"
+              [ngClass]="{ 'bui-header-selected': column === 'selected' }"
               mat-header-cell
               *matHeaderCellDef
             >
@@ -58,7 +58,7 @@
         mat-raised-button
         color="primary"
         (click)="selected = []"
-        style="margin-right: 10px"
+        class="mr-2.5"
       >
         Reset
       </button>
@@ -66,7 +66,7 @@
         mat-raised-button
         color="primary"
         (click)="cancel()"
-        style="margin-right: 10px"
+        class="mr-2.5"
       >
         Cancel
       </button>

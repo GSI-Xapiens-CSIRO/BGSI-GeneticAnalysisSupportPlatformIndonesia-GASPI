@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { API, Auth } from 'aws-amplify';
-import { from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -8,6 +8,65 @@ import { environment } from 'src/environments/environment';
 })
 export class DportalService {
   constructor() {}
+
+  // data portal admin user file actions
+  adminGetUserFolders() {
+    console.log('get user folders');
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        'dportal/admin/folders',
+        {},
+      ),
+    );
+  }
+
+  adminDeleteUserFolder(folder: string) {
+    console.log('delete user folder');
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/folders/${folder}`,
+        {},
+      ),
+    );
+  }
+
+  // data portal admin cli uploads actions
+  adminGetUploaders(project: string) {
+    console.log('get project uploaders');
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/upload`,
+        {},
+      ),
+    );
+  }
+
+  adminAddUploader(project: string, email: string, args: any) {
+    console.log('add project uploader');
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/users/${email}/upload`,
+        {
+          body: args,
+        },
+      ),
+    );
+  }
+
+  adminRemoveUploader(project: string, email: string, uploadId: string) {
+    console.log('remove project uploader');
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/users/${email}/upload/${uploadId}`,
+        {},
+      ),
+    );
+  }
 
   // data portal admin project actions
   adminCreateProject(name: string, description: string) {
@@ -36,14 +95,33 @@ export class DportalService {
     );
   }
 
-  getAdminProjects() {
-    console.log('get projects');
+  getAdminProjects(
+    limit: number = 10,
+    last_evaluated_key: string | null = null,
+    search?: string,
+  ) {
     return from(
-      API.get(
-        environment.api_endpoint_sbeacon.name,
-        'dportal/admin/projects',
-        {},
-      ),
+      API.get(environment.api_endpoint_sbeacon.name, 'dportal/admin/projects', {
+        queryStringParameters: {
+          limit: limit,
+          last_evaluated_key: last_evaluated_key,
+          search,
+        },
+      }),
+    );
+  }
+
+  getMyProjectsPagination(
+    limit: number = 10,
+    last_evaluated_key: string | null = null,
+  ) {
+    return from(
+      API.get(environment.api_endpoint_sbeacon.name, 'dportal/my-projects', {
+        queryStringParameters: {
+          limit: limit,
+          last_evaluated_key: last_evaluated_key,
+        },
+      }),
     );
   }
 
@@ -58,14 +136,35 @@ export class DportalService {
     );
   }
 
+  clearAdminProjectErrors(project: string) {
+    console.log('clear project errors');
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/admin/projects/${project}/errors`,
+        {},
+      ),
+    );
+  }
+
   // data portal admin notebook actions
-  getAdminNotebooks() {
-    console.log('get my notebooks');
+  getAdminNotebooks(
+    limit: number = 3,
+    last_evaluated_index: number = 0,
+    search?: string,
+  ) {
+    console.log('get admin notebooks');
     return from(
       API.get(
         environment.api_endpoint_sbeacon.name,
         'dportal/admin/notebooks',
-        {},
+        {
+          queryStringParameters: {
+            limit: limit,
+            last_evaluated_index: last_evaluated_index,
+            search,
+          },
+        },
       ),
     );
   }
@@ -115,14 +214,23 @@ export class DportalService {
     );
   }
 
-  adminAddUserToProject(project: string, email: string) {
+  adminSearchUsers(search: string) {
+    console.log('search users', search);
+    return from(
+      API.get(environment.api_endpoint_sbeacon.name, `dportal/admin/users`, {
+        queryStringParameters: { search },
+      }),
+    );
+  }
+
+  adminAddUserToProject(project: string, emails: string[]) {
     console.log('add user to project');
     return from(
       API.post(
         environment.api_endpoint_sbeacon.name,
         `dportal/admin/projects/${project}/users`,
         {
-          body: { emails: [email] },
+          body: { emails },
         },
       ),
     );
@@ -143,9 +251,9 @@ export class DportalService {
   adminIngestToBeacon(
     name: string,
     datasetId: string,
-    s3Payload: string,
+    s3Payload: string | { [key: string]: string },
     vcfLocations: string[],
-  ) {
+  ): Observable<{ success: boolean; message: string }> {
     console.log('ingest to sbeacon');
     return from(
       API.post(
@@ -158,7 +266,10 @@ export class DportalService {
     );
   }
 
-  adminUnIngestFromBeacon(name: string, datasetId: string) {
+  adminUnIngestFromBeacon(
+    name: string,
+    datasetId: string,
+  ): Observable<{ success: boolean; message: string }> {
     console.log('uningest from sbeacon');
     return from(
       API.del(
@@ -169,7 +280,7 @@ export class DportalService {
     );
   }
 
-  adminIndexBeacon() {
+  adminIndexBeacon(): Observable<{ success: boolean; message: string }> {
     console.log('ingest to sbeacon');
     return from(
       API.post(
@@ -183,10 +294,42 @@ export class DportalService {
   }
 
   // data portal user actions
-  getMyProjects() {
+  getMySavedQueries() {
+    console.log('get my saved queries');
+    return from(
+      API.get(environment.api_endpoint_sbeacon.name, 'dportal/queries', {}),
+    );
+  }
+
+  saveMyQuery(name: string, description: string, query: any) {
+    console.log('save my query');
+    return from(
+      API.post(environment.api_endpoint_sbeacon.name, 'dportal/queries', {
+        body: { name, description, query },
+      }),
+    );
+  }
+
+  deleteMyQuery(name: string) {
+    console.log('delete my query');
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/queries/${name}`,
+        {},
+      ),
+    );
+  }
+
+  getMyProjects(limit?: number, last_evaluated_key?: string | null) {
     console.log('get my projects');
     return from(
-      API.get(environment.api_endpoint_sbeacon.name, 'dportal/projects', {}),
+      API.get(environment.api_endpoint_sbeacon.name, 'dportal/projects', {
+        queryStringParameters: {
+          ...(limit !== undefined && limit !== null ? { limit } : {}), // Include limit only if not null/undefined
+          ...(last_evaluated_key ? { last_evaluated_key } : {}), // Include last_evaluated_key only if it's truthy
+        },
+      }),
     );
   }
 
@@ -296,6 +439,15 @@ export class DportalService {
         `dportal/notebooks/${name}/url`,
         {},
       ),
+    );
+  }
+
+  generateCohort(payload: any) {
+    console.log('generate cohort');
+    return from(
+      API.post(environment.api_endpoint_sbeacon.name, 'dportal/cohort', {
+        body: payload,
+      }),
     );
   }
 }

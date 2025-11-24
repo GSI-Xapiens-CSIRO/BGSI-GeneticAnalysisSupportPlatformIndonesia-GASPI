@@ -4,11 +4,6 @@ output "api_url" {
   description = "URL used to invoke the API."
 }
 
-output "api_stage" {
-  value       = module.sbeacon.api_stage
-  description = "API stage."
-}
-
 # cognito
 output "cognito_client_id" {
   value       = module.cognito.cognito_client_id

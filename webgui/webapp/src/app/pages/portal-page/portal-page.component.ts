@@ -44,6 +44,14 @@ export class PortalPageComponent implements OnInit {
 
   onTabChange(index: number) {
     const routes = ['portal', 'sbeacon-query', 'sbeacon-filter'];
+    // if directed to correct tab from same page, do nothing
+    const urlTree = this.router.parseUrl(this.router.url);
+    const path = urlTree.root.children['primary'].segments.at(-1)?.path;
+
+    if (path === routes[index]) {
+      return;
+    }
+
     this.router.navigate([routes[index]], { relativeTo: this.route });
   }
 }

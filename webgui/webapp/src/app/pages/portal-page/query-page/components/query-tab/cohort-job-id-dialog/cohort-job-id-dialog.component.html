@@ -1,0 +1,33 @@
+<h1 mat-dialog-title>Create a Cohort</h1>
+<div mat-dialog-content>
+  <span class="font-semibold">Enter a name for the job</span>
+  <form>
+    <mat-form-field class="w-full">
+      <mat-label>Job ID</mat-label>
+      <input matInput [formControl]="jobIdFormControl" />
+      <mat-error
+        >Enter a Job id of 10-20 alphanumeric characters including - and
+        _.</mat-error
+      >
+    </mat-form-field>
+  </form>
+  <br />
+  <div>
+    <button
+      mat-raised-button
+      color="primary"
+      [mat-dialog-close]="false"
+      class="mr-2.5"
+    >
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      [mat-dialog-close]="jobIdFormControl.value"
+      [disabled]="jobIdFormControl.invalid"
+    >
+      Create
+    </button>
+  </div>
+</div>

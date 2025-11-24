@@ -57,19 +57,21 @@ export class EntryIdSelectionDialogComponent {
   protected skip = 0;
   protected limit = 0;
   protected total = 0;
-  protected entries: any = [];
   protected dataSourceEntries = new MatTableDataSource<any>([]);
   protected displayedColumnsEntries: string[] = [];
   protected selected: string | null = null;
 
   constructor(
     public dialogRef: MatDialogRef<EntryIdSelectionDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
+    @Inject(MAT_DIALOG_DATA) public data: { scope: string; projects: string[] },
     private qs: QueryService,
     private cd: ChangeDetectorRef,
   ) {}
 
   ngAfterViewInit(): void {
+    if (this.data.projects.length === 0) {
+      return;
+    }
     this.paginator.page
       .pipe(
         startWith({}),
@@ -79,6 +81,7 @@ export class EntryIdSelectionDialogComponent {
           this.limit = this.paginator.pageSize;
           return this.qs
             .fetch(this.data.scope, {
+              projects: this.data.projects,
               query: {
                 filters: [],
                 requestedGranularity: 'record',
@@ -109,7 +112,7 @@ export class EntryIdSelectionDialogComponent {
           ? results.response.collections
           : results.response.resultSets[0].results;
 
-        if (this.entries.length && _.isEmpty(resultsArray)) {
+        if (this.dataSourceEntries.data.length && _.isEmpty(resultsArray)) {
           this.paginator.pageIndex -= 1;
           console.log('page out of bounds');
         } else {
@@ -121,7 +124,7 @@ export class EntryIdSelectionDialogComponent {
             idName,
             ..._.filter(_.keys(resultsArray[0]), (item) => item != idName),
           ];
-          this.entries = resultsArray;
+          this.dataSourceEntries = new MatTableDataSource(resultsArray);
         }
       });
   }

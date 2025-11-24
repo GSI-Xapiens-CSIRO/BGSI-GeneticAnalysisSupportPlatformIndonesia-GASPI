@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,13 +7,12 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { catchError, of } from 'rxjs';
+import { catchError, of, Subscription } from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
+import { DportalService } from 'src/app/services/dportal.service';
 import { ScopeTypes } from 'src/app/utils/interfaces';
 import { environment } from 'src/environments/environment';
 import * as _ from 'lodash';
-import { GlobalSpinnerComponent } from '../../../../../components/global-spinner/global-spinner.component';
 import { FiltersResultViewerComponent } from '../filters-result-viewer/filters-result-viewer.component';
 import { TermFreqViewerComponent } from '../term-freq-viewer/term-freq-viewer.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,7 +24,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { SpinnerService } from 'src/app/services/spinner.service';
+import { ToastrService } from 'ngx-toastr';
 // import { result, testTerms } from './test_responses/filters';
+
+interface Project {
+  name: string;
+  ingested_datasets: string[];
+}
 
 @Component({
   selector: 'app-filters-tab',
@@ -44,66 +49,108 @@ import { SpinnerService } from 'src/app/services/spinner.service';
     TermFreqViewerComponent,
     FiltersResultViewerComponent,
   ],
-  providers: [FilterService],
+  providers: [FilterService, DportalService],
   templateUrl: './filters-tab.component.html',
   styleUrl: './filters-tab.component.scss',
 })
-export class FiltersTabComponent {
+export class FiltersTabComponent implements OnInit, OnDestroy {
   protected _ = _;
   protected form: FormGroup;
+  protected myProjects: Project[] = [];
   protected query: any = null;
   protected endpoint: any = null;
   protected results: any = null;
   protected scopeTypes = ScopeTypes;
   protected activeScope: string | null = null;
   protected terms: any[] = [];
+  protected projects: any[] = [];
+  private form$: Subscription | null = null;
 
   constructor(
     private fb: FormBuilder,
     private fs: FilterService,
+    private dps: DportalService,
     private dg: MatDialog,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
   ) {
     this.form = fb.group({
+      projects: [[], Validators.required],
       scope: this.fb.control(ScopeTypes.INDIVIDUALS, [Validators.required]),
       id: this.fb.control({ value: '', disabled: true }, [Validators.required]),
       skip: this.fb.control(0, [Validators.required, Validators.min(0)]),
       limit: this.fb.control(100, [
         Validators.required,
         Validators.min(1),
-        Validators.max(500),
+        Validators.max(5000),
       ]),
+      search: this.fb.control('', [Validators.pattern(/^\S.*\S$/)]),
       stats: this.fb.control(false),
     });
 
-    this.form.controls['scope'].valueChanges.subscribe((scope) => {
-      if (scope === ScopeTypes.DATASETS || scope == ScopeTypes.COHORTS) {
-        this.form.controls['id'].enable();
+    this.form$ = this.form.valueChanges.subscribe((form) => {
+      const scope = form.scope;
+      const limit = form.limit;
+
+      if (scope === ScopeTypes.DATASETS) {
+        this.form.controls['id'].enable({ emitEvent: false });
         this.form.controls['id'].markAsTouched();
-        this.form.controls['stats'].setValue(false);
+        this.form.controls['stats'].setValue(false, { emitEvent: false });
         this.form.controls['stats'].disable();
+      } else if (limit <= 100) {
+        this.form.controls['stats'].enable({ emitEvent: false });
+        this.form.controls['id'].disable({ emitEvent: false });
       } else {
-        this.form.controls['stats'].enable();
-        this.form.controls['id'].disable();
+        this.form.controls['stats'].setValue(false, { emitEvent: false });
+        this.form.controls['stats'].disable({ emitEvent: false });
+        this.form.controls['id'].disable({ emitEvent: false });
       }
     });
+  }
+
+  ngOnInit(): void {
+    this.list();
+  }
+
+  ngOnDestroy(): void {
+    if (this.form$) {
+      this.form$.unsubscribe();
+    }
+  }
+
+  list() {
+    this.dps
+      .getMyProjects()
+      .pipe(catchError(() => of(null)))
+      .subscribe((projects: any) => {
+        if (!projects.data || !Array.isArray(projects.data)) {
+          this.tstr.error('Unable to get projects.', 'Error');
+        } else {
+          this.myProjects = projects.data
+            .filter((p: Project) => p.ingested_datasets.length > 0)
+            .map((p: Project) => ({
+              ...p,
+              expanded: false,
+            }));
+        }
+      });
   }
 
   run() {
     this.ss.start();
     const form = this.form.value;
-    const query = {
+    const projects = form.projects.join(',');
+    const query: any = {
       skip: form.skip,
       limit: form.limit,
+      projects: projects,
+      search: form.search,
     };
+
     let result$;
     let endpoint: any;
 
-    if (
-      form.scope === ScopeTypes.DATASETS ||
-      form.scope == ScopeTypes.COHORTS
-    ) {
+    if (form.scope === ScopeTypes.DATASETS) {
       result$ = this.fs.fetch_by_scope_and_id(form.scope, form.id, query);
       endpoint = `${environment.api_endpoint_sbeacon.endpoint}${form.scope}/${form.id}/filtering_terms`;
     } else {
@@ -122,9 +169,11 @@ export class FiltersTabComponent {
             }))
           : [];
         this.activeScope = form.stats ? form.scope : null;
+        this.projects = form.projects;
       } else {
         if (!data) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
+          this.ss.end();
           return;
         }
       }
@@ -134,25 +183,29 @@ export class FiltersTabComponent {
   }
 
   reset() {
+    this.form.get('projects')!.setValue([]);
     this.results = null;
     this.query = null;
     this.endpoint = null;
     this.terms = [];
+    this.projects = [];
     this.activeScope = null;
     this.form.patchValue({
       scope: ScopeTypes.INDIVIDUALS,
       skip: 0,
       limit: 100,
+      search: '',
     });
   }
 
   async searchIds() {
     const scope = this.form.value.scope;
+    const projects = this.form.value.projects;
     const { EntryIdSelectionDialogComponent } = await import(
       'src/app/components/entry-id-selection-dialog/entry-id-selection-dialog.component'
     );
     const dialog = this.dg.open(EntryIdSelectionDialogComponent, {
-      data: { scope },
+      data: { scope, projects },
     });
 
     dialog.afterClosed().subscribe((entry) => {

@@ -1,4 +1,7 @@
-@if ((auth.userGroups | async)!.has("administrators")) {
+@if (
+  (auth.userGroups | async)!.has("administrators") ||
+  (auth.userGroups | async)!.has("managers")
+) {
   <app-admin-section />
   <br />
 }

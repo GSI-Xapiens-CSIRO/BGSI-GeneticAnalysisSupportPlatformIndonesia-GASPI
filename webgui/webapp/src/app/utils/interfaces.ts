@@ -20,5 +20,4 @@ export enum ScopeTypes {
   ANALYSES = 'analyses',
   GENOMIC_VARIANTS = 'g_variants',
   DATASETS = 'datasets',
-  COHORTS = 'cohorts',
 }

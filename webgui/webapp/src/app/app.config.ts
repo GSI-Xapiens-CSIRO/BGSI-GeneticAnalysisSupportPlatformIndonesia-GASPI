@@ -1,19 +1,28 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   DetachedRouteHandle,
   RouteReuseStrategy,
   provideRouter,
+  withPreloading,
+  PreloadAllModules,
 } from '@angular/router';
-
+import { provideToastr } from 'ngx-toastr';
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 
-class CustomReuseStrategy implements RouteReuseStrategy {
+@Injectable({
+  providedIn: 'root',
+})
+export class CustomReuseStrategy implements RouteReuseStrategy {
   private handlers: { [key: string]: DetachedRouteHandle } = {};
+
+  resetHandlers(): void {
+    this.handlers = {};
+  }
 
   shouldDetach(route: ActivatedRouteSnapshot): boolean {
     return true;
@@ -51,14 +60,20 @@ class CustomReuseStrategy implements RouteReuseStrategy {
       }
       next = next.parent;
     }
+
+    if (route.queryParams) {
+      path += `?${JSON.stringify(route.queryParams)}`;
+    }
+
     return path;
   }
 }
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(PreloadAllModules)),
     provideAnimations(),
+    provideToastr(),
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline' },

@@ -36,8 +36,8 @@ export interface TextInputDialogComponentData {
 export class TextInputDialogComponent {
   protected valueControl: FormControl = new FormControl('', [
     Validators.required,
-    Validators.minLength(5),
-    Validators.maxLength(64),
+    Validators.minLength(6),
+    Validators.maxLength(30),
   ]);
   constructor(
     public dialogRef: MatDialogRef<TextInputDialogComponent>,

@@ -1,0 +1,33 @@
+@if (auth.user | async) {
+  <div class="bui-menu-user">
+    <div class="flex items-center gap-3 mr-4">
+      <button
+        [disableRipple]="true"
+        class="bui-btn-user"
+        mat-button
+        [matMenuTriggerFor]="menu"
+      >
+        Hi, {{ (auth.user | async)?.attributes?.given_name }}
+        <mat-icon class="bui-btn-avatar-icon">account_circle</mat-icon>
+      </button>
+    </div>
+    <mat-menu class="mt-3" #menu="matMenu">
+      <a
+        mat-menu-item
+        class="bui-content-menu-item"
+        [routerLinkActive]="'active'"
+        [routerLink]="['profile']"
+      >
+        Profile
+      </a>
+      <a
+        mat-menu-item
+        class="bui-content-menu-item"
+        [routerLink]="[]"
+        (click)="onLogout()"
+      >
+        Logout
+      </a>
+    </mat-menu>
+  </div>
+}

@@ -1,0 +1,40 @@
+<h2 mat-dialog-title>Register Your MFA App</h2>
+<mat-dialog-content>
+  <div class="flex flex-col items-center">
+    <qrcode
+      [qrdata]="data.qrCode"
+      [width]="300"
+      [margin]="0"
+      [errorCorrectionLevel]="'M'"
+    ></qrcode>
+    <br />
+    <p>Scan the QR code with your MFA app or copy below code</p>
+    <button
+      mat-button
+      [cdkCopyToClipboard]="data.secretCode"
+      matTooltip="Click to copy"
+      class="w-[550px]"
+    >
+      <mat-icon class="text-black">content_copy</mat-icon>
+      <pre class="text-black">{{ data.secretCode }}</pre>
+    </button>
+    <br />
+    <mat-form-field class="w-[300px]">
+      <mat-label>Authenticator Code</mat-label>
+      <input matInput [formControl]="code" />
+      <mat-error>Invalid code</mat-error>
+    </mat-form-field>
+  </div>
+
+  <button mat-raised-button mat-dialog-close color="primary" class="mr-2.5">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    [mat-dialog-close]="code.value"
+    color="primary"
+    [disabled]="code.invalid"
+  >
+    Finish
+  </button>
+</mat-dialog-content>

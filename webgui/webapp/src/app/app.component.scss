@@ -4,8 +4,8 @@
 
 .bui-header-wrapper {
   overflow: hidden;
-  background: url(/assets/images/header.png) no-repeat right top;
-  background-size: contain;
+  background: url(/assets/images/header.jpg) no-repeat right top;
+  background-size: cover;
 
   @media (max-width: 1024px) {
     background-size: cover;
@@ -82,12 +82,30 @@
 /*********************************************************************************/
 /* Menu                                                                           */
 /*********************************************************************************/
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bui-menu-wrapper {
+  animation: slideDown 0.5s ease-out;
+  @media (min-width: 1200px) {
+    display: none;
+  }
+}
 
 .bui-menu-expander {
   display: none;
 
   @media (max-width: 1200px) {
-    display: unset;
+    @apply flex items-center justify-between;
   }
 }
 
@@ -101,40 +119,41 @@
     position: relative;
     margin-top: 0px;
   }
+
+  @apply w-full;
 }
 
-.bui-menu ul {
-  display: inline-block;
-  background-color: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(5px);
-  border-radius: 0px 5px 5px 0px;
-
+.bui-menu-icon {
+  @apply text-white;
   @media (max-width: 1200px) {
-    display: flex;
-    flex-direction: column;
-    border-radius: 0px;
-    padding-inline-start: 0px;
-    margin: 0;
+    @apply text-black;
   }
 }
 
-.bui-menu li {
-  @apply block;
-  @apply float-left;
-  @apply text-center;
-  @apply border-solid border-0 border-b-[1px] border-b-[#2e2e2e] lg:border-b-[0px];
+.bui-profile-lg-visibility {
+  @media (max-width: 1200px) {
+    display: none;
+  }
+
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.bui-menu li a {
-  display: block;
-  padding: 0.8em 1.5em;
-  letter-spacing: 0.25em;
-  text-decoration: none;
-  font-size: 0.8em;
-  font-weight: 600;
-  text-transform: uppercase;
-  outline: 0;
-  color: #fff;
+.bui-menu-wrapper-desktop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  @media (max-width: 1200px) {
+    display: none;
+  }
+}
+
+.bui-profile-sm-visibility {
+  @media (max-width: 1200px) {
+    display: block;
+  }
 }
 
 /*********************************************************************************/
@@ -144,10 +163,14 @@
 .bui-footer {
   height: 10%;
   overflow: hidden;
-  background: #2f2f2f url(/assets/images/bg02.jpg) repeat;
+  // background: #2f2f2f url(/assets/images/bg02.jpg) repeat;
+  background-color: theme("colors.primary-10");
   padding: 50px 1px;
   text-align: center;
   color: #6f6f6f;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .bui-footer h2 {
@@ -179,36 +202,18 @@
   text-transform: uppercase;
   font-weight: 400;
   font-size: 0.9em;
-  color: #6f6f6f;
 }
 
 .bui-byline {
   position: relative;
   top: -2em;
-  font-weight: 500;
-  font-size: 1em;
-  color: #8e8e8e;
+  font-weight: 700;
   font: 16px Arial;
 }
 
 .bui-footer .bui-byline {
   padding-bottom: 2.5em;
   letter-spacing: 0.1em;
-}
-
-.bui-menu-item:hover {
-  transform: scale(1.2) !important;
-  transition: transform 0.4s;
-}
-
-.bui-menu-items:hover .active {
-  transform: scale(1);
-  transition: transform 0.4s;
-}
-
-.bui-menu-item.active {
-  transform: scale(1.2);
-  transition: transform 0.4s;
 }
 
 .bui-card-resize {
@@ -233,4 +238,38 @@
   height: auto;
   opacity: 1;
   visibility: visible;
+}
+
+/*********************************************************************************/
+/* BGSI LOGO                                                                           */
+/*********************************************************************************/
+.bgsi-logo {
+  position: absolute;
+  right: 5rem;
+  top: 2rem;
+  width: 60px;
+  @media (max-width: 1280px) {
+    right: 3rem;
+    width: 30px;
+  }
+
+  @media (max-width: 1200px) {
+    display: none;
+  }
+}
+
+.kemenkes-logo {
+  position: absolute;
+  right: 11rem;
+  top: 1.5rem;
+  width: 200px;
+
+  @media (max-width: 1280px) {
+    right: 6rem;
+    width: 130px;
+  }
+
+  @media (max-width: 1200px) {
+    display: none;
+  }
 }

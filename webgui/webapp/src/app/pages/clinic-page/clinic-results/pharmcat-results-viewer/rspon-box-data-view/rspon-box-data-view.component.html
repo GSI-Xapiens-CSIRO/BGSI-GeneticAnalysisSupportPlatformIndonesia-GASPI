@@ -1,0 +1,160 @@
+<div class="mb-2 flex flex-row items-center w-full">
+  <mat-checkbox (change)="change.emit($event.checked)" [checked]="selected">
+  </mat-checkbox>
+  <mat-accordion style="width: 100%" class="mr-2">
+    <mat-expansion-panel
+      (opened)="togglePanel = true"
+      (closed)="togglePanel = false"
+    >
+      <mat-expansion-panel-header style="padding: 1rem">
+        <mat-panel-title>
+          <div
+            class="flex items-center w-[200vw] md:w-full lg:w-full xl:w-full font-normal"
+          >
+            <div class="flex flex-1 flex-row items-center gap-2">
+              <div class="flex flex-col gap-1">
+                <div class="flex flex-row items-center">
+                  <div class="title-accordion">{{ row["Gene"] }}</div>
+                  @if (isBookmark) {
+                    <div
+                      matTooltip="This variant(s) was already selected for reporting, please see the 'Variant selected for reporting' below"
+                    >
+                      <mat-icon class="text-gray-400">bookmark</mat-icon>
+                    </div>
+                  }
+                </div>
+                <div>
+                  {{ row["Organisation"] }}
+                </div>
+              </div>
+            </div>
+            <div class="flex-1 title-accordion">
+              {{ row["Drug"] }}
+            </div>
+            <div class="flex-1 flex flex-col gap-1">
+              <div>Star Alleles</div>
+              <!-- [style.color]="handleColorClignsign(row['clinSig'])" -->
+              <div class="title-accordion">
+                {{ row["Alleles"] }}
+              </div>
+            </div>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div
+        class="data-row border-0 border-t-2 border-gray-300 border-dashed pt-2 flex flex-col gap-2 no-scrollbar"
+        style="height: 300px; overflow: scroll"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-10 gap-4">
+          <!-- Card 1 -->
+          <div class="col-span-7 bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Prescribing Guidelines
+            </div>
+            <div class="flex flex-col gap-1">
+              <div class="row-content">
+                <div>Variants (rsID)</div>
+                <div class="flex flex-row gap-1">
+                  @for (data of row["Variants"]; track data; let last = $last) {
+                    <div
+                      (click)="handleRedirectUrl('Variants', data)"
+                      class="row-value link-click"
+                    >
+                      {{ data }}
+                      @if (!last) {
+                        <span>,</span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Phenotype</div>
+                <div class="row-value">
+                  {{ row["Phenotypes"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Implications</div>
+                <div class="row-value">
+                  {{ row["Implications"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Recommendation</div>
+                <div class="row-value">
+                  {{ row["Recommendation"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Classification</div>
+                <div class="row-value">
+                  {{ row["Classification"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Population</div>
+                <div class="row-value">
+                  {{ row["Population"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Dosing Info</div>
+                <div class="row-value">
+                  {{ row["Dosing Information"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Alternate Drug Available</div>
+                <div class="row-value">
+                  {{ row["Alternate Drug Available"] }}
+                </div>
+              </div>
+              <div class="row-content">
+                <div>Other Prescribing Guidance</div>
+                <div class="row-value">
+                  {{ row["Other Prescribing Guidance"] }}
+                </div>
+              </div>
+
+              <div class="flex items-center justify-center">
+                <a
+                  class="text-blue-500 hover:underline cursor-pointer"
+                  (click)="filter.emit(row['Related Variants'])"
+                  [ariaDisabled]="variantHasRows"
+                  >See related variants
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-3 bgCard p-4 rounded-xl shadow-md">
+            <div class="font-semibold text-base mb-2 border-bottom">
+              Publication Media
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              @for (column of row["PubMed IDs"].slice(0, 8); track column) {
+                <div
+                  class="pub-med p-1 cursor-pointer rounded-md flex justify-center items-center"
+                  (click)="handleRedirectUrl('PubMed IDs', column)"
+                >
+                  {{ column }}
+                </div>
+              }
+
+              @if (row["PubMed IDs"].length > 8) {
+                <div class="relative">
+                  <pop-over-component
+                    [data]="
+                      row['PubMed IDs'].slice(8, row['PubMed IDs'].length)
+                    "
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>

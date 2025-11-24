@@ -1,0 +1,50 @@
+.bui-menu-user {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
+  border-radius: 5px;
+
+  @apply justify-end px-4 py-3;
+
+  @media (min-width: 1200px) {
+    @apply mr-10;
+  }
+}
+
+.bui-btn-user {
+  width: auto !important;
+  height: min-content !important;
+  padding: 0px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-decoration: none;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  outline: 0;
+  color: #fff;
+
+  @media (max-width: 1200px) {
+    color: #000 !important;
+  }
+}
+
+.bui-btn-avatar-icon {
+  @apply size-5;
+}
+
+.bui-btn-user:active {
+  @apply bg-inherit;
+}
+
+.bui-btn-user:hover {
+  transform: scale(1.2) !important;
+  transition: transform 0.4s;
+}
+
+.bui-content-menu-item {
+  color: #000 !important;
+}
+
+.bui-content-menu-item.active {
+  color: theme("colors.warning-10") !important;
+}

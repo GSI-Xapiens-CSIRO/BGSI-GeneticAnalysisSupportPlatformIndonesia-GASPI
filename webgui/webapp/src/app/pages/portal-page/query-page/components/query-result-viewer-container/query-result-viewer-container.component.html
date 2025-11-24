@@ -5,10 +5,10 @@
         <h2>Summary</h2>
       </ng-template>
       <mat-card-content>
-        <mat-card style="display: flex; flex-direction: row; flex-wrap: wrap">
-          <div style="margin: 10px">
+        <mat-card class="flex flex-row flex-wrap">
+          <div class="m-2.5">
             <h3>
-              Results exist: {{ results.responseSummary.exists ? "✅" : "❎" }}
+              Results exist: {{ results.responseSummary.exists ? "✅" : "❌" }}
             </h3>
             <h3>
               Total count:
@@ -30,6 +30,7 @@
             [words]="words"
             [scope]="scope"
             [results]="results"
+            [projects]="projects"
           />
         }
       </mat-card-content>
@@ -48,7 +49,7 @@
       <ng-template mat-tab-label>
         <h2>JSON Data</h2>
       </ng-template>
-      <mat-card-content style="margin-bottom: 10px">
+      <mat-card-content class="mb-2.5">
         <app-text-query-results-viewer
           [endpoint]="endpoint"
           [query]="query"
@@ -58,25 +59,9 @@
     </mat-tab>
     <mat-tab>
       <ng-template mat-tab-label>
-        <h2>Download</h2>
+        <h2>Actions</h2>
       </ng-template>
-      <mat-card-content class="flex flex-row space-x-[10px] mb-[10px]">
-        <button
-          (click)="download(query)"
-          mat-raised-button
-          color="primary"
-          class="w-[110px]"
-        >
-          Query
-        </button>
-        <button
-          (click)="download(results)"
-          mat-raised-button
-          color="primary"
-          class="w-[110px]"
-        >
-          Result
-        </button>
+      <mat-card-content class="flex flex-row space-x-2.5 mb-2.5">
         <button
           (click)="save({ endpoint, query, results })"
           mat-raised-button

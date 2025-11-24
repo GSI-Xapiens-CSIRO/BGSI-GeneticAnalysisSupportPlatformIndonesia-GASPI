@@ -1,21 +1,26 @@
 data "external" "build" {
   program = ["python", "build_and_hash.py"]
   query = {
-    install_command              = var.install-command
-    build_command                = var.build-command
-    webapp_dir                   = var.webapp-dir
-    build_destiation             = var.build-destination
-    base_range                   = var.base_range
-    region                       = var.region
-    user_pool_id                 = var.user_pool_id
-    identity_pool_id             = var.identity_pool_id
-    user_pool_web_client_id      = var.user_pool_web_client_id
-    data_portal_bucket           = var.data_portal_bucket
-    api_endpoint_sbeacon         = var.api_endpoint_sbeacon
-    api_endpoint_svep            = var.api_endpoint_svep
-    pricing_access_key_id        = var.pricing_access_key_id
-    pricing_access_secret_key_id = var.pricing_access_secret_key_id
-
+    install_command         = var.install-command
+    build_command           = var.build-command
+    webapp_dir              = var.webapp-dir
+    build_destiation        = var.build-destination
+    base_range              = var.base_range
+    region                  = var.region
+    user_pool_id            = var.user_pool_id
+    identity_pool_id        = var.identity_pool_id
+    user_pool_web_client_id = var.user_pool_web_client_id
+    data_portal_bucket      = var.data_portal_bucket
+    api_endpoint_sbeacon    = var.api_endpoint_sbeacon
+    api_endpoint_clinic     = var.api_endpoint_clinic
+    clinic_mode             = var.clinic_mode
+    hub_name                = var.hub_name
+    clinic_warning_dp         = var.clinic-warning-thresholds.dp
+    clinic_warning_filter     = var.clinic-warning-thresholds.filter
+    clinic_warning_gq         = var.clinic-warning-thresholds.gq
+    clinic_warning_mq         = var.clinic-warning-thresholds.mq
+    clinic_warning_qual       = var.clinic-warning-thresholds.qual
+    clinic_warning_qd         = var.clinic-warning-thresholds.qd
   }
   working_dir = path.module
 }
@@ -27,7 +32,7 @@ resource "null_resource" "s3-upload" {
   }
 
   provisioner "local-exec" {
-    command = "/bin/bash \"${path.module}/upload.sh\" \"${path.module}/${var.build-destination}\" ${aws_s3_bucket.bui-hosted-bucket.id}"
+    command = "/bin/bash \"${path.module}/upload.sh\" \"${path.module}/${var.build-destination}\" ${aws_s3_bucket.bui-hosted-bucket.id} ${aws_s3_object.version.key}"
   }
 
   depends_on = [

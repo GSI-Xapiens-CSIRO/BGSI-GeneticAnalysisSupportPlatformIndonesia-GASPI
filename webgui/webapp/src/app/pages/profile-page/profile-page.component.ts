@@ -14,13 +14,17 @@ import * as _ from 'lodash';
 import { catchError, filter, of } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from './services/user.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { GlobalSpinnerComponent } from '../../components/global-spinner/global-spinner.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { SpinnerService } from 'src/app/services/spinner.service';
+import { Auth } from 'aws-amplify';
+import {
+  isStrongPassword,
+  PasswordStrengthBarComponent,
+} from 'src/app/components/password-strength-bar/password-strength-bar.component';
+import { ToastrService } from 'ngx-toastr';
 
 /**
  * A validator function that checks if the 'confirmPassword' and 'newPassword' fields of a form match.
@@ -80,7 +84,7 @@ const mustNotMatch = (): ValidatorFn => {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    GlobalSpinnerComponent,
+    PasswordStrengthBarComponent,
   ],
   providers: [UserService],
 })
@@ -88,13 +92,15 @@ export class ProfilePageComponent {
   protected user: any;
   protected userDetailsForm: FormGroup;
   protected userPasswordForm: FormGroup;
+  protected mfaActivated = false;
+  isStrongPassword = isStrongPassword;
 
   constructor(
     private auth: AuthService,
     private fb: FormBuilder,
     private dg: MatDialog,
     private us: UserService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
   ) {
     this.userDetailsForm = this.fb.group({
@@ -103,15 +109,51 @@ export class ProfilePageComponent {
     });
     this.userPasswordForm = this.fb.group(
       {
+        // old password could be shorter (terraform user for dev work)
         oldPassword: ['', [Validators.required, Validators.minLength(6)]],
-        newPassword: ['', [Validators.required, Validators.minLength(6)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
+        newPassword: ['', [Validators.required, Validators.minLength(8)]],
+        confirmPassword: ['', [Validators.required, Validators.minLength(8)]],
       },
       { validators: [mustMatch(), mustNotMatch()] },
     );
     auth.user.pipe(filter((u) => !!u)).subscribe((u: any) => {
       this.user = u.signInUserSession.idToken.payload;
       this.resetDetails();
+
+      Auth.getPreferredMFA(u).then((mfa) => {
+        this.mfaActivated = mfa !== 'NOMFA';
+      });
+    });
+  }
+
+  async activateMfa() {
+    const secretCode = await Auth.setupTOTP(this.auth.user.value);
+    const qrCode =
+      'otpauth://totp/BGSI DataPortal:' +
+      this.auth.user.value.username +
+      '?secret=' +
+      secretCode +
+      '&issuer=dataportal';
+
+    const { MFAQRCodeComponent } = await import(
+      './components/mfa-qr-code/mfa-qr-code.component'
+    );
+
+    const dialogRef = this.dg.open(MFAQRCodeComponent, {
+      data: { qrCode, secretCode },
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        try {
+          await Auth.verifyTotpToken(this.auth.user.value, result);
+          await Auth.setPreferredMFA(this.auth.user.value, 'TOTP');
+          this.mfaActivated = true;
+        } catch (error) {
+          console.error(error);
+          this.tstr.error('Invalid code. Try again.', 'Error');
+        }
+      }
     });
   }
 
@@ -144,17 +186,13 @@ export class ProfilePageComponent {
           )
           .pipe(
             catchError(() => {
-              this.sb.open('Operation failed. Try again later.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.error('Operation failed. Try again later.', 'Error');
               return of(null);
             }),
           )
           .subscribe((result) => {
             if (result === 'SUCCESS') {
-              this.sb.open('Details updated successfully.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.success('Details updated successfully.', 'Success');
               this.resetDetails();
               this.auth.refresh();
             }
@@ -185,17 +223,13 @@ export class ProfilePageComponent {
           )
           .pipe(
             catchError(() => {
-              this.sb.open('Operation failed. Try again later.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.error('Operation failed. Try again later.', 'Error');
               return of(null);
             }),
           )
           .subscribe((result) => {
             if (result === 'SUCCESS') {
-              this.sb.open('Password updated successfully.', 'Okay', {
-                duration: 60000,
-              });
+              this.tstr.success('Password updated successfully.', 'Success');
               this.userPasswordForm.reset();
             }
             this.ss.end();

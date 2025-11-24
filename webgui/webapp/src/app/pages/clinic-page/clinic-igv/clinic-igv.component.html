@@ -1,0 +1,105 @@
+@if (igvData) {
+  <mat-card class="mb-2">
+    <mat-card-content>
+      <div class="flex flex-row gap-4 items-center">
+        <div
+          class="flex justify-center items-center bg-primary-50 rounded-full p-1 cursor-pointer"
+          (click)="handleBackToFiles()"
+        >
+          <mat-icon style="color: white">keyboard_backspace</mat-icon>
+        </div>
+        <div class="text-base">
+          Result of the file
+          <b class="text-primary-60 text-xl">{{ igvData.filename || "" }}</b>
+          from
+          <b class="text-primary-60 text-xl">{{ igvData.projectName || "" }}</b>
+          project
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+}
+
+<mat-card>
+  <mat-card-content>
+    <div class="mx-1 lg:mx-[20px]">
+      <h2 class="text-left">{{ igvData?.projectName || "Instructions" }}</h2>
+      @if (!igvData) {
+        <p>
+          In this section, you can view and analyze your BAM file into IGV
+          Viewer by clicking on the BAM file from the list. Returns may be
+          returned with an error, as the BAM file is invalid.
+        </p>
+      }
+
+      @if (igvData) {
+        <app-igv-viewer [data]="igvData" />
+      } @else {
+        <div>
+          <br />
+          <app-component-spinner [loading]="loading" />
+          <div class="flex flex-row-reverse space-x-[10px]">
+            <button mat-mini-fab color="primary" (click)="refresh()">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+          <br />
+          <table mat-table [dataSource]="dataSource">
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Project Name</th>
+              <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+            </ng-container>
+
+            <!-- Description Column -->
+            <ng-container matColumnDef="description">
+              <th mat-header-cell *matHeaderCellDef>Project Description</th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.description }}
+              </td>
+            </ng-container>
+
+            <!-- Files Column -->
+            <ng-container matColumnDef="files">
+              <th mat-header-cell *matHeaderCellDef>Files</th>
+              <td mat-cell *matCellDef="let element">
+                @for (file of element.files; track $index) {
+                  <div class="file-row flex">
+                    <div
+                      class="flex my-1"
+                      aria-label="Example tooltip"
+                      [style.color]="file.disabled ? 'gray' : '#16B3AC'"
+                    >
+                      <div
+                        (click)="
+                          !file.disabled &&
+                            handleSelectDataIGV(element.name, file.filename)
+                        "
+                        [matTooltip]="tooltipMessage(file.disabled)"
+                        [style.cursor]="
+                          file.disabled ? 'not-allowed' : 'pointer'
+                        "
+                      >
+                        {{ file.filename }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+          <mat-paginator
+            #paginator
+            [pageSizeOptions]="[5, 10, 50]"
+            [pageSize]="pageSize"
+            length="9999"
+          ></mat-paginator>
+          <br />
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -7,7 +7,7 @@
       <mat-card-content>
         <h2>Resources</h2>
         <mat-card>
-          <div style="overflow-x: auto; max-height: 300px">
+          <div class="overflow-x-auto max-h-[300px]">
             <table mat-table [dataSource]="dataSourceResources">
               @for (column of displayedColumnsResources; track $index) {
                 <ng-container [matColumnDef]="column">
@@ -31,7 +31,7 @@
           </div>
           <mat-paginator
             #paginatorResources
-            [pageSizeOptions]="[5, 10]"
+            [pageSizeOptions]="[10, 50, 100]"
             showFirstLastButtons
           >
           </mat-paginator>
@@ -50,7 +50,7 @@
           </mat-form-field>
         </div>
         <mat-card>
-          <div class="overflow-x-auto" style="height: 500px">
+          <div class="overflow-x-auto h-[500px]">
             <table mat-table [dataSource]="dataSourceFilters">
               @for (column of displayedColumnsFilters; track $index) {
                 <ng-container [matColumnDef]="column">
@@ -63,9 +63,10 @@
                         mat-button
                         cdkCopyToClipboard="{{ element[column] }}"
                         matTooltip="Click to copy"
+                        class="w-full"
                       >
-                        <pre>{{ element[column] }}</pre>
-                        <mat-icon iconPositionEnd>content_copy</mat-icon>
+                        <mat-icon class="text-black">content_copy</mat-icon>
+                        <pre class="text-black">{{ element[column] }}</pre>
                       </button>
                     } @else {
                       <pre>{{ element[column] }}</pre>
@@ -85,7 +86,7 @@
           </div>
           <mat-paginator
             #paginatorFilters
-            [pageSizeOptions]="[10, 50]"
+            [pageSizeOptions]="[10, 50, 100]"
             showFirstLastButtons
           >
           </mat-paginator>
@@ -96,7 +97,7 @@
       <ng-template mat-tab-label>
         <h2>JSON Data</h2>
       </ng-template>
-      <mat-card-content style="margin-bottom: 10px">
+      <mat-card-content class="mb-2.5">
         <mat-accordion>
           <mat-expansion-panel
             [expanded]="queryJSONOpen"
@@ -188,29 +189,6 @@
             </div>
           </mat-expansion-panel>
         </mat-accordion>
-      </mat-card-content>
-    </mat-tab>
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <h2>Download</h2>
-      </ng-template>
-      <mat-card-content>
-        <button
-          (click)="download(query)"
-          mat-raised-button
-          color="primary"
-          style="margin-bottom: 10px; margin-right: 10px; width: 110px"
-        >
-          Query
-        </button>
-        <button
-          (click)="download(results)"
-          mat-raised-button
-          color="primary"
-          style="margin-bottom: 10px; margin-right: 10px; width: 110px"
-        >
-          Result
-        </button>
       </mat-card-content>
     </mat-tab>
   </mat-tab-group>

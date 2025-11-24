@@ -1,136 +1,134 @@
 version: 3
+
 automerge: true
-delete_source_branch_on_merge: false
+autodiscover:
+  mode: auto
+delete_source_branch_on_merge: true
+parallel_plan: true
+parallel_apply: true
+abort_on_execution_order_fail: true
 
 projects:
-# Projects deploying to Hub01 (main branch)
-- name: gxc-hub01-root
+- name: gxc-main
+  branch: /main/
   dir: .
-  workspace: hub01
-  branch: main
-  workflow: hub01-workflow
+  workspace: default
+  terraform_version: &tf_version v1.9.4
+  execution_order_group: 1
   autoplan:
-    when_modified:
-      - '*.json',
-      - '*.yaml',
-      - '*.js',
-      - '*.tf',
-      - '*.tfvars'
-
-- name: gxc-hub01-cognito
-  dir: cognito
-  workspace: hub01
-  branch: main
+    when_modified: &tf_files
+      - "../modules/**/*.tf"
+      - ".terraform.lock.hcl"
+      - "*.json"
+      - "*.yaml"
+      - "*.js"
+      - "*.tf"
+      - "*.tfvars"
+      - "*.hcl"
+    enabled: true
+  plan_requirements: [approved]
+  apply_requirements: [approved]
   workflow: hub01-workflow
-  autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
 
-- name: gxc-hub01-sbeacon
-  dir: sbeacon
-  workspace: hub01
-  branch: main
-  workflow: hub01-workflow
-  autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
-
-- name: gxc-hub01-svep
-  dir: svep
-  workspace: hub01
-  branch: main
-  workflow: hub01-workflow
-  autoplan:
-    when_modified:
-      - - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
-
-- name: gxc-hub01-webgui
-  dir: webgui/terraform-aws
-  workspace: hub01
-  branch: main
-  workflow: hub01-workflow
-  autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
-
-# Projects deploying to Hub02 (xapiens branch)
-- name: gxc-hub02-root
+- name: gxc-xapiens
+  branch: /xapiens/
   dir: .
-  workspace: hub02
-  branch: xapiens
-  workflow: hub02-workflow
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 2
   autoplan:
-    when_modified:
-      - '*.json',
-      - '*.yaml',
-      - '*.js',
-      - '*.tf',
-      - '*.tfvars'
+    when_modified: *tf_files
+    enabled: true
+  plan_requirements: [approved]
+  apply_requirements: [approved]
+  workflow: hub02-workflow
 
-- name: gxc-hub02-cognito
-  dir: cognito
-  workspace: hub02
-  branch: xapiens
-  workflow: hub02-workflow
+- name: gxc-hub01
+  branch: /hub01/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 3
   autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
+    when_modified: *tf_files
+  workflow: hub01-workflow
 
-- name: gxc-hub02-sbeacon
-  dir: sbeacon
-  workspace: hub02
-  branch: xapiens
-  workflow: hub02-workflow
+- name: gxc-hub02
+  branch: /hub02/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 4
   autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
+    when_modified: *tf_files
+  workflow: hub02-workflow
 
-- name: gxc-hub02-svep
-  dir: svep
-  workspace: hub02
-  branch: xapiens
-  workflow: hub02-workflow
+- name: gxc-hub03
+  branch: /hub03/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 5
   autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
+    when_modified: *tf_files
+  workflow: hub03-workflow
 
-- name: gxc-hub02-webgui
-  dir: webgui/terraform-aws
-  workspace: hub02
-  branch: xapiens
-  workflow: hub02-workflow
+- name: gxc-hub04
+  branch: /hub04/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 6
   autoplan:
-    when_modified:
-      - '**/*.json',
-      - '**/*.yaml',
-      - '**/*.js',
-      - '**/*.tf',
-      - '**/*.tfvars'
+    when_modified: *tf_files
+  workflow: hub04-workflow
+
+- name: gxc-uat01
+  branch: /uat01/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 7
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat01-workflow
+
+- name: gxc-uat02
+  branch: /uat02/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 8
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat02-workflow
+
+- name: gxc-uat03
+  branch: /uat03/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 9
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat03-workflow
+
+- name: gxc-uat04
+  branch: /uat04/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 10
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat04-workflow
+
+- name: gxc-uat05
+  branch: /uat05/
+  dir: .
+  workspace: default
+  terraform_version: *tf_version
+  execution_order_group: 10
+  autoplan:
+    when_modified: *tf_files
+  workflow: uat05-workflow

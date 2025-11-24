@@ -4,6 +4,7 @@ import {
   Input,
   OnDestroy,
   OnInit,
+  SecurityContext,
 } from '@angular/core';
 import {
   FormArray,
@@ -15,6 +16,7 @@ import {
 } from '@angular/forms';
 import { examples } from './examples';
 import { QueryService } from 'src/app/services/query.service';
+import { DportalService } from 'src/app/services/dportal.service';
 import {
   parseFilters,
   parseRequestParameters,
@@ -24,9 +26,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { FilterTypes, ScopeTypes } from 'src/app/utils/interfaces';
 import { catchError, of, Subscription } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import _ from 'lodash';
-import { AsyncPipe } from '@angular/common';
 import { QueryResultViewerContainerComponent } from '../query-result-viewer-container/query-result-viewer-container.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -35,7 +35,7 @@ import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
@@ -48,15 +48,23 @@ import {
   twoRangesValidator,
 } from 'src/app/utils/validators';
 import { customQueries } from './custom-queries';
+import { UserQuotaService } from 'src/app/services/userquota.service';
+import { DomSanitizer } from '@angular/platform-browser';
+import { ToastrService } from 'ngx-toastr';
 // import { result, query, endpoint } from './test_responses/individuals';
 // import { result, query } from './test_responses/biosamples';
+
+interface Project {
+  name: string;
+  ingested_datasets: string[];
+}
 
 const allowedReturns = {
   individuals: {
     biosamples: true,
     g_variants: true,
   },
-  biomsaples: {
+  biosamples: {
     runs: true,
     analyses: true,
     g_variants: true,
@@ -77,16 +85,13 @@ const allowedReturns = {
     biosamples: true,
     g_variants: true,
   },
-  cohorts: {
-    individuals: true,
-  },
 };
 
 @Component({
   selector: 'app-query-tab',
   templateUrl: './query-tab.component.html',
   styleUrl: './query-tab.component.scss',
-  providers: [QueryService],
+  providers: [QueryService, DportalService],
   standalone: true,
   imports: [
     MatCardModule,
@@ -112,15 +117,17 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
   protected allowedReturns: any = allowedReturns;
   protected loading = false;
   protected form: FormGroup;
-  protected examples: any = examples;
+  protected examples: any[] = examples;
+  protected myProjects: Project[] = [];
   protected scopeTypes = ScopeTypes;
   protected filterTypes = FilterTypes;
   // TODO bug fix for https://github.com/angular/components/issues/13870
   protected disableAnimation = true;
-  // displayed results
+  // displayed results and related data tied with results
   protected results: any = null;
   protected endpoint: any = null;
   protected query: any = null;
+  protected projects: any = null;
   // protected results: any = result;
   // protected endpoint: any = endpoint;
   // protected query: any = query;
@@ -129,35 +136,29 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
   protected openPanels: boolean[] = [false, false, false];
   // custom queries
   protected customQuery = false;
-  protected customQueries: any = customQueries;
+  protected customQueries: any[] = customQueries;
   // saved queries
-  protected savedQueries: any = [];
+  protected savedQueries: any[] = [];
   @Input()
   page!: number;
   private subscription: Subscription | null = null;
 
-  ngOnInit(): void {}
-
-  ngAfterViewInit(): void {
-    // TODO bug fix for https://github.com/angular/components/issues/13870
-    setTimeout(() => (this.disableAnimation = false));
-  }
-
-  ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = null;
-    }
-  }
+  // user quota
+  protected userSub: string = '';
+  protected quotaQueryCount: number = 0;
+  protected usageCount: number = 0;
 
   constructor(
     private fb: FormBuilder,
     private qs: QueryService,
+    private dps: DportalService,
     public dg: MatDialog,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
     private ss: SpinnerService,
+    private sanitizer: DomSanitizer,
   ) {
     this.form = this.fb.group({
+      projects: [[], Validators.required],
       scope: this.fb.control(ScopeTypes.INDIVIDUALS, [Validators.required]),
       granularity: this.fb.control('count', Validators.required),
       skip: this.fb.control({ value: 0, disabled: true }, [
@@ -250,6 +251,21 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     this.savedQueries = JSON.parse(
       localStorage.getItem('savedQueries') || '[]',
     );
+
+    this.dps
+      .getMySavedQueries()
+      .pipe(catchError(() => of(null)))
+      .subscribe((queries: any) => {
+        if (queries === null) {
+          this.tstr.error('Unable to get saved queries.', 'Error');
+        } else {
+          this.savedQueries = queries;
+        }
+      });
+  }
+
+  getSafeHtml(html: string) {
+    return this.sanitizer.sanitize(SecurityContext.HTML, html);
   }
 
   openPanel(index: number) {
@@ -258,14 +274,50 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
+  ngOnInit(): void {
+    this.list();
+  }
+
+  list() {
+    this.dps
+      .getMyProjects()
+      .pipe(catchError(() => of(null)))
+      .subscribe((projects: any) => {
+        if (!projects.data || !Array.isArray(projects.data)) {
+          this.tstr.error('Unable to get projects.', 'Error');
+        } else {
+          this.myProjects = projects.data
+            .filter((p: Project) => p.ingested_datasets.length > 0)
+            .map((p: Project) => ({
+              ...p,
+              expanded: false,
+            }));
+        }
+      });
+  }
+
+  ngAfterViewInit(): void {
+    // TODO bug fix for https://github.com/angular/components/issues/13870
+    setTimeout(() => (this.disableAnimation = false));
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
+    }
+  }
+
   closePanel(index: number) {
     this.openPanels[index] = false;
   }
 
-  run() {
+  async run() {
     this.ss.start();
+
     const form: any = this.form.value;
     const query = {
+      projects: form.projects,
       query: {
         filters: serializeFilters(form.filters, form.scope),
         requestedGranularity: form.granularity,
@@ -300,21 +352,93 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       result$ = this.qs.fetch(form.scope, query);
       endpoint = `${form.scope}/`;
     }
-    result$.pipe(catchError((err, res) => of(null))).subscribe((data) => {
-      if (data) {
-        this.results = data;
-        this.endpoint = endpoint;
-        this.scope = form.customReturn ? form.return : form.scope;
-      } else {
-        this.sb.open(
-          'API request failed. Please check your parameters.',
-          'Okay',
-          { duration: 60000 },
+    result$
+      .pipe(
+        catchError((err: any) => {
+          if (err?.code === 'ERR_NETWORK') {
+            this.tstr.error(
+              'API request failed. Please check your network connectivity.',
+              'Error',
+            );
+          } else if (
+            err?.response?.status === 403 &&
+            (err?.response?.data?.code === 'QUOTA_EXCEEDED' ||
+              err?.response?.data?.code === 'NO_QUOTA')
+          ) {
+            this.tstr.error(
+              'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',
+              'Error',
+            );
+          } else {
+            this.tstr.error(
+              'API request failed. Please check your parameters.',
+              'Error',
+            );
+          }
+          return of(null);
+        }),
+      )
+      .subscribe((data) => {
+        if (data) {
+          this.results = data;
+          this.endpoint = endpoint;
+          this.scope = form.customReturn ? form.return : form.scope;
+          this.projects = form.projects;
+        }
+        this.query = query;
+
+        this.ss.end();
+      });
+  }
+
+  async makeCohort() {
+    const { CohortJobIdDialogComponent } = await import(
+      './cohort-job-id-dialog/cohort-job-id-dialog.component'
+    );
+
+    const dialog = this.dg.open(CohortJobIdDialogComponent, {
+      data: {},
+    });
+
+    dialog.afterClosed().subscribe((jobId) => {
+      if (!jobId) {
+        return;
+      }
+      const form: any = this.form.value;
+      const query = {
+        jobId: jobId,
+        projects: form.projects,
+        scope: form.scope,
+        query: {
+          filters: serializeFilters(form.filters, form.scope),
+          requestedGranularity: form.granularity,
+        },
+        meta: {
+          apiVersion: 'v2.0',
+        },
+      };
+      if (form.scope === ScopeTypes.GENOMIC_VARIANTS) {
+        _.set(
+          query,
+          'query.requestParameters',
+          serializeRequestParameters(form.requestParameters),
         );
       }
-      this.query = query;
-
-      this.ss.end();
+      this.ss.start();
+      this.dps
+        .generateCohort(query)
+        .pipe(catchError(() => of(null)))
+        .subscribe((data) => {
+          if (data) {
+            this.tstr.success(
+              'Cohort job created successfully. Please check the status in My Data section.',
+              'Success',
+            );
+          } else {
+            this.tstr.error('Unable to create cohort job.', 'Error');
+          }
+          this.ss.end();
+        });
     });
   }
 
@@ -353,6 +477,9 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
   reset() {
     this.customQuery = false;
+    this.form.reset();
+
+    this.form.get('projects')!.setValue([]);
     (this.form.get('filters') as FormArray).clear();
 
     this.form.patchValue({
@@ -383,7 +510,8 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     query.func(this);
   }
 
-  loadExample(query: any) {
+  loadQuery(entry: any) {
+    const query = entry.query;
     this.reset();
     (this.form.get('filters') as FormArray).clear();
     _.range(query.body.query.filters.length).forEach(() => {
@@ -391,6 +519,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.form.patchValue({
+      projects: query.projects,
       scope: query.scope,
       granularity: query.body.query.requestedGranularity,
       id: query.id,
@@ -418,43 +547,56 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       data: {},
     });
 
-    dialog.afterClosed().subscribe((text) => {
-      if (_.isEmpty(text)) {
-        return;
-      }
-      const saved = JSON.parse(localStorage.getItem('savedQueries') || '[]');
-      const form: any = this.form.value;
-      const entry = {
-        text: text,
-        scope: form.scope,
-        return: form.return,
-        id: form.id,
-        customReturn: form.customReturn,
-        body: {
-          query: {
-            filters: serializeFilters(form.filters, form.scope),
-            requestedGranularity: form.granularity,
-            pagination: {
-              skip: form.skip,
-              limit: form.limit,
+    dialog
+      .afterClosed()
+      .subscribe((details: { name: string; description: string } | null) => {
+        if (!details) {
+          return;
+        }
+        const saved = JSON.parse(localStorage.getItem('savedQueries') || '[]');
+        const form: any = this.form.value;
+        const entry = {
+          projects: form.projects,
+          scope: form.scope,
+          return: form.return,
+          id: form.id,
+          customReturn: form.customReturn,
+          body: {
+            query: {
+              filters: serializeFilters(form.filters, form.scope),
+              requestedGranularity: form.granularity,
+              pagination: {
+                skip: form.skip,
+                limit: form.limit,
+              },
+            },
+            meta: {
+              apiVersion: 'v2.0',
             },
           },
-          meta: {
-            apiVersion: 'v2.0',
-          },
-        },
-      };
-      if (form.scope === ScopeTypes.GENOMIC_VARIANTS && !form.customReturn) {
-        _.set(
-          entry,
-          'body.query.requestParameters',
-          serializeRequestParameters(form.requestParameters),
-        );
-      }
-      console.log(entry);
-      this.savedQueries = [...saved, entry];
-      localStorage.setItem('savedQueries', JSON.stringify(this.savedQueries));
-    });
+        };
+        if (form.scope === ScopeTypes.GENOMIC_VARIANTS && !form.customReturn) {
+          _.set(
+            entry,
+            'body.query.requestParameters',
+            serializeRequestParameters(form.requestParameters),
+          );
+        }
+        this.dps
+          .saveMyQuery(details.name, details.description, entry)
+          .pipe(catchError(() => of(null)))
+          .subscribe((res) => {
+            if (!res) {
+              this.tstr.error('Unable to save query.', 'Error');
+            } else {
+              this.savedQueries.push({
+                name: details.name,
+                description: details.description,
+                query: entry,
+              });
+            }
+          });
+      });
   }
 
   async deleteSavedQuery(index: number) {
@@ -470,9 +612,18 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
     dialog.afterClosed().subscribe((yes) => {
       if (yes) {
-        const saved = JSON.parse(localStorage.getItem('savedQueries') || '[]');
-        this.savedQueries = _.filter(saved, (_, idx: number) => idx !== index);
-        localStorage.setItem('savedQueries', JSON.stringify(this.savedQueries));
+        this.dps
+          .deleteMyQuery(this.savedQueries[index].name)
+          .pipe(catchError(() => of(null)))
+          .subscribe((res) => {
+            if (res) {
+              this.savedQueries = this.savedQueries.filter(
+                (_, index) => index !== index,
+              );
+            } else {
+              this.tstr.error('Unable to delete query.', 'Error');
+            }
+          });
       }
     });
   }
@@ -480,11 +631,12 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
   async searchFilters(filter: FormGroup, index: number) {
     const scope = filter.get('scope')!.value;
     const type = filter.get('type')!.value;
+    const projects = this.form.value.projects;
     const { FilterSelectionDialogComponent } = await import(
       'src/app/components/filter-selection-dialog/filter-selection-dialog.component'
     );
     const dialog = this.dg.open(FilterSelectionDialogComponent, {
-      data: { scope, type },
+      data: { scope, type, projects },
     });
 
     dialog.afterClosed().subscribe((filters) => {
@@ -509,6 +661,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async searchEntries() {
     const scope = this.form.value.scope;
+    const projects = this.form.value.projects;
 
     if (scope === ScopeTypes.GENOMIC_VARIANTS) {
       alert(
@@ -520,7 +673,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       'src/app/components/entry-id-selection-dialog/entry-id-selection-dialog.component'
     );
     const dialog = this.dg.open(EntryIdSelectionDialogComponent, {
-      data: { scope },
+      data: { scope, projects },
     });
 
     dialog.afterClosed().subscribe((entry) => {

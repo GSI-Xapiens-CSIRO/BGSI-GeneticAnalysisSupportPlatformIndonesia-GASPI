@@ -35,6 +35,11 @@ export class VariantEditorComponent {
 
   constructor(private controlContainer: ControlContainer) {}
 
+  toUpperCase(event: Event) {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.toUpperCase();
+  }
+
   ngOnInit(): void {
     this.form = this.controlContainer.control as FormGroup;
   }

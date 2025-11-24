@@ -1,0 +1,17 @@
+<h1 mat-dialog-title>Job Failure</h1>
+<div mat-dialog-content>
+  <div>
+    <p>This job id failed to complete with the following error message:</p>
+    <p>
+      Failed Step : {{ data.failedStep }}
+      <br />
+      Error: {{ data.errorMessage }}
+    </p>
+    <p>Here are couple of suggestions:</p>
+    <ol>
+      <li>If the problem was in the VCF - make changes and resubmit.</li>
+      <li>Raise a ticket with administrator to look into this error.</li>
+    </ol>
+    <button mat-raised-button mat-dialog-close color="primary">Close</button>
+  </div>
+</div>

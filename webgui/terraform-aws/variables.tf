@@ -65,17 +65,40 @@ variable "api_endpoint_sbeacon" {
   description = "API endpoint for sbeacon."
 }
 
-variable "api_endpoint_svep" {
+variable "api_endpoint_clinic" {
   type        = string
-  description = "API endpoint for svep."
+  description = "API endpoint for the clinic. Connects either to sVEP of PGxFlow functionality depending on var.enable-pgxflow"
 }
 
-variable "pricing_access_key_id" {
+variable "clinic_mode" {
   type        = string
-  description = "Access key for AWS sdk Pricing plan."
+  description = "Specifies whether to enable sVEP or PGxFlow in the clinic"
 }
 
-variable "pricing_access_secret_key_id" {
+variable "bui-ssm-parameter-name" {
   type        = string
-  description = "Secret key for AWS sdk Pricing plan."
+  description = "Name of the SSM parameter storing the Beacon UI URL"
+}
+
+variable "web_acl_arn" {
+  type        = string
+  description = "arn of the WAF Web ACL to associate with the website's cloudfront distribution"
+  default     = null
+}
+
+variable "hub_name" {
+  type        = string
+  description = "Hub name"
+}
+
+variable "clinic-warning-thresholds" {
+  type = object({
+    qual   = optional(number, 0)
+    filter = optional(string, "")
+    dp     = optional(number, 0)
+    gq     = optional(number, 0)
+    mq     = optional(number, 0)
+    qd     = optional(number, 0)
+  })
+  description = "Thresholds before warnings are shown in clinic results page"
 }

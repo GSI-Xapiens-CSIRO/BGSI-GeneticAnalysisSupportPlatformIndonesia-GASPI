@@ -1,16 +1,12 @@
 <mat-card>
   <mat-card-content>
-    <h2 style="text-align: center; color: #006064; text-transform: uppercase">
-      Login
+    <h2 class="text-primary-60 text-center uppercase">
+      @if (state === StateTypes.FIRST_LOGIN) {
+        <div>Set New Password</div>
+      } @else {
+        <div>Login</div>
+      }
     </h2>
-    <!-- <div style="width: 100%; align-items: center; display: flex">
-      <img
-        src="/assets/images/sbeacon-tile.png"
-        alt=""
-        height="150px"
-        style="margin: 0 auto"
-      />
-    </div> -->
     <form [formGroup]="loginForm" (ngSubmit)="login()" class="bui-login-form">
       <mat-form-field class="bui-login-input-field">
         <mat-label>Email</mat-label>
@@ -21,7 +17,7 @@
           placeholder="Eg: guest@domain.com"
           required
         />
-        <mat-hint>Enter your email</mat-hint>
+        <mat-hint>Enter your email (case insensitive)</mat-hint>
         @if (loginForm.controls.email.invalid) {
           <mat-error>
             A valid <strong>email</strong> is <strong>required</strong>
@@ -75,7 +71,7 @@
               {{ loginForm.controls.newPassword.errors!["error"] }}
               {{
                 loginForm.controls.newPassword.errors!["minlength"] &&
-                  "Passwords must be at least 6 characters."
+                  "Passwords must be at least 8 characters."
               }}
               @if (loginForm.controls.newPassword.errors!["required"]) {
                 A new password is <strong>required</strong>
@@ -83,22 +79,60 @@
             </mat-error>
           }
         </mat-form-field>
+        <div class="bui-login-input-field">
+          <app-password-strength-bar
+            [password]="loginForm.value.newPassword || ''"
+          />
+        </div>
+        <mat-form-field class="bui-login-input-field" required>
+          <mat-label>Re-enter your password</mat-label>
+          <input
+            formControlName="confirmationPassword"
+            matInput
+            placeholder="Re-enter your password"
+            type="password"
+          />
+          <mat-hint>Please Re-enter your password</mat-hint>
+          @if (loginForm.get("confirmationPassword")?.errors?.["mismatch"]) {
+            <mat-error>
+              {{ loginForm.get("confirmationPassword")?.errors?.["mismatch"] }}
+            </mat-error>
+          }
+        </mat-form-field>
       }
       @if (state == StateTypes.ORDINARY_LOGIN) {
         <a
-          class="text-left w-[300px] font-medium text-cyan-900 text-sm"
+          class="text-left w-[300px] font-medium text-primary-60 text-sm"
           [routerLink]="[]"
           (click)="forgotPassword()"
           >Forgot password</a
         >
       }
+      @if (state == StateTypes.TOTP_LOGIN) {
+        <mat-form-field class="bui-login-input-field" required>
+          <mat-label>OTP Code</mat-label>
+          <input
+            formControlName="totp"
+            matInput
+            placeholder=""
+            type="password"
+          />
+          <mat-hint>Enter the six digit OTP</mat-hint>
+        </mat-form-field>
+      }
       <button
-        [disabled]="loginForm.invalid"
+        [disabled]="isSubmitDisabled()"
         mat-raised-button
         color="primary"
         class="bui-login-input-field"
       >
-        Login
+        {{
+          state === StateTypes.PASSWORD_RESET
+            ? "Change Password"
+            : state === StateTypes.FIRST_LOGIN
+              ? "Submit"
+              : "Login"
+        }}
       </button>
     </form>
   </mat-card-content>

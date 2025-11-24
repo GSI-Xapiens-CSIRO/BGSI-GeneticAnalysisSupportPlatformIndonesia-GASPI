@@ -11,13 +11,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { DportalService } from '../../../../../services/dportal.service';
 import { catchError, of, switchMap, map, defaultIfEmpty } from 'rxjs';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FileDropperComponent } from '../../file-dropper/file-dropper.component';
 import { Storage } from 'aws-amplify';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { DecimalPipe } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-data-submission-form',
@@ -28,7 +29,6 @@ import { DecimalPipe } from '@angular/common';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatSnackBarModule,
     FileDropperComponent,
     MatProgressSpinnerModule,
     MatIconModule,
@@ -48,30 +48,45 @@ export class DataSubmissionFormComponent {
   constructor(
     private fb: FormBuilder,
     private dps: DportalService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
+    private auth: AuthService,
   ) {
     this.dataSubmissionForm = this.fb.group({
       projectName: fb.control('', [
         Validators.required,
-        Validators.pattern(/^\S.*\S$/),
+        Validators.pattern(/^[^\s][A-Za-z0-9\s_-]*[^\s]$/),
+        Validators.minLength(6),
+        Validators.maxLength(64),
       ]),
-      projectDescription: fb.control('', Validators.required),
+      projectDescription: fb.control('', [
+        Validators.required,
+        Validators.maxLength(5000),
+      ]),
     });
   }
 
   async uploadFile(path: string, file: File): Promise<string> {
     this.fileProgress.set(file.name, 0);
     try {
-      await Storage.put(`projects/${path}/${file.name}`, file, {
-        customPrefix: { public: '' },
-        progressCallback: (progress: { loaded: number; total: number }) => {
-          this.fileProgress.set(file.name, progress.loaded);
-          this.progress = Array.from(this.fileProgress.values()).reduce(
-            (acc, val) => acc + val,
-            0,
-          );
+      const user = this.auth.user.getValue();
+      await Storage.put(
+        `staging/projects/${path}/project-files/${file.name}`,
+        file,
+        {
+          customPrefix: { public: '' },
+          metadata: {
+            usersub: user.attributes.sub,
+            username: user.attributes.email,
+          },
+          progressCallback: (progress: { loaded: number; total: number }) => {
+            this.fileProgress.set(file.name, progress.loaded);
+            this.progress = Array.from(this.fileProgress.values()).reduce(
+              (acc, val) => acc + val,
+              0,
+            );
+          },
         },
-      });
+      );
     } catch (error) {
       console.error('Error uploading file', error);
       throw error;
@@ -108,23 +123,33 @@ export class DataSubmissionFormComponent {
       .subscribe((res: any) => {
         console.log('sub', res);
         if (res) {
-          this.sb.open('Project created', 'Okay', { duration: 60000 });
+          this.tstr.success('Project created', 'Success');
           this.reset();
         } else {
-          this.sb.open('Project creation failed', 'Okay', { duration: 60000 });
+          this.tstr.error('Project creation failed', 'Error');
         }
         this.dataSubmissionForm.enable();
       });
   }
 
   patchFiles(files: FileList) {
-    if (files.length + this.files.length > 20) {
-      this.sb.open('No more than 20 files per project is allowed!', 'Okay', {
-        duration: 60000,
-      });
+    if (files.length + this.files.length > 50) {
+      this.tstr.error(
+        'No more than 50 files allowed per upload!. You may add more files later, upto 50 at a time.',
+        'Error',
+      );
       return;
     }
-    this.files = [...this.files, ...Array.from(files)];
+
+    const newFiles = Array.from(files).filter((file) => {
+      if (this.files.some((addedFile) => addedFile.name === file.name)) {
+        this.tstr.error(`File with name ${file.name} already exists!`, 'Error');
+        return false;
+      }
+      return true;
+    });
+
+    this.files = [...this.files, ...newFiles];
   }
 
   reset() {

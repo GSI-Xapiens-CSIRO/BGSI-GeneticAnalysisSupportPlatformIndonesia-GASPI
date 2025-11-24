@@ -1,13 +1,13 @@
-import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
-import { AuthService } from './services/auth.service';
 import {
-  animate,
-  state,
-  style,
-  transition,
-  trigger,
-} from '@angular/animations';
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { AuthService } from './services/auth.service';
 import { AsyncPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
   RouterLinkActive,
   RouterLink,
@@ -21,55 +21,46 @@ import {
 } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { GlobalSpinnerComponent } from './components/global-spinner/global-spinner.component';
 import { SpinnerService } from './services/spinner.service';
+import { ProfileMenuComponent } from './components/profile-menu/profile-menu.component';
+import { MatDialog } from '@angular/material/dialog';
+import { Subscription } from 'rxjs';
+import { ListMenuComponent } from './components/list-menu/list-menu.component';
+import { HeartBeatComponent } from './components/heart-beat/heart-beat.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  animations: [
-    trigger('collapse', [
-      state(
-        'open',
-        style({
-          height: '*',
-          opacity: 1,
-          visibility: 'visible',
-        }),
-      ),
-      state(
-        'closed',
-        style({
-          height: '0',
-          opacity: 0,
-          visibility: 'hidden',
-        }),
-      ),
-      transition('open => closed', [animate('0.1s ease-out')]),
-      transition('closed => open', [animate('0.1s ease-in')]),
-    ]),
-  ],
   standalone: true,
   imports: [
     MatButtonModule,
     MatIconModule,
-    RouterLinkActive,
+    MatMenuModule,
     RouterLink,
     RouterOutlet,
     AsyncPipe,
     GlobalSpinnerComponent,
+    ProfileMenuComponent,
+    ListMenuComponent,
+    HeartBeatComponent,
   ],
   providers: [SpinnerService],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
+  buildVersion: string = '';
   protected isCollapsed = false;
+  private realodSubscription: Subscription | null = null;
 
   constructor(
     protected auth: AuthService,
+    private http: HttpClient,
     private router: Router,
     private el: ElementRef,
     private ss: SpinnerService,
+    private dg: MatDialog,
   ) {
     this.router.events.subscribe((event: Event) => {
       switch (true) {
@@ -85,18 +76,33 @@ export class AppComponent implements OnInit {
         }
       }
     });
+
+    this.realodSubscription = this.auth.promptReloadAndLogin.subscribe(
+      async (prompt) => {
+        if (prompt) {
+          const { ReloadAndLoginDialogComponent } = await import(
+            './components/reload-and-login-dialog/reload-and-login-dialog.component'
+          );
+
+          this.dg.open(ReloadAndLoginDialogComponent);
+        }
+      },
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this.realodSubscription) {
+      this.realodSubscription.unsubscribe();
+    }
   }
 
   ngOnInit(): void {
-    this.isCollapsed = this.el.nativeElement.offsetWidth < 1200;
-    // TODO - check if this is really necessary
-    // this prevents users from reloading and landing on same page even when they are logged in
-    // route security is enabled by the authguards
-    (async () => {
-      await this.auth.refresh();
-    })();
+    this.isCollapsed = true;
+    this.http.get('version.txt', { responseType: 'text' }).subscribe(
+      // Use empty string in case of getting full redirected xml if missing
+      (version) => (this.buildVersion = version.length < 64 ? version : ''),
+    );
   }
-
   @HostListener('window:resize', ['event'])
   onResize() {
     this.isCollapsed = this.el.nativeElement.offsetWidth < 1200;

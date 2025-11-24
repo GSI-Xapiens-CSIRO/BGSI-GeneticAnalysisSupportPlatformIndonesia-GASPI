@@ -1,0 +1,20 @@
+region="ap-southeast-3"
+common-tags={
+  "Owner"="GXC"
+  "Environment"="STAGING"
+}
+
+# cognito users
+gaspi-guest-username="guest@example.com"
+gaspi-guest-password="Guest@Example123!"
+gaspi-admin-username="admin@example.com"
+gaspi-admin-password="Admin@Example123!"
+
+# buckets
+variants-bucket-prefix="gasi-variants-"
+metadata-bucket-prefix="gasi-metadata-"
+lambda-layers-bucket-prefix="gasi-lambda-layers-"
+dataportal-bucket-prefix="gasi-dataportal-"
+
+# ses email
+ses-source-email="admin@example.com"

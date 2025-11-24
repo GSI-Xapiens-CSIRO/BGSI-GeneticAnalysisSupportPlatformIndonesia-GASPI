@@ -1,0 +1,184 @@
+<h1 mat-dialog-title>View and update: {{ data.project.name }}</h1>
+
+<div mat-dialog-content>
+  <div
+    class="flex flex-col gap-2 p-4 my-4 font-medium text-yellow-800 rounded-lg bg-yellow-100"
+    role="alert"
+  >
+    <div>
+      Multi-sampled VCF is for the Data Portal functionalities, and only
+      single-sampled and compressed VCF works for the Clinical workflow.
+    </div>
+    <div>
+      Please make sure that neither the filename nor the file content contains
+      any sensitive personal information!
+    </div>
+  </div>
+  <div class="flex flex-col space-y-1">
+    @for (
+      file of project.files.slice(
+        paginator.pageIndex * paginator.pageSize,
+        paginator.pageIndex * paginator.pageSize + paginator.pageSize
+      );
+      track file
+    ) {
+      <div class="flex flex-row items-center space-x-2">
+        <button mat-mini-fab color="warn" (click)="removeFile(file)">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <div class="flex">{{ file }}</div>
+        @if (project.pendingFiles.includes(file)) {
+          &nbsp;(
+          <mat-icon
+            class="text-white bg-red-600 rounded-full"
+            matTooltip="This project has files that are still being deindeified, until they are deidentified, they cannot be ingested to sBeacon"
+            >priority_high</mat-icon
+          >
+          <p>Pending</p>
+          )
+        }
+      </div>
+    } @empty {
+      <h4>No files added to the project yet</h4>
+    }
+    <mat-paginator
+      [class.hide]="project.files.length <= 5"
+      #paginator
+      [length]="project.files.length"
+      [pageSize]="5"
+      [pageSizeOptions]="[5, 10, 50]"
+    >
+    </mat-paginator>
+  </div>
+  <br />
+  <hr />
+  <h3>Ingested datasets from the project to sBeacon</h3>
+  <div class="flex flex-col space-y-1">
+    @for (dataset of project.ingestedDatasets; track dataset) {
+      <div class="flex flex-row items-center space-x-2">
+        <button
+          mat-mini-fab
+          color="warn"
+          (click)="unIngest(project.name, dataset)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+        <div class="flex">{{ dataset }}</div>
+      </div>
+    } @empty {
+      <h4>No datasets ingested yet</h4>
+    }
+  </div>
+  <br />
+  <hr />
+  <h3>Change project description and add extra files</h3>
+  <form [formGroup]="dataSubmissionForm">
+    <br />
+    <div class="flex flex-col space-y-2 w-full">
+      <mat-form-field class="w-full">
+        <mat-label>Project description</mat-label>
+        <textarea
+          matInput
+          formControlName="projectDescription"
+          placeholder="Enter project description"
+        ></textarea>
+        <mat-error>
+          A description of upto 5000 characters is required.</mat-error
+        >
+      </mat-form-field>
+      <app-file-dropper
+        (dropped)="patchFiles($event)"
+        [disabled]="dataSubmissionForm.disabled"
+        #fileDropper
+      />
+    </div>
+    <br />
+    <h4>Following files will be added</h4>
+    @for (file of addedFiles; track $index) {
+      <div class="flex flex-row items-center space-x-2 mb-1">
+        <button
+          mat-mini-fab
+          color="warn"
+          type="button"
+          (click)="removeFileFromForm($index)"
+          [disabled]="dataSubmissionForm.disabled"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+        <div class="flex flex-row space-x-2">
+          <span>{{ file.name }}</span>
+          <span class="font-bold">
+            {{ file.size / (1024 * 1024) | number: "1.3-3" }} MB</span
+          >
+        </div>
+      </div>
+    } @empty {
+      <span class="text-sm text-gray-500 italic">
+        Added files will appear here. Please use unique file names within each
+        project.
+      </span>
+      <br />
+    }
+    <h4>Following files will be removed</h4>
+    @for (file of removedFiles; track $index) {
+      <div class="flex flex-row items-center space-x-2 mb-1">
+        <button
+          mat-mini-fab
+          color="primary"
+          type="button"
+          (click)="undoRemoveFile($index)"
+          [disabled]="dataSubmissionForm.disabled"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+        <div class="flex flex-row space-x-2 text-red-600">
+          {{ file }}
+        </div>
+      </div>
+    } @empty {
+      <span class="text-sm text-gray-500 italic">
+        Removed files will appear here.
+      </span>
+      <br />
+    }
+    <br />
+    <div class="flex flex-row space-x-[10px]">
+      <button
+        class="w-[100px]"
+        mat-raised-button
+        mat-dialog-close
+        color="primary"
+        type="button"
+        [disabled]="dataSubmissionForm.disabled"
+      >
+        close
+      </button>
+      <button
+        class="w-[100px]"
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="reset()"
+        [disabled]="dataSubmissionForm.disabled"
+      >
+        Reset
+      </button>
+      <button
+        class="w-[100px]"
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="onSubmit(dataSubmissionForm.value)"
+        [disabled]="submitDisabled(dataSubmissionForm.value)"
+      >
+        Submit
+      </button>
+      <mat-spinner
+        class="w-[100px]"
+        diameter="36"
+        mode="determinate"
+        [value]="(progress / totalSize) * 100"
+      ></mat-spinner>
+    </div>
+  </form>
+</div>

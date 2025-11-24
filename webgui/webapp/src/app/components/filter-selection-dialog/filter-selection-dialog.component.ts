@@ -24,7 +24,6 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Subject, catchError, map, of, startWith, switchMap } from 'rxjs';
 import { FilterService } from 'src/app/services/filter.service';
 import * as _ from 'lodash';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
@@ -33,6 +32,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ComponentSpinnerComponent } from '../component-spinner/component-spinner.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { ToastrService } from 'ngx-toastr';
 
 // Docs: https://material.angular.io/components/paginator/examples
 // Paginator internationalization
@@ -89,17 +89,21 @@ export class FilterSelectionDialogComponent implements AfterViewInit {
   protected dataSourceFilters = new MatTableDataSource<any>([]);
   protected displayedColumnsFilters = ['selected', 'id', 'label', 'type'];
   protected selected: { [key: string]: any } = {};
-  protected filter = '';
+  protected filter: string = '';
 
   constructor(
     public dialogRef: MatDialogRef<FilterSelectionDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
+    @Inject(MAT_DIALOG_DATA)
+    public data: { scope: string; projects: string[]; type: string },
     private fs: FilterService,
     private cd: ChangeDetectorRef,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {}
 
   ngAfterViewInit(): void {
+    if (this.data.projects.length === 0) {
+      return;
+    }
     this.paginatorFilters.page
       .pipe(
         startWith({}),
@@ -111,6 +115,7 @@ export class FilterSelectionDialogComponent implements AfterViewInit {
             .fetch_by_scope(this.data.scope, {
               skip: this.limit * this.paginatorFilters.pageIndex,
               limit: this.limit,
+              projects: this.data.projects.join(','),
             })
             .pipe(catchError(() => of(null)));
         }),
@@ -123,7 +128,7 @@ export class FilterSelectionDialogComponent implements AfterViewInit {
       )
       .subscribe((results) => {
         if (!results) {
-          this.sb.open('API request failed', 'Okay', { duration: 60000 });
+          this.tstr.error('API request failed', 'Error');
           return;
         }
         if (
@@ -131,7 +136,7 @@ export class FilterSelectionDialogComponent implements AfterViewInit {
           _.isEmpty(_.get(results, 'response.filteringTerms', []))
         ) {
           this.paginatorFilters.pageIndex -= 1;
-          console.log('page out of bounds');
+          this.tstr.warning('No more items to load', 'Warning');
         } else {
           this.dataSourceFilters = new MatTableDataSource(
             _.get(results, 'response.filteringTerms', []),

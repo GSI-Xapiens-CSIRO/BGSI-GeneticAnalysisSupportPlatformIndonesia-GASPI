@@ -1,8 +1,8 @@
 <mat-card>
-  <mat-card-content style="margin-bottom: 10px">
+  <mat-card-content class="mb-2.5">
     <h2>Select on from saved queries</h2>
   </mat-card-content>
-  <mat-card-content style="margin-bottom: 10px" [@.disabled]="disableAnimation">
+  <mat-card-content class="mb-2.5" [@.disabled]="disableAnimation">
     <mat-accordion>
       <mat-expansion-panel
         [expanded]="openPanels[0]"
@@ -20,45 +20,25 @@
         <div>
           @for (example of examples; track example) {
             <div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: row;
-                  justify-content: left;
-                  gap: 10px;
-                  margin-bottom: 5px;
-                "
-              >
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
-                >
+              <div class="flex flex-row justify-start gap-2.5 mb-1.5">
+                <div class="flex flex-col justify-center">
                   <button
-                    style="transform: scale(0.7)"
+                    class="scale-70"
                     mat-mini-fab
                     [routerLink]="[]"
                     color="primary"
-                    (click)="loadExample(example)"
+                    (click)="loadQuery(example)"
                   >
                     <mat-icon>double_arrow</mat-icon>
                   </button>
                 </div>
                 <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
+                  class="flex flex-row items-center cursor-pointer space-x-2"
+                  (click)="loadQuery(example)"
+                  [routerLink]="[]"
                 >
-                  <div
-                    style="cursor: pointer"
-                    [routerLink]="[]"
-                    (click)="loadExample(example)"
-                    [innerHTML]="example.text"
-                  ></div>
+                  <div class="font-semibold">{{ example.name }}:</div>
+                  <div [innerHTML]="getSafeHtml(example.description)"></div>
                 </div>
               </div>
             </div>
@@ -84,131 +64,36 @@
           }
           @for (savedQuery of savedQueries; track savedQuery; let i = $index) {
             <div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: row;
-                  justify-content: left;
-                  gap: 10px;
-                  margin-bottom: 5px;
-                "
-              >
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
-                >
+              <div class="flex flex-row justify-start gap-2.5 mb-1.5">
+                <div class="flex flex-col justify-center">
                   <button
-                    style="transform: scale(0.7)"
+                    class="scale-70"
                     mat-mini-fab
                     [routerLink]="[]"
                     color="primary"
-                    (click)="loadExample(savedQuery)"
+                    (click)="loadQuery(savedQuery)"
                   >
                     <mat-icon>double_arrow</mat-icon>
                   </button>
                 </div>
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
-                >
+                <div class="flex flex-col justify-center">
                   <button
-                    style="transform: scale(0.7)"
+                    class="scale-70"
                     mat-mini-fab
                     [routerLink]="[]"
-                    color="primary"
+                    color="warn"
                     (click)="deleteSavedQuery(i)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
                 <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
+                  class="flex flex-row items-center cursor-pointer space-x-2"
+                  (click)="loadQuery(savedQuery)"
+                  [routerLink]="[]"
                 >
-                  <div
-                    style="cursor: pointer"
-                    [routerLink]="[]"
-                    (click)="loadExample(savedQuery)"
-                    [innerHTML]="savedQuery.text"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      </mat-expansion-panel>
-      <mat-expansion-panel
-        [expanded]="openPanels[2]"
-        (opened)="openPanel(2)"
-        (closed)="closePanel(2)"
-      >
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            {{ openPanels[2] ? "Hide" : "View" }} specialised queries
-          </mat-panel-title>
-          <mat-panel-description>
-            Specialised queries combine multi step "and" queries for a
-            pre-defined workflow
-          </mat-panel-description>
-        </mat-expansion-panel-header>
-        <div>
-          @if (!customQueries.length) {
-            <span>No custom queries</span>
-          }
-          @for (
-            customQuery of customQueries;
-            track customQuery;
-            let i = $index
-          ) {
-            <div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: row;
-                  justify-content: left;
-                  gap: 10px;
-                  margin-bottom: 5px;
-                "
-              >
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
-                >
-                  <button
-                    style="transform: scale(0.7)"
-                    mat-mini-fab
-                    [routerLink]="[]"
-                    color="primary"
-                    (click)="runCustomQuery(customQuery)"
-                  >
-                    <mat-icon>double_arrow</mat-icon>
-                  </button>
-                </div>
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                  "
-                >
-                  <div
-                    style="cursor: pointer"
-                    [routerLink]="[]"
-                    (click)="runCustomQuery(customQuery)"
-                    [innerHTML]="customQuery.text"
-                  ></div>
+                  <div class="font-semibold">{{ savedQuery.name }}:</div>
+                  <div [innerHTML]="getSafeHtml(savedQuery.description)"></div>
                 </div>
               </div>
             </div>
@@ -218,11 +103,26 @@
     </mat-accordion>
   </mat-card-content>
   @if (!customQuery) {
-    <mat-card-content style="margin-bottom: 10px">
+    <mat-card-content class="mb-2.5">
       <h2>Choose query parameters</h2>
     </mat-card-content>
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="run()">
+        <h3>Select projects</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
+          <mat-form-field>
+            <mat-label>Projects</mat-label>
+            <mat-select formControlName="projects" multiple required>
+              @for (project of myProjects; track project) {
+                <mat-option [value]="project.name">
+                  {{ project.name }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>Select one or more projects</mat-hint>
+            <mat-error>Select at least one project</mat-error>
+          </mat-form-field>
+        </div>
         <h3>Select scope and granularity</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
           <mat-form-field>
@@ -234,7 +134,6 @@
               <mat-option value="analyses">Analyses</mat-option>
               <mat-option value="g_variants">Genomic Variants</mat-option>
               <mat-option value="datasets">Datasets</mat-option>
-              <mat-option value="cohorts">Cohorts</mat-option>
             </mat-select>
             <mat-hint>Main scope to query</mat-hint>
           </mat-form-field>
@@ -256,6 +155,8 @@
               min="0"
               type="number"
             />
+            <mat-error>This field is required</mat-error>
+            <mat-hint>Number of records to skip</mat-hint>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Limit</mat-label>
@@ -267,6 +168,8 @@
               max="500"
               type="number"
             />
+            <mat-error>Limit must be 1 to 500 entries</mat-error>
+            <mat-hint>Maximum number of records to return</mat-hint>
           </mat-form-field>
         </div>
         <div class="bui-custom-entry-checkbox-container">
@@ -335,11 +238,6 @@
                 ) {
                   <mat-option value="datasets">Datasets</mat-option>
                 }
-                @if (
-                  _.get(allowedReturns[form.value.scope], "cohorts", false)
-                ) {
-                  <mat-option value="cohorts">Cohorts</mat-option>
-                }
               </mat-select>
               @if (form.value.customReturn) {
                 <mat-error>Required</mat-error>
@@ -370,7 +268,7 @@
             (click)="addFilter($any(form).get('filters'))"
             mat-raised-button
             color="primary"
-            style="margin-bottom: 10px; width: 110px"
+            class="mb-2.5 w-[120px]"
           >
             Add Filter
           </button>
@@ -385,9 +283,9 @@
       (click)="reset()"
       mat-raised-button
       color="primary"
-      style="margin-bottom: 10px; margin-right: 10px; width: 110px"
+      class="mb-2.5 mr-2.5 w-[120px]"
     >
-      Reset
+      Reset All
     </button>
     @if (!customQuery) {
       <button
@@ -396,9 +294,9 @@
         (click)="saveQuery()"
         mat-raised-button
         color="primary"
-        style="margin-bottom: 10px; margin-right: 10px; width: 110px"
+        class="mb-2.5 mr-2.5 w-[120px]"
       >
-        Save
+        Save Query
       </button>
       <button
         type="button"
@@ -406,9 +304,26 @@
         [disabled]="form.invalid"
         mat-raised-button
         color="primary"
-        style="margin-bottom: 10px; width: 110px"
+        class="!mb-2.5 mr-2.5 w-[120px]"
       >
-        Run query
+        Run Query
+      </button>
+      <button
+        type="button"
+        (click)="makeCohort()"
+        [disabled]="
+          form.invalid ||
+          form.value.customReturn ||
+          ![scopeTypes.GENOMIC_VARIANTS, scopeTypes.INDIVIDUALS].includes(
+            form.value.scope
+          ) ||
+          form.value.granularity !== 'record'
+        "
+        mat-raised-button
+        color="primary"
+        class="!mb-2.5 w-[120px]"
+      >
+        Make Cohort
       </button>
     }
   </mat-card-content>
@@ -420,5 +335,6 @@
     [endpoint]="endpoint"
     [query]="query"
     [scope]="scope"
+    [projects]="projects"
   ></app-query-result-viewer-container>
 }

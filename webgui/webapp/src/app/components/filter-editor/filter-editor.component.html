@@ -1,7 +1,6 @@
 <div
-  class="grid grid-cols-3 md:grid-cols-7 gap-1 md:gap-4"
+  class="grid grid-cols-3 md:grid-cols-7 gap-1 md:gap-4 mb-7"
   [formGroup]="form"
-  style="margin-bottom: 30px"
 >
   <mat-form-field>
     <mat-label>Scope</mat-label>
@@ -14,8 +13,8 @@
         >Genomic Variants</mat-option
       >
       <mat-option [value]="scopeTypes.DATASETS">Datasets</mat-option>
-      <mat-option [value]="scopeTypes.COHORTS">Cohorts</mat-option>
     </mat-select>
+    <mat-hint>Scope to set the filter</mat-hint>
   </mat-form-field>
   <mat-form-field>
     <mat-label>Type</mat-label>
@@ -24,20 +23,27 @@
       <mat-option [value]="filterTypes.ALPHANUMERIC">Alphanumeric</mat-option>
       <mat-option [value]="filterTypes.CUSTOM">Custom</mat-option>
     </mat-select>
+    <mat-hint>Type of filter</mat-hint>
   </mat-form-field>
   <mat-form-field>
     <mat-label>Filter Id</mat-label>
     <input matInput formControlName="id" required />
-    <mat-hint
-      ><a [routerLink]="[]" (click)="searchFiltersClicked.emit()"
-        >Search</a
-      ></mat-hint
-    >
-    <mat-error
-      >Required (<a [routerLink]="[]" (click)="searchFiltersClicked.emit()"
-        >Search</a
-      >)</mat-error
-    >
+    @if (form.get("type")?.value === filterTypes.ONTOLOGY) {
+      <mat-hint>
+        <a [routerLink]="[]" (click)="searchFiltersClicked.emit()">Search</a>
+      </mat-hint>
+    } @else {
+      <mat-hint>Filter ID</mat-hint>
+    }
+    @if (form.get("type")?.value === filterTypes.ONTOLOGY) {
+      <mat-error>
+        Required (
+        <a [routerLink]="[]" (click)="searchFiltersClicked.emit()">Search</a>
+        )
+      </mat-error>
+    } @else {
+      <mat-error>Filter ID is required</mat-error>
+    }
   </mat-form-field>
   <mat-checkbox
     color="primary"
@@ -57,17 +63,22 @@
       <mat-option value="&lt;">&lt;</mat-option>
       <mat-option value="&lt;=">&lt;=</mat-option>
     </mat-select>
+    <mat-hint>Filter comparison</mat-hint>
   </mat-form-field>
   <mat-form-field>
     <mat-label>Filter Value</mat-label>
     <input matInput formControlName="value" required />
+    <mat-hint>Value of the filter</mat-hint>
+    @if (form.get("type")?.value === filterTypes.ALPHANUMERIC) {
+      <mat-error>Filter value is required</mat-error>
+    }
   </mat-form-field>
-  <div class="flex md:justify-end">
+  <div class="flex md:justify-end items-center h-[56px]">
     <button
       type="button"
       (click)="removeFilterClicked.emit()"
-      mat-fab
-      color="primary"
+      mat-mini-fab
+      color="warn"
     >
       <mat-icon>delete</mat-icon>
     </button>

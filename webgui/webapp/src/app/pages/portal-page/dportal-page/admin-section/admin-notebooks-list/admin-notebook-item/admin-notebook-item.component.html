@@ -8,6 +8,10 @@
       <span> <strong>Status:</strong> {{ cachedStatus.status }} </span>
       <span> <strong>Volume (GB):</strong> {{ cachedStatus.volumeSize }} </span>
       <span> <strong>Type (GB):</strong> {{ cachedStatus.instanceType }} </span>
+      <span class="text-red-500">
+        <strong>Cost Estimation:</strong> ${{ cachedStatus.costEstimation }} /
+        Month</span
+      >
       <span class="text-sm text-gray-500 italic"
         >Instance must be stopped before deleting or changing. Changes in
         notebook instances can take few minutes to come in to effect.</span
@@ -17,12 +21,12 @@
   @if (cachedStatus) {
     <div class="flex flex-col space-y-1">
       @if (cachedStatus.status == Status.IN_SERVICE) {
-        <button mat-mini-fab color="primary" (click)="stop()">
+        <button mat-mini-fab color="warn" (click)="stop()">
           <mat-icon>stop_circle</mat-icon>
         </button>
       }
       @if (cachedStatus.status == Status.STOPPED) {
-        <button mat-mini-fab color="primary" (click)="delete()">
+        <button mat-mini-fab color="warn" (click)="delete()">
           <mat-icon>cancel</mat-icon>
         </button>
       }

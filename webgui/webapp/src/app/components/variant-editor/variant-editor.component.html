@@ -49,7 +49,7 @@
       <mat-label>Ref. base</mat-label>
       <input
         formControlName="referenceBases"
-        oninput="this.value = this.value.toUpperCase()"
+        (input)="toUpperCase($event)"
         matInput
         [defaultValue]=""
         placeholder="Eg: AC, N"
@@ -61,7 +61,7 @@
       <mat-label>Alt. base</mat-label>
       <input
         formControlName="alternateBases"
-        oninput="this.value = this.value.toUpperCase()"
+        (input)="toUpperCase($event)"
         matInput
         [defaultValue]=""
         placeholder="Eg: AC, N"

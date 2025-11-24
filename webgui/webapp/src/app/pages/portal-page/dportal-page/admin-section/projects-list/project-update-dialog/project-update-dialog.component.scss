@@ -1,0 +1,8 @@
+:host {
+  display: block;
+  width: 800px;
+}
+
+.hide {
+  @apply h-0 invisible my-0 py-0;
+}

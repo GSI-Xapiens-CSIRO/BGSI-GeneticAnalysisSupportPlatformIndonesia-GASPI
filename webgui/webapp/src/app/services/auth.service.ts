@@ -1,30 +1,41 @@
 import { Injectable } from '@angular/core';
-import { Auth } from 'aws-amplify';
-import { CognitoUser } from 'amazon-cognito-identity-js';
+import { Auth, Hub } from 'aws-amplify';
 import { BehaviorSubject } from 'rxjs';
-import { Router } from '@angular/router';
-import _, { identity } from 'lodash';
+import _ from 'lodash';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  public user = new BehaviorSubject<CognitoUser | null>(null);
+  public user = new BehaviorSubject<any | null>(null);
   public userGroups = new BehaviorSubject<Set<string>>(new Set([]));
+  public promptReloadAndLogin = new BehaviorSubject<boolean>(false);
   private tempUser: any = null;
 
-  constructor(private router: Router) {
+  constructor() {
     this.refresh();
+    Hub.listen('auth', async ({ payload: { event, data } }) => {
+      switch (event) {
+        case 'tokenRefresh_failure':
+          this.promptReloadAndLogin.next(true);
+          break;
+      }
+    });
   }
 
   async signIn(username: string, password: string) {
     try {
       const user = await Auth.signIn(username, password);
 
-      if (_.get(user, 'challengeName', '') === 'NEW_PASSWORD_REQUIRED') {
-        this.tempUser = user;
-        return 'NEW_PASSWORD_REQUIRED';
+      switch (user.challengeName) {
+        case 'NEW_PASSWORD_REQUIRED':
+          this.tempUser = user;
+          return 'NEW_PASSWORD_REQUIRED';
+        case 'SOFTWARE_TOKEN_MFA':
+          this.tempUser = user;
+          return 'SOFTWARE_TOKEN_MFA';
       }
+
       console.log('Logged in as ', user);
       await this.refresh();
       return true;
@@ -50,15 +61,38 @@ export class AuthService {
     return true;
   }
 
+  async signInWithTOTP(totp: string) {
+    try {
+      await Auth.confirmSignIn(this.tempUser, totp, 'SOFTWARE_TOKEN_MFA');
+      await this.refresh();
+      return true;
+    } catch (error) {
+      console.log('error signing in', error);
+      return false;
+    }
+  }
+
   async signOut() {
     await Auth.signOut();
-    this.refresh();
-    this.router.navigate(['/login']);
+    await this.refresh();
+    window.location.href = '/login';
   }
 
   async refresh() {
     try {
-      const user = await Auth.currentAuthenticatedUser();
+      const creds = await Auth.currentCredentials();
+      let user = await Auth.currentAuthenticatedUser();
+      console.log('User', user);
+      console.log('Identity', creds.identityId);
+
+      if (user.attributes['custom:identity_id'] != creds.identityId) {
+        console.log('Updating identity_id');
+        await Auth.updateUserAttributes(user, {
+          'custom:identity_id': creds.identityId,
+        });
+        user = await Auth.currentAuthenticatedUser();
+      }
+
       this.userGroups.next(
         new Set(user.signInUserSession.idToken.payload['cognito:groups']),
       );
@@ -73,5 +107,9 @@ export class AuthService {
 
   async forgotPassword(username: string) {
     return await Auth.forgotPassword(username);
+  }
+
+  async resetPassword(username: string, code: string, newPassword: string) {
+    return await Auth.forgotPasswordSubmit(username, code, newPassword);
   }
 }

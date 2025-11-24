@@ -1,16 +1,28 @@
-<div class="flex flex-row justify-between w-full items-center">
-  <h2 class="flex">Notebook Instances in the System</h2>
-  <button
-    mat-mini-fab
-    color="primary"
-    class="flex items-center"
-    (click)="list()"
-  >
-    <mat-icon>refresh</mat-icon>
-  </button>
+<h2 class="flex p-0 my-4">Notebook Instances in the System</h2>
+<div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4">
+  <div class="flex flex-col gap-3">
+    <div class="w-2/4">
+      <mat-form-field class="w-full">
+        <mat-label>Search</mat-label>
+        <input
+          matInput
+          type="text"
+          [formControl]="searchControl"
+          placeholder="Description/Owner"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="flex flex-row space-x-[10px] items-center justify-end">
+    <button mat-mini-fab color="primary" (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
 </div>
+
 <div class="flex flex-col space-y-1 relative">
-  @for (notebook of notebooks; track notebook) {
+  <app-component-spinner [loading]="loading" />
+  @for (notebook of notebooksDataSource; track notebook) {
     <app-admin-notebook-item
       #notebook
       [notebook]="notebook"
@@ -21,3 +33,10 @@
   }
   <br />
 </div>
+
+<mat-paginator
+  #paginator
+  [pageSizeOptions]="[3, 5, 10]"
+  [pageSize]="pageSize"
+  [length]="9999"
+></mat-paginator>

@@ -1,9 +1,24 @@
 <mat-card>
-  <mat-card-content style="margin-bottom: 10px">
+  <mat-card-content class="mb-2.5">
     <h2>View filters available for different scopes</h2>
   </mat-card-content>
   <mat-card-content>
     <form [formGroup]="form" (ngSubmit)="run()">
+      <h3>Select projects</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
+        <mat-form-field>
+          <mat-label>Projects</mat-label>
+          <mat-select formControlName="projects" multiple required>
+            @for (project of myProjects; track project) {
+              <mat-option [value]="project.name">
+                {{ project.name }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-hint>Select one or more projects</mat-hint>
+          <mat-error>Select at least one project</mat-error>
+        </mat-form-field>
+      </div>
       <h3>Select scope and granularity</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
         <mat-form-field>
@@ -15,22 +30,23 @@
             <mat-option [value]="scopeTypes.BIOSAMEPLES">Biosamples</mat-option>
             <mat-option [value]="scopeTypes.RUNS">Runs</mat-option>
             <mat-option [value]="scopeTypes.DATASETS">Datasets</mat-option>
-            <mat-option [value]="scopeTypes.COHORTS">Cohorts</mat-option>
           </mat-select>
+          <mat-hint>Scope to fetch filters</mat-hint>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Id</mat-label>
           <input matInput formControlName="id" form />
           @if (form.controls["id"].enabled) {
-            <mat-hint
-              ><a [routerLink]="[]" (click)="searchIds()">Search</a></mat-hint
-            >
+            <mat-hint>
+              <a [routerLink]="[]" (click)="searchIds()">Search</a>
+            </mat-hint>
+          } @else {
+            <mat-hint>Only available in datasets scope</mat-hint>
           }
           @if (form.controls["id"].enabled) {
-            <mat-error
-              >Required (<a [routerLink]="[]" (click)="searchIds()">Search</a
-              >)</mat-error
-            >
+            <mat-error>
+              Required (<a [routerLink]="[]" (click)="searchIds()">Search</a>)
+            </mat-error>
           }
         </mat-form-field>
         <mat-form-field>
@@ -42,6 +58,8 @@
             type="number"
             formControlName="skip"
           />
+          <mat-error>This field is required</mat-error>
+          <mat-hint>Number of entries to skip</mat-hint>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Limit</mat-label>
@@ -49,19 +67,37 @@
             matInput
             [defaultValue]="100"
             min="1"
-            max="500"
+            max="5000"
             type="number"
             formControlName="limit"
           />
+          <mat-error>Limit must be 1 to 5000 entries</mat-error>
+          <mat-hint>Maximum number of records to return</mat-hint>
         </mat-form-field>
       </div>
-      <div class="bui-visualise-checkbox-container">
-        <h3>
+      <h3>Use a keyword to refine the query</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-4">
+        <mat-form-field>
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="search"
+            placeholder="Ontology code/label"
+          />
+          <mat-hint>Optional keyword to search for</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="flex flex-row items-center">
+        <h3 class="inline-flex items-center">
           Visualise term frequencies
           <mat-checkbox formControlName="stats" color="primary"></mat-checkbox>
         </h3>
         @if (form.controls["stats"].disabled) {
-          <em>Not available for the selected scope</em>
+          <em>
+            Not available for the selected scope or number of requested records
+            too big (>100).
+          </em>
         }
       </div>
     </form>
@@ -73,17 +109,16 @@
       (click)="reset()"
       mat-raised-button
       color="primary"
-      style="margin-bottom: 10px; margin-right: 10px; width: 110px"
+      class="mb-2.5 mr-2.5 w-[110px]"
     >
       Reset
     </button>
     <button
       [disabled]="form.invalid"
       (click)="run()"
-      [disabled]="false"
       mat-raised-button
       color="primary"
-      style="margin-bottom: 10px; width: 110px"
+      class="!mb-2.5 w-[110px]"
     >
       Run query
     </button>
@@ -94,6 +129,7 @@
   <app-term-freq-viewer
     [scope]="activeScope!"
     [terms]="terms"
+    [projects]="projects"
   ></app-term-freq-viewer>
 }
 @if (results) {

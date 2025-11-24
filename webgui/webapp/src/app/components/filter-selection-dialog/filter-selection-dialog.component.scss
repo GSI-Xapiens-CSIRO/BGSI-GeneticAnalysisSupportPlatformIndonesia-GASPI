@@ -10,3 +10,7 @@
     max-height: 100%;
   }
 }
+
+.hide {
+  @apply h-0 invisible my-0 py-0;
+}

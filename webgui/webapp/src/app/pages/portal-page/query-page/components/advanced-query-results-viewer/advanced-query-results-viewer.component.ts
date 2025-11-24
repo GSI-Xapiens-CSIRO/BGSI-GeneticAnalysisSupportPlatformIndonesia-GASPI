@@ -8,7 +8,6 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { QueryService } from 'src/app/services/query.service';
 import { FilterTypes, ScopeTypes } from 'src/app/utils/interfaces';
@@ -18,7 +17,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { RouterLink } from '@angular/router';
 import { MatInputModule } from '@angular/material/input';
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
@@ -26,6 +24,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { FilterEditorComponent } from 'src/app/components/filter-editor/filter-editor.component';
 import _ from 'lodash';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-advanced-query-results-viewer',
@@ -40,7 +39,6 @@ import _ from 'lodash';
     MatSelectModule,
     MatOptionModule,
     MatInputModule,
-    RouterLink,
     MatCheckboxModule,
     MatButtonModule,
     MatIconModule,
@@ -60,6 +58,8 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
   public words: any;
   @Input({ required: true })
   public results: any;
+  @Input({ required: true })
+  public projects: any;
   protected filtersForm: FormArray;
   protected scopeTypes = ScopeTypes;
   protected filterTypes = FilterTypes;
@@ -76,7 +76,7 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
     private fb: FormBuilder,
     private dg: MatDialog,
     private qs: QueryService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
   ) {
     this.filtersForm = this.fb.array(
       [],
@@ -131,11 +131,12 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
   async searchFilters(filter: FormGroup, index: number) {
     const scope = filter.get('scope')!.value;
     const type = filter.get('type')!.value;
+    const projects = this.projects;
     const { FilterSelectionDialogComponent } = await import(
       'src/app/components/filter-selection-dialog/filter-selection-dialog.component'
     );
     const dialog = this.dg.open(FilterSelectionDialogComponent, {
-      data: { scope, type },
+      data: { scope, type, projects },
     });
 
     dialog.afterClosed().subscribe((filters) => {
@@ -193,12 +194,31 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
     forkJoin(observables$)
       .pipe(
         takeUntil(this.destroy$),
-        catchError((_) => of(null)),
+        catchError((err: any) => {
+          if (err?.code === 'ERR_NETWORK') {
+            this.tstr.error(
+              'API request failed. Please check your network connectivity.',
+              'Error',
+            );
+          } else if (
+            err?.response?.status === 403 &&
+            err?.response?.data?.code === 'QUOTA_EXCEEDED'
+          ) {
+            this.tstr.error(
+              'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',
+              'Error',
+            );
+          } else {
+            this.tstr.error(
+              'API request failed. Please check your parameters.',
+              'Error',
+            );
+          }
+          return of(null);
+        }),
       )
       .subscribe((counts) => {
-        if (!counts) {
-          this.sb.open('Unable to fetch details', 'Okay', { duration: 60000 });
-        } else if (counts.length == this.terms.length) {
+        if (counts && counts.length === this.terms.length) {
           this.counts = _.reverse(_.sortBy(counts, (item) => item.count));
         }
         this.loading = false;

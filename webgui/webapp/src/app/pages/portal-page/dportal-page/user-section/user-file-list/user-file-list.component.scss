@@ -1,0 +1,19 @@
+//no scrollbar
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.ellipsis {
+  width: 80%; /* Harus ada width yang tetap */
+  white-space: nowrap; /* Mencegah teks turun ke baris berikutnya */
+  overflow: hidden; /* Memotong teks yang berlebih */
+  text-overflow: ellipsis; /* Menampilkan "..." */
+}

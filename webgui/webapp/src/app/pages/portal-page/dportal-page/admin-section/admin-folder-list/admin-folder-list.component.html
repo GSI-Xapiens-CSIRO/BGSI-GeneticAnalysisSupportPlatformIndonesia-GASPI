@@ -1,0 +1,69 @@
+<div class="flex flex-row justify-between w-full items-center">
+  <h2 class="flex">Folders tracked under users</h2>
+  <button
+    mat-mini-fab
+    color="primary"
+    class="flex items-center"
+    (click)="list()"
+  >
+    <mat-icon>refresh</mat-icon>
+  </button>
+</div>
+<p>These folders are held by active users.</p>
+<div class="max-h-96 overflow-scroll no-scrollbar">
+  <table mat-table [dataSource]="dataSource" matSort>
+    <!-- Given Name Column -->
+    <ng-container matColumnDef="given_name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Given Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.given_name }}</td>
+    </ng-container>
+
+    <!-- Family Name Column -->
+    <ng-container matColumnDef="family_name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Family Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.family_name }}</td>
+    </ng-container>
+
+    <!-- Email Column -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+      <td mat-cell *matCellDef="let element">{{ element.email }}</td>
+    </ng-container>
+
+    <!-- Actions Column -->
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef>Action</th>
+      <td mat-cell *matCellDef="let element">
+        <button
+          mat-mini-fab
+          color="warn"
+          (click)="deleteFolder(element['custom:identity_id'])"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>
+
+@if (inactiveIdentities.length) {
+  <h2>Folders not tracked under users</h2>
+  <p>
+    These folders either belong to past users and currently does not belong to
+    anyone.
+  </p>
+
+  <div class="flex flex-col space-y-1">
+    @for (identity of inactiveIdentities; track identity) {
+      <div class="flex flex-row space-x-2 items-center">
+        <button mat-mini-fab color="warn" (click)="deleteFolder(identity)">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <div class="flex font-semibold">{{ identity }}</div>
+      </div>
+    }
+  </div>
+}

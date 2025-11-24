@@ -33,8 +33,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
+              "src/styles.scss"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
@@ -62,6 +61,14 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "budgets": [
                 {
                   "type": "initial",
@@ -77,7 +84,14 @@
               "outputHashing": "all"
             },
             "development": {
-              "optimization": false,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "extractLicenses": false,
               "sourceMap": true,
               "fileReplacements": [
@@ -122,8 +136,7 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
+              "src/styles.scss"
             ],
             "scripts": []
           }

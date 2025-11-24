@@ -1,0 +1,74 @@
+<h1 mat-dialog-title>Allow user to upload to: {{ data.project }}</h1>
+<div mat-dialog-content>
+  <p>
+    Please provide a unique name to avoid overwriting an existing file in the
+    project.
+    <br />
+    Please provide the extension of file (eg: .json, .csv, .txt).
+  </p>
+  <form [formGroup]="fileNameForm">
+    <mat-form-field class="w-full">
+      <mat-label>File Name</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        type="text"
+        required
+        autocomplete="off"
+        placeholder="eg: transformed-metadata.json"
+      />
+      <mat-error>
+        A name is required (6-30 alphanumeric characters including - and _)
+      </mat-error>
+    </mat-form-field>
+    <div class="flex flex-row space-x-1">
+      <button
+        mat-raised-button
+        type="button"
+        mat-dialog-close
+        color="primary"
+        class="w-[110px]"
+      >
+        close
+      </button>
+      <button
+        mat-raised-button
+        type="button"
+        [disabled]="fileNameForm.invalid"
+        color="primary"
+        class="w-[110px]"
+        (click)="submit(fileNameForm.value.name)"
+      >
+        Generate
+      </button>
+    </div>
+  </form>
+  @if (uploadCode) {
+    <div class="mt-4">
+      <p class="text-lg">Upload Code:</p>
+      <pre class="bg-gray-100 p-2 rounded-md overflow-x-auto">{{
+        uploadCode
+      }}</pre>
+    </div>
+    <div class="flex flex-row space-x-1">
+      <button
+        mat-raised-button
+        type="button"
+        mat-dialog-close
+        color="primary"
+        class="w-[110px]"
+      >
+        close
+      </button>
+      <button
+        mat-raised-button
+        type="button"
+        color="primary"
+        class="w-[110px]"
+        (click)="copyToClipboard()"
+      >
+        Copy
+      </button>
+    </div>
+  }
+</div>

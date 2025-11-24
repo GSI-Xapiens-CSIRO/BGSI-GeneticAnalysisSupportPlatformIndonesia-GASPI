@@ -1,15 +1,14 @@
-<div>
-  <h1 mat-dialog-title>
-    Select a <em>{{ _.startCase(data.scope) }}</em> entry
-  </h1>
+<!-- prettier-ignore -->
+<h1 mat-dialog-title>Select a <em>{{ _.startCase(data.scope) }}</em> entry</h1>
+@if (data.projects.length > 0) {
   <app-component-spinner [loading]="loading"></app-component-spinner>
   <div mat-dialog-content>
     <div class="bui-filter-selection-table">
-      <table mat-table [dataSource]="entries">
+      <table mat-table [dataSource]="dataSourceEntries">
         @for (column of displayedColumnsEntries; track column) {
           <ng-container [matColumnDef]="column">
             <th
-              [style.width]="column === 'selected' ? '100px' : ''"
+              [ngClass]="{ 'bui-header-selected': column === 'selected' }"
               mat-header-cell
               *matHeaderCellDef
             >
@@ -24,15 +23,12 @@
                     ) {
                       <pre>{{ element[column] }}</pre>
                     } @else {
-                      #showJSON;|
-                    }
-                    <ng-template #showJSON>
                       <ngx-json-viewer
-                        style="text-wrap: nowrap"
+                        class="bui-ngx-json-viewer"
                         [expanded]="false"
                         [json]="element[column]"
                       ></ngx-json-viewer>
-                    </ng-template>
+                    }
                   </div>
                 }
                 @case ("selected") {
@@ -58,9 +54,10 @@
       #paginator
       [pageSizeOptions]="[10, 50, 100]"
       [length]="total"
-      page
+      [class.hide]="!(dataSourceEntries.data.length && !loading)"
     ></mat-paginator>
-    @if (!entries.length && !loading) {
+
+    @if (!dataSourceEntries.data.length && !loading) {
       <p>No entries available in the selected scope</p>
     }
     <div>
@@ -68,11 +65,18 @@
         mat-raised-button
         color="primary"
         (click)="cancel()"
-        style="margin-right: 10px"
+        class="mr-2.5"
       >
         Cancel
       </button>
       <button mat-raised-button color="primary" (click)="done()">Done</button>
     </div>
   </div>
-</div>
+} @else {
+  <div mat-dialog-content>
+    <p>Please select some projects.</p>
+    <button mat-raised-button color="primary" (click)="cancel()" class="mr-2.5">
+      Cancel
+    </button>
+  </div>
+}

@@ -1,14 +1,14 @@
 <div
-  class="border-dashed border-[1px] p-10 rounded-md bg-cyan-300 font-light max-w-[100%] mx-auto text-center cursor-pointer"
+  class="border-dashed border-[1px] p-10 rounded-md bg-primary-50 font-light max-w-[100%] mx-auto text-center cursor-pointer"
   #dropzone
   (dragenter)="highlight($event)"
   (dragover)="highlight($event)"
   (dragleave)="unhighlight($event)"
-  (drop)="handleDrop($event)"
+  (drop)="unhighlight($event); handleDrop($event)"
   (click)="!disabled && input.click()"
   [class]="disabled ? 'bg-gray-500' : ''"
 >
-  <h4 class="my-0">
+  <h4 class="my-0 text-white">
     Drag and drop you files here. Or click to select files manually.
   </h4>
 

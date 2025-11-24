@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -17,13 +17,26 @@ import {
   Validators,
 } from '@angular/forms';
 import { AdminService } from 'src/app/pages/admin-page/services/admin.service';
-import { catchError, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  of,
+  Subscription,
+} from 'rxjs';
 import * as _ from 'lodash';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { SpinnerService } from 'src/app/services/spinner.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { AwsService } from 'src/app/services/aws.service';
+import { gigabytesToBytes } from 'src/app/utils/file';
+import { UserQuotaService } from 'src/app/services/userquota.service';
+import { UserInfoService } from 'src/app/services/userinfo.service';
+
+import { ToastrService } from 'ngx-toastr';
+import { MatRadioModule } from '@angular/material/radio';
+import { NotebookRole, UserInstitutionType } from '../enums'; // adjust the path if needed
 
 @Component({
   selector: 'app-admin-create-user-dialog',
@@ -38,18 +51,19 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-create-user-dialog.component.html',
   styleUrls: ['./admin-create-user-dialog.component.scss'],
   providers: [AdminService],
 })
-export class AdminCreateUserComponent {
-  protected initialGroups: any = {
-    administrators: false,
-  };
-
+export class AdminCreateUserComponent implements OnInit, OnDestroy {
   protected loading = false;
   protected newUserForm: FormGroup;
+  protected costEstimation: number | null = 0;
+  noteBookRoleValue = NotebookRole;
+  institutionTypeValue = UserInstitutionType;
+  emailFormFieldSubscription: Subscription | undefined;
 
   constructor(
     public dialogRef: MatDialogRef<AdminCreateUserComponent>,
@@ -58,18 +72,63 @@ export class AdminCreateUserComponent {
     private dg: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     private ss: SpinnerService,
-    private adminServ: AdminService,
-    private sb: MatSnackBar,
+    private tstr: ToastrService,
+    private aws: AwsService,
+    private uq: UserQuotaService,
+    private ui: UserInfoService,
   ) {
     this.newUserForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       administrators: [false],
+      managers: [false],
+      // Quota
+      quotaSize: ['', [Validators.required, Validators.min(0)]],
+      quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
+      institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
+      institutionName: ['', Validators.required],
+      isMedicalDirector: [false],
     });
   }
 
-  // ngOnInit(): void {}
+  ngOnInit(): void {
+    this.onChangeCalculateCost();
+    this.emailFormFieldSubscription = this.newUserForm.controls[
+      'email'
+    ]?.valueChanges.subscribe((value: string | null) => {
+      if (value && value !== value.toLowerCase()) {
+        this.newUserForm.controls['email']?.setValue(value.toLowerCase(), {
+          emitEvent: false,
+        });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.emailFormFieldSubscription) {
+      this.emailFormFieldSubscription.unsubscribe();
+    }
+  }
+
+  onChangeCalculateCost() {
+    this.newUserForm.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged())
+      .subscribe((values) => {
+        if (values.quotaQueryCount && values.quotaSize) {
+          this.aws
+            .calculateQuotaEstimationPerMonth(
+              values.quotaQueryCount,
+              values.quotaSize,
+            )
+
+            .subscribe((res) => {
+              this.costEstimation = res;
+            });
+        }
+      });
+  }
 
   cancel(): void {
     this.dialogRef.close();
@@ -77,64 +136,58 @@ export class AdminCreateUserComponent {
 
   createUser(): void {
     const form = this.newUserForm.value;
+    const groups = _.pick(form, ['administrators', 'managers']);
+    const attributes = _.pick(form, ['isMedicalDirector']);
+
     this.ss.start();
-    this.adminServ
-      .createUser(form.firstName, form.lastName, form.email)
+    this.as
+      .createUser(form.firstName, form.lastName, form.email, groups, attributes)
       .pipe(
         catchError((e) => {
           if (
             _.get(e, 'response.data.error', '') === 'UsernameExistsException'
           ) {
-            this.sb.open('This user already exist in the system!', 'Okay', {
-              duration: 60000,
-            });
-            //temp handling because all return from BE always false and the second one always success with error user exist
-            //or change parameter in BE when adding user include role
-            //change soon, after discuss with BE
-            if (form.administrators) {
-              this.updateUserRole(form.email, form.administrators);
-            } else {
-              this.newUserForm.reset();
-              this.dialogRef.close({ reload: true });
-              this.sb.open('User created successfully!', 'Okay', {
-                duration: 60000,
-              });
-            }
-            //end of temp
-            this.newUserForm.reset();
+            this.tstr.warning('This user already exists!', 'Warning');
           } else {
-            this.sb.open(
+            this.tstr.error(
               e.response?.data?.message ?? 'Please Try Again Later',
-              'Okay',
-              {
-                duration: 60000,
-              },
+              'Error',
             );
           }
           return of(null);
         }),
       )
       .subscribe((response) => {
-        //api response always null
         this.ss.end();
-
         if (response) {
+          this.addUserQuota(response?.uid ?? form.email);
+          this.addUserInstitution(response?.uid ?? form.email);
           this.newUserForm.reset();
-          this.sb.open('User created successfully!', 'Okay', {
-            duration: 60000,
-          });
           this.dialogRef.close({ reload: true });
+          this.tstr.success('User created successfully!', 'Success');
         }
       });
   }
 
-  updateUserRole(email: string, isAdmin: boolean): void {
-    this.as
-      .updateUsersGroups(email, { administrators: isAdmin })
-      .pipe(catchError(() => of(null)))
-      .subscribe(() => {
-        this.loading = false;
-        this.dialogRef.close({ reload: true });
-      });
+  addUserInstitution(sub: string): void {
+    this.ui
+      .storeUserInfo(
+        sub,
+        this.newUserForm.value.institutionType,
+        this.newUserForm.value.institutionName,
+      )
+      .pipe(catchError(() => of(null)));
+  }
+
+  addUserQuota(sub: string): void {
+    this.uq
+      .upsertUserQuota(sub, this.costEstimation, {
+        quotaSize: gigabytesToBytes(this.newUserForm.value.quotaSize),
+        quotaQueryCount: this.newUserForm.value.quotaQueryCount,
+        usageSize: 0,
+        usageCount: 0,
+        notebookRole: this.newUserForm.value.notebookRole,
+      })
+      .pipe(catchError(() => of(null)));
   }
 }

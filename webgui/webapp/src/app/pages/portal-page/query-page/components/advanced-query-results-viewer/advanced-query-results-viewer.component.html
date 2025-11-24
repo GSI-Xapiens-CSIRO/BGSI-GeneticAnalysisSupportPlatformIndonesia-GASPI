@@ -1,5 +1,5 @@
 <mat-card>
-  <div style="margin: 10px">
+  <div class="m-2.5">
     <h3>Advanced statistics</h3>
     <h6>
       Note: you can select ontology terms from query and results to visualise
@@ -56,23 +56,17 @@
       </div>
     </form>
     @if (loading) {
-      <div
-        style="
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 10px;
-        "
+      <div class="flex flex-row items-center gap-2.5"
       >
-        <h3 style="display: flex; flex-grow: 1">Loading</h3>
+        <h3 class="flex flex-grow">Loading</h3>
         <mat-progress-bar
-          style="display: flex; flex-grow: 2"
+          class="flex flex-grow-2"
           mode="determinate"
           [value]="(100 * completed) / terms.length"
         ></mat-progress-bar>
       </div>
     } @else if (!loading && counts.length > 0) {
-      <div style="margin: auto; overflow: auto">
+      <div class="m-auto overflow-auto">
         <app-term-freq-plot [counts]="counts" />
       </div>
     }

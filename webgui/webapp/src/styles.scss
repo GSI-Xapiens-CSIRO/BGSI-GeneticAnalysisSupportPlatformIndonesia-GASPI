@@ -4,6 +4,11 @@ Custom theming
 @use "@angular/material" as mat;
 
 /*
+Toastre
+*/
+@import "ngx-toastr/toastr";
+
+/*
 Tailwind
 */
 @tailwind base;
@@ -12,17 +17,44 @@ Tailwind
 
 @include mat.core();
 
-$bui-primary: mat.define-palette(mat.$cyan-palette, 900, 800, 700);
+$custom-contrast: (
+  50: black,
+);
+
+$custom-color: (
+  10: #e1fbfa,
+  50: #16b3ac,
+  60: #128f8a,
+  100: #b3ece8,
+  200: #80e1dc,
+  300: #4dd6d0,
+  400: #26cbc4,
+  500: #16b3ac,
+  // primary color
+  600: #14a59d,
+  700: #12878d,
+  800: #106a7e,
+  900: #0d4e6e,
+  A100: #a1fdfc,
+  A200: #6ef4f4,
+  A400: #3beceb,
+  A700: #21e4e3,
+  contrast: $custom-contrast,
+
+  // Add contrast map here
+);
+
+$bui-primary: mat.define-palette($custom-color, 50);
 $bui-accent: mat.define-palette(mat.$cyan-palette, A400, A200, A700);
 
 $bui-theme: mat.define-light-theme(
   (
     color: (
       primary: $bui-primary,
-      accent: $bui-accent
+      accent: $bui-accent,
     ),
     typography: mat.define-typography-config(),
-    density: 0
+    density: 0,
   )
 );
 
@@ -40,7 +72,7 @@ body {
 }
 
 body {
-  background: #2f2f2f url(assets/images/bg02.jpg) repeat;
+  background: theme("colors.primary-10");
   font-family: "Source Sans Pro", sans-serif;
   font-size: 12pt;
   font-weight: 300;
@@ -48,7 +80,9 @@ body {
 }
 
 .bui-card-background {
-  background-color: #1d4753;
-  background-image: url(/assets/images/dot-grid.png);
+  background-color: theme("colors.primary-10");
 }
 
+button {
+  color: white !important;
+}
