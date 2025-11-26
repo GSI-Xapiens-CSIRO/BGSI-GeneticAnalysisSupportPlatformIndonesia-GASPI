@@ -9,7 +9,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { formatBytes, getTotalStorageSize } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
-import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-user-file-list',
@@ -33,7 +32,7 @@ export class UserFileListComponent implements OnInit {
   costEstimation: number = 0;
   totalSize: number = 0;
   totalSizeFormatted: string = '';
-  totalSizeRemainingText: string = '';
+  totalSizeRemainingText: string = '0 B';
 
   loadingUsage: boolean = false;
 
@@ -61,14 +60,17 @@ export class UserFileListComponent implements OnInit {
     this.currentUsage(this.myFiles);
   }
 
-  generateTotalSize(files: any[], quotaSize: number = 0) {
+  generateTotalSize(files: any[], quotaSize?: number) {
     const bytesTotal = getTotalStorageSize(files);
 
     this.totalSize = bytesTotal;
     this.totalSizeFormatted = formatBytes(bytesTotal, 2);
 
+    // Use provided quotaSize or fall back to the stored quotaSize
+    const effectiveQuotaSize = quotaSize !== undefined ? quotaSize : this.quotaSize;
+
     this.totalSizeRemainingText = formatBytes(
-      Math.floor(quotaSize - this.totalSize),
+      Math.floor(effectiveQuotaSize - this.totalSize),
       2,
     );
   }
@@ -80,6 +82,8 @@ export class UserFileListComponent implements OnInit {
       this.uq.getCurrentUsage(),
     );
 
+    // Store quotaSize for later use
+    this.quotaSize = quotaSize;
     this.generateTotalSize(files, quotaSize);
 
     this.quotaSizeFormatted = formatBytes(quotaSize, 2);
