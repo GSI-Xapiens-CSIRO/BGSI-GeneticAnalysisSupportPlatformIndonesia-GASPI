@@ -4,13 +4,6 @@ import os
 import boto3
 from markupsafe import escape
 
-# Try to import base64 logo, fallback to external URL if not available
-try:
-    from sbeacon_logo_base64 import get_logo_data_uri
-    USE_EMBEDDED_LOGO = True
-except ImportError:
-    USE_EMBEDDED_LOGO = False
-
 BUI_SSM_PARAM_NAME = os.environ["BUI_SSM_PARAM_NAME"]
 SES_SOURCE_EMAIL = os.environ["SES_SOURCE_EMAIL"]
 SES_CONFIG_SET_NAME = os.environ["SES_CONFIG_SET_NAME"]
@@ -31,12 +24,7 @@ def lambda_handler(event, context):
         beacon_base_url = response.get("Parameter", {}).get("Value", "")
 
         beacon_ui_url = f"{beacon_base_url}/login"
-
-        # Use embedded base64 image if available, otherwise use external URL
-        if USE_EMBEDDED_LOGO:
-            beacon_img_url = get_logo_data_uri()
-        else:
-            beacon_img_url = f"{beacon_base_url}/assets/images/sbeacon.png"
+        beacon_img_url = f"{beacon_base_url}/assets/images/sbeacon.png"
         subject = "sBeacon Registration"
         body_html = f"""
 <html>
