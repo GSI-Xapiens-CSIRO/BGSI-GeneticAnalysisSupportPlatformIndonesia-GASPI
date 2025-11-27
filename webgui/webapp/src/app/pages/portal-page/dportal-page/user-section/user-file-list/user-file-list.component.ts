@@ -67,24 +67,32 @@ export class UserFileListComponent implements OnInit {
     this.totalSizeFormatted = formatBytes(bytesTotal, 2);
 
     // Use provided quotaSize or fall back to the stored quotaSize
-    const effectiveQuotaSize = quotaSize !== undefined ? quotaSize : this.quotaSize;
+    const effectiveQuotaSize =
+      quotaSize !== undefined ? quotaSize : this.quotaSize;
 
-    this.totalSizeRemainingText = formatBytes(
-      Math.floor(effectiveQuotaSize - this.totalSize),
-      2,
-    );
+    // Calculate remaining, ensure it's not negative
+    const remaining = Math.max(0, effectiveQuotaSize - this.totalSize);
+
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
   }
 
   async currentUsage(files: any[]) {
     this.loadingUsage = true;
 
-    const { quotaSize, costEstimation } = await firstValueFrom(
+    const { quotaSize, costEstimation, usageSize } = await firstValueFrom(
       this.uq.getCurrentUsage(),
     );
 
-    // Store quotaSize for later use
+    // Store quotaSize for later use (e.g., after delete)
     this.quotaSize = quotaSize;
-    this.generateTotalSize(files, quotaSize);
+
+    // Use usageSize from backend instead of calculating from files
+    this.totalSize = usageSize;
+    this.totalSizeFormatted = formatBytes(usageSize, 2);
+
+    // Calculate remaining based on backend usageSize
+    const remaining = Math.max(0, quotaSize - usageSize);
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
 
     this.quotaSizeFormatted = formatBytes(quotaSize, 2);
     this.costEstimation = costEstimation;
