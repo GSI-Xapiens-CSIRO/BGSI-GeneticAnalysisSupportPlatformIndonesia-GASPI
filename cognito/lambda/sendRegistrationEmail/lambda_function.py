@@ -4,6 +4,13 @@ import os
 import boto3
 from markupsafe import escape
 
+# Try to import base64 logo, fallback to external URL if not available
+try:
+    from sbeacon_logo_base64 import get_logo_data_uri
+    USE_EMBEDDED_LOGO = True
+except ImportError:
+    USE_EMBEDDED_LOGO = False
+
 BUI_SSM_PARAM_NAME = os.environ["BUI_SSM_PARAM_NAME"]
 SES_SOURCE_EMAIL = os.environ["SES_SOURCE_EMAIL"]
 SES_CONFIG_SET_NAME = os.environ["SES_CONFIG_SET_NAME"]
@@ -21,10 +28,15 @@ def lambda_handler(event, context):
         temp_password = body_dict["temporary_password"]
 
         response = ssm_client.get_parameter(Name=BUI_SSM_PARAM_NAME)
-        beacon_ui_url = response.get("Parameter", {}).get("Value", "")
+        beacon_base_url = response.get("Parameter", {}).get("Value", "")
 
-        beacon_ui_url = f"{beacon_ui_url}/login"
-        beacon_img_url = f"{beacon_ui_url}/assets/images/sbeacon.png"
+        beacon_ui_url = f"{beacon_base_url}/login"
+
+        # Use embedded base64 image if available, otherwise use external URL
+        if USE_EMBEDDED_LOGO:
+            beacon_img_url = get_logo_data_uri()
+        else:
+            beacon_img_url = f"{beacon_base_url}/assets/images/sbeacon.png"
         subject = "sBeacon Registration"
         body_html = f"""
 <html>
@@ -56,10 +68,14 @@ def lambda_handler(event, context):
       <p>Welcome to sBeacon - your sign-in credentials are as follows:</p>
       <p>Email: <strong>{escape(email)}</strong></p>
       <p>Temporary Password: <strong>{escape(temp_password)}</strong></p>
-      <p><a href="{beacon_ui_url}">Access your account</a></p>
-      <div style="max-width:80;">
-        <img src="{beacon_img_url}" alt="sBeacon Logo" style="max-width:80%; width:80%; margin-top:20px;">
-      </div>
+      <p><a href="{beacon_ui_url}" style="color:#33548e; text-decoration:none; font-weight:bold;">Access your account</a></p>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+        <tr>
+          <td align="center">
+            <img src="{beacon_img_url}" alt="sBeacon Logo" width="400" height="auto" border="0" style="display:block; max-width:100%; height:auto;">
+          </td>
+        </tr>
+      </table>
     </div>
   </body>
 </html>
