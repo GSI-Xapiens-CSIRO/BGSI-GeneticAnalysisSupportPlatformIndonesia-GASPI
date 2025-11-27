@@ -695,14 +695,13 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
         const parsed = parseFilters(filters, scope);
         original.splice(index, 0, ...parsed);
         const combined = original;
-
         (this.form.get('filters') as FormArray).clear();
         _.range(combined.length).forEach(() => {
           this.addFilter(this.form.get('filters') as FormArray);
         });
 
         this.form.patchValue({
-          filters: parseFilters(combined, scope),
+          filters: combined,
         });
       }
     });
