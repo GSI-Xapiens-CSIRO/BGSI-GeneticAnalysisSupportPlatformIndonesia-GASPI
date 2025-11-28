@@ -67,7 +67,8 @@ export class UserFileListComponent implements OnInit {
     this.totalSizeFormatted = formatBytes(bytesTotal, 2);
 
     // Use provided quotaSize or fall back to the stored quotaSize
-    const effectiveQuotaSize = quotaSize !== undefined ? quotaSize : this.quotaSize;
+    const effectiveQuotaSize =
+      quotaSize !== undefined ? quotaSize : this.quotaSize;
 
     // Calculate remaining, ensure it's not negative
     const remaining = Math.max(0, effectiveQuotaSize - this.totalSize);
