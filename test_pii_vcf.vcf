@@ -1,0 +1,14 @@
+##fileformat=VCFv4.2
+##contig=<ID=chr2,length=242193529>
+##contig=<ID=chr3,length=198295559>
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<Name="John Doe",Email="john.doe@example.com",DOB="1980-01-01",Address="123 Fake St, Faketown, USA">
+##INFO=<nama="Budi Santoso",email="budi@example.com",tanggal_lahir="1985-05-15",alamat="Jl. Sudirman No. 123, Jakarta">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	1	2	3	4
+chr2	20436	.	C	T	47	PASS	NS=4;DP=18	GT	1|1	1|0	0|1	1|0
+chr2	42619	.	G	T	23	PASS	NS=4;DP=30	GT	0|1	1|0	0|0	0|1
+chr3	23398	.	G	A	60	PASS	NS=4;DP=70	GT	1|0	1|1	1|1	0|1
+chr3	30264	.	A	T	30	PASS	NS=4;DP=79	GT	0|0	0|1	0|1	1|1
+chr3	47708	.	T	G	25	PASS	NS=4;DP=31	GT	1|0	1|1	0|1	0|0

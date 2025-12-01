@@ -1,0 +1,17 @@
+[
+  {
+    "name": "John Doe",
+    "age": 45,
+    "sex": "Male",
+    "mrn": "RM-2024-000123",
+    "medical_record_number": "MRN-XXXXXXXXXX",
+    "no_rm": "RM-XXXXXXXXXX",
+    "nomor_rm": "RM-XXXXXXXXXX",
+    "nomor rm": "RM-XXXXXXXXXX",
+    "rekam_medis": "RM-XXXXXXXXXX",
+    "rekam medis": "RM-XXXXXXXXXX",
+    "no_mr": "MR-10293847",
+    "nomor_mr": "MR-56473829",
+    "diagnosis": "Type 2 Diabetes"
+  }
+]

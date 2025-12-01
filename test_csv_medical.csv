@@ -1,0 +1,3 @@
+name,age,sex,mrn,no_mr,email,diagnosis
+John Doe,45,Male,RM-2024-000123,MR-10293847,john@example.com,Type 2 Diabetes
+Jane Smith,38,Female,RM-2024-000456,MR-98765432,jane@example.com,Hypertension

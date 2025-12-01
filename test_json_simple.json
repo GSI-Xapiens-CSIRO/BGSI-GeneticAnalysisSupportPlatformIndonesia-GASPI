@@ -1,0 +1,23 @@
+[
+  {
+    "name": "John Doe",
+    "nama": "Budi Santoso",
+    "fullname": "John Doe Smith",
+    "umur": 45,
+    "jenis_kelamin": "Laki-laki",
+    "email": "john@example.com",
+    "nomor_telepon": "081234567890",
+    "nomer_telepon": "081234567891",
+    "nomor_telfon": "081234567892",
+    "nomer_telfon": "081234567893",
+    "nomor_hp": "081234567894",
+    "nomer_hp": "081234567895",
+    "nomor_handphone": "081234567896",
+    "nomer_handphone": "081234567897",
+    "mobilephone": "081234567898",
+    "address": "123 Main St, New York",
+    "alamat": "Jl. Sudirman No. 123, Jakarta",
+    "riwayat_medis": ["Diabetes tipe 2", "Gatal-gatal"],
+    "data_non_pii": "This should remain unchanged"
+  }
+]
