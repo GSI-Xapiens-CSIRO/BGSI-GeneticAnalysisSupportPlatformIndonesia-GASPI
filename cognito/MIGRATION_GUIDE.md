@@ -51,12 +51,25 @@ Migration runs automatically via `null_resource` dependency.
 
 ### Manual Testing
 ```bash
+# Dry run (safe preview)
 cd cognito/scripts
+./test_migration.sh ap-southeast-3 admin@example.com guest@example.com --dry-run
+
+# Live run (applies changes)
 ./test_migration.sh ap-southeast-3 admin@example.com guest@example.com
 ```
 
 ### Direct Script Execution
 ```bash
+# Dry run to preview changes
+python3 migrate_cognito_users.py \
+  --region ap-southeast-3 \
+  --user-pool-name "gaspi-users" \
+  --admin-username "admin@example.com" \
+  --guest-username "guest@example.com" \
+  --dry-run
+
+# Live run to apply changes
 python3 migrate_cognito_users.py \
   --region ap-southeast-3 \
   --user-pool-name "gaspi-users" \
@@ -100,7 +113,7 @@ Migration completed successfully
 
 ## Best Practices
 
-1. **Always Test**: Use test script before production deployment
+1. **Always Test**: Use `--dry-run` first to preview changes, then test script before production
 2. **Backup Strategy**: Consider exporting user data before migration
 3. **Monitoring**: Review migration logs for any skipped users
 4. **Rollback Plan**: Keep user export for emergency restoration

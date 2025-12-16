@@ -33,18 +33,21 @@ def check_user_bindings(cognito_client, user_pool_id, username):
     except ClientError:
         return False
 
-def safe_delete_user(cognito_client, user_pool_id, username):
+def safe_delete_user(cognito_client, user_pool_id, username, dry_run=False):
     """Safely delete user if no bindings exist"""
     try:
         if check_user_bindings(cognito_client, user_pool_id, username):
             print(f"User {username} has AWS resource bindings - skipping deletion")
             return False
             
-        cognito_client.admin_delete_user(
-            UserPoolId=user_pool_id,
-            Username=username
-        )
-        print(f"Deleted user: {username}")
+        if dry_run:
+            print(f"[DRY RUN] Would delete user: {username}")
+        else:
+            cognito_client.admin_delete_user(
+                UserPoolId=user_pool_id,
+                Username=username
+            )
+            print(f"Deleted user: {username}")
         return True
     except ClientError as e:
         if e.response['Error']['Code'] == 'UserNotFoundException':
@@ -77,7 +80,7 @@ def is_terraform_managed_pool(cognito_client, pool_id):
         print(f"Error checking pool {pool_id}: {e}")
         return False
 
-def find_user_pool(cognito_client, pool_name):
+def find_user_pool(cognito_client, pool_name, dry_run=False):
     """Find correct user pool, delete incorrect duplicates"""
     paginator = cognito_client.get_paginator('list_user_pools')
     matching_pools = []
@@ -111,8 +114,11 @@ def find_user_pool(cognito_client, pool_name):
             
             for pool in incorrect_pools:
                 try:
-                    print(f"Deleting incorrect pool: {pool['Id']}")
-                    cognito_client.delete_user_pool(UserPoolId=pool['Id'])
+                    if dry_run:
+                        print(f"[DRY RUN] Would delete incorrect pool: {pool['Id']}")
+                    else:
+                        print(f"Deleting incorrect pool: {pool['Id']}")
+                        cognito_client.delete_user_pool(UserPoolId=pool['Id'])
                 except ClientError as e:
                     print(f"Warning: Could not delete pool {pool['Id']}: {e}")
             
@@ -132,14 +138,18 @@ def main():
     parser.add_argument('--user-pool-name', required=True, help='Cognito User Pool name')
     parser.add_argument('--admin-username', required=True, help='Admin username')
     parser.add_argument('--guest-username', required=True, help='Guest username')
+    parser.add_argument('--dry-run', action='store_true', help='Show what would be done without making changes')
     
     args = parser.parse_args()
+    
+    if args.dry_run:
+        print("=== DRY RUN MODE - No changes will be made ===")
     
     try:
         cognito_client = boto3.client('cognito-idp', region_name=args.region)
         
         # Find existing user pool (fail if duplicates)
-        user_pool_id = find_user_pool(cognito_client, args.user_pool_name)
+        user_pool_id = find_user_pool(cognito_client, args.user_pool_name, args.dry_run)
         
         if not user_pool_id:
             print(f"No existing pools found - proceeding with creation")
@@ -149,9 +159,12 @@ def main():
         users_to_check = [args.admin_username, args.guest_username]
         
         for username in users_to_check:
-            safe_delete_user(cognito_client, user_pool_id, username)
+            safe_delete_user(cognito_client, user_pool_id, username, args.dry_run)
         
-        print("Migration completed successfully")
+        if args.dry_run:
+            print("=== DRY RUN COMPLETE - Run without --dry-run to apply changes ===")
+        else:
+            print("Migration completed successfully")
         
     except Exception as e:
         print(f"Migration failed: {e}")
