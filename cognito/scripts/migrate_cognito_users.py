@@ -123,14 +123,33 @@ def find_user_pool(cognito_client, pool_name, dry_run=False):
                     print(f"Warning: Could not delete pool {pool['Id']}: {e}")
             
             return correct_pool['Id']
+        elif len(terraform_pools) == 0:
+            # No Terraform pools found - keep newest, delete others
+            print("No Terraform-managed pools found - keeping newest pool")
+            newest_pool = max(matching_pools, key=lambda p: p['CreationDate'])
+            older_pools = [p for p in matching_pools if p['Id'] != newest_pool['Id']]
+            
+            print(f"Keeping newest pool: {newest_pool['Id']} (created: {newest_pool['CreationDate']})")
+            
+            for pool in older_pools:
+                try:
+                    if dry_run:
+                        print(f"[DRY RUN] Would delete older pool: {pool['Id']}")
+                    else:
+                        print(f"Deleting older pool: {pool['Id']}")
+                        cognito_client.delete_user_pool(UserPoolId=pool['Id'])
+                except ClientError as e:
+                    print(f"Warning: Could not delete pool {pool['Id']}: {e}")
+            
+            return newest_pool['Id']
         else:
-            # Multiple or no Terraform pools found - require manual cleanup
+            # Multiple Terraform pools found - require manual cleanup
             print(f"ERROR: Found {len(terraform_pools)} Terraform-managed pools (expected 1)")
             print("Please manually delete duplicate pools before running Terraform:")
             for pool in matching_pools:
                 managed = "(Terraform)" if pool in terraform_pools else "(Manual)"
                 print(f"  - Pool ID: {pool['Id']} {managed} (created: {pool['CreationDate']})")
-            raise Exception("Ambiguous duplicate pools found - manual cleanup required")
+            raise Exception("Multiple Terraform pools found - manual cleanup required")
 
 def main():
     parser = argparse.ArgumentParser(description='Migrate Cognito users safely')
