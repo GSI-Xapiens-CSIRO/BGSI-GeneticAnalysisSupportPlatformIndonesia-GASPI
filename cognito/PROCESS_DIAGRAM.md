@@ -6,7 +6,7 @@
 
 **Key Points**:
 - Migration runs automatically before Cognito resources are created
-- Script safely handles both existing and non-existing user pools
+- Script handles duplicate pools by keeping the newest and deleting others
 - Users with AWS bindings are preserved, unbound users are deleted
 - Process is idempotent - safe to run multiple times
 
@@ -14,41 +14,53 @@
 flowchart TD
     A[Terraform Apply] --> B[null_resource: cognito_migration]
     B --> C[Execute migrate_cognito_users.py]
-    C --> D{User Pool Exists?}
+    C --> D[Scan for User Pools]
+    D --> E{Pools Found?}
     
-    D -->|No| E[Log: Pool not found]
-    E --> F[Exit 0 - Continue Terraform]
+    E -->|No Pools| F[Log: No pools found]
+    F --> G[Exit 0 - Continue Terraform]
     
-    D -->|Yes| G[Found existing pool]
-    G --> H[Check Admin User]
-    H --> I{Admin User Exists?}
+    E -->|Single Pool| H[Use existing pool]
+    E -->|Multiple Pools| I[Check Pool Configurations]
+    I --> J{Terraform Pool Found?}
     
-    I -->|No| J[Log: Admin not found]
-    I -->|Yes| K{Admin Has Bindings?}
+    J -->|1 Terraform Pool| K[Keep Terraform pool]
+    K --> L[Delete non-Terraform pools]
+    L --> H
     
-    K -->|Yes| L[Log: Admin has bindings - Skip]
-    K -->|No| M[Delete Admin User]
+    J -->|0 or 2+ Terraform Pools| M[ERROR: Ambiguous pools]
+    M --> N[Exit 1 - Manual cleanup required]
     
-    J --> N[Check Guest User]
-    L --> N
-    M --> N
+    H --> K[Check Admin User]
+    K --> L{Admin User Exists?}
     
-    N --> O{Guest User Exists?}
-    O -->|No| P[Log: Guest not found]
-    O -->|Yes| Q{Guest Has Bindings?}
+    L -->|No| M[Log: Admin not found]
+    L -->|Yes| N{Admin Has Bindings?}
     
-    Q -->|Yes| R[Log: Guest has bindings - Skip]
-    Q -->|No| S[Delete Guest User]
+    N -->|Yes| O[Log: Admin has bindings - Skip]
+    N -->|No| P[Delete Admin User]
     
-    P --> T[Migration Complete]
-    R --> T
-    S --> T
+    M --> Q[Check Guest User]
+    O --> Q
+    P --> Q
     
-    T --> U[Terraform Creates User Pool]
-    U --> V[Create User Pool Client]
-    V --> W[Create Groups & Users]
+    Q --> R{Guest User Exists?}
+    R -->|No| S[Log: Guest not found]
+    R -->|Yes| T{Guest Has Bindings?}
     
-    F --> U
+    T -->|Yes| U[Log: Guest has bindings - Skip]
+    T -->|No| V[Delete Guest User]
+    
+    S --> W[Migration Complete]
+    U --> W
+    V --> W
+    
+    W --> X[Terraform Creates User Pool]
+    X --> Y[Create User Pool Client]
+    Y --> Z[Create Groups & Users]
+    
+    G --> X
+    N --> O[Terraform Fails - Fix Required]
 ```
 
 ## Binding Detection Logic

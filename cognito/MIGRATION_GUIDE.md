@@ -25,13 +25,18 @@ cognito/
 ## Migration Logic
 
 ### Safety Checks
-The migration script checks for AWS resource bindings before deletion:
+The migration script performs multiple safety checks:
 
-1. **Identity Pool Binding**: Checks for `identity_id` attribute
-2. **Group Membership**: Verifies user group associations
-3. **Safe Deletion**: Only removes users without bindings
+1. **Duplicate Pool Detection**: Identifies Terraform-managed pools by schema attributes
+2. **Identity Pool Binding**: Checks for `identity_id` attribute
+3. **Group Membership**: Verifies user group associations
+4. **Safe Deletion**: Only removes users without bindings
 
-### User States
+### Pool and User States
+- **No Pools**: No action needed → **CONTINUE**
+- **Single Pool**: Use existing pool → **MIGRATE USERS**
+- **Single Terraform Pool**: Keep Terraform pool, delete others → **MIGRATE USERS**
+- **Multiple/No Terraform Pools**: Error - manual cleanup required → **TERRAFORM FAILS**
 - **Bound Users**: Have `identity_id` or group memberships → **PRESERVED**
 - **Unbound Users**: No AWS resource connections → **SAFELY DELETED**
 - **Non-existent Users**: No action needed → **CONTINUE**
@@ -111,3 +116,9 @@ Migration completed successfully
 - Check if users have `identity_id` attribute
 - Verify group memberships
 - Review IAM permissions for Cognito operations
+
+### Duplicate Pools Found
+- Script automatically identifies Terraform-managed pools by schema attributes
+- Keeps pools with `terraform`, `identity_id`, `is_medical_director` attributes
+- Deletes pools without Terraform schema (manually created)
+- Only requires manual cleanup if multiple Terraform pools exist

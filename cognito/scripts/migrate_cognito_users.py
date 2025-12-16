@@ -53,6 +53,79 @@ def safe_delete_user(cognito_client, user_pool_id, username):
         print(f"Error deleting user {username}: {e}")
         return False
 
+def is_terraform_managed_pool(cognito_client, pool_id):
+    """Check if pool has Terraform-managed attributes"""
+    try:
+        response = cognito_client.describe_user_pool(UserPoolId=pool_id)
+        pool = response['UserPool']
+        
+        # Check for Terraform-specific schema attributes
+        schema = pool.get('Schema', [])
+        terraform_attrs = ['terraform', 'identity_id', 'is_medical_director']
+        
+        found_attrs = []
+        for attr in schema:
+            if attr['Name'] in terraform_attrs:
+                found_attrs.append(attr['Name'])
+        
+        # Pool is Terraform-managed if it has our custom attributes
+        is_managed = len(found_attrs) >= 2
+        print(f"Pool {pool_id}: Found attributes {found_attrs} - {'Terraform managed' if is_managed else 'Not Terraform managed'}")
+        return is_managed
+        
+    except ClientError as e:
+        print(f"Error checking pool {pool_id}: {e}")
+        return False
+
+def find_user_pool(cognito_client, pool_name):
+    """Find correct user pool, delete incorrect duplicates"""
+    paginator = cognito_client.get_paginator('list_user_pools')
+    matching_pools = []
+    
+    for page in paginator.paginate(MaxResults=60):
+        for pool in page['UserPools']:
+            if pool['Name'] == pool_name:
+                matching_pools.append(pool)
+    
+    if len(matching_pools) == 0:
+        print(f"No existing pools named '{pool_name}' found")
+        return None
+    elif len(matching_pools) == 1:
+        print(f"Found existing user pool: {matching_pools[0]['Id']}")
+        return matching_pools[0]['Id']
+    else:
+        print(f"Found {len(matching_pools)} duplicate pools with name '{pool_name}'")
+        
+        # Find Terraform-managed pools
+        terraform_pools = []
+        for pool in matching_pools:
+            if is_terraform_managed_pool(cognito_client, pool['Id']):
+                terraform_pools.append(pool)
+        
+        if len(terraform_pools) == 1:
+            # Keep the Terraform-managed pool, delete others
+            correct_pool = terraform_pools[0]
+            incorrect_pools = [p for p in matching_pools if p['Id'] != correct_pool['Id']]
+            
+            print(f"Keeping Terraform-managed pool: {correct_pool['Id']}")
+            
+            for pool in incorrect_pools:
+                try:
+                    print(f"Deleting incorrect pool: {pool['Id']}")
+                    cognito_client.delete_user_pool(UserPoolId=pool['Id'])
+                except ClientError as e:
+                    print(f"Warning: Could not delete pool {pool['Id']}: {e}")
+            
+            return correct_pool['Id']
+        else:
+            # Multiple or no Terraform pools found - require manual cleanup
+            print(f"ERROR: Found {len(terraform_pools)} Terraform-managed pools (expected 1)")
+            print("Please manually delete duplicate pools before running Terraform:")
+            for pool in matching_pools:
+                managed = "(Terraform)" if pool in terraform_pools else "(Manual)"
+                print(f"  - Pool ID: {pool['Id']} {managed} (created: {pool['CreationDate']})")
+            raise Exception("Ambiguous duplicate pools found - manual cleanup required")
+
 def main():
     parser = argparse.ArgumentParser(description='Migrate Cognito users safely')
     parser.add_argument('--region', required=True, help='AWS region')
@@ -65,25 +138,14 @@ def main():
     try:
         cognito_client = boto3.client('cognito-idp', region_name=args.region)
         
-        # Find existing user pool
-        paginator = cognito_client.get_paginator('list_user_pools')
-        user_pool_id = None
-        
-        for page in paginator.paginate(MaxResults=60):
-            for pool in page['UserPools']:
-                if pool['Name'] == args.user_pool_name:
-                    user_pool_id = pool['Id']
-                    break
-            if user_pool_id:
-                break
+        # Find existing user pool (fail if duplicates)
+        user_pool_id = find_user_pool(cognito_client, args.user_pool_name)
         
         if not user_pool_id:
-            print(f"User pool '{args.user_pool_name}' not found - proceeding with creation")
+            print(f"No existing pools found - proceeding with creation")
             sys.exit(0)
         
-        print(f"Found existing user pool: {user_pool_id}")
-        
-        # Check and handle existing users
+        # Check and handle existing users in the remaining pool
         users_to_check = [args.admin_username, args.guest_username]
         
         for username in users_to_check:
