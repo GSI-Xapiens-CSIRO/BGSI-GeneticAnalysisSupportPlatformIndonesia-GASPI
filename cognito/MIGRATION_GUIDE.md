@@ -15,11 +15,11 @@ This migration system ensures idempotent Terraform deployments by safely handlin
 ### Files Structure
 ```
 cognito/
-├── migration.tf              # Terraform migration orchestration
+├── migration.tf                  # Terraform migration orchestration
 ├── scripts/
 │   ├── migrate_cognito_users.py  # Main migration script
 │   └── test_migration.sh         # Test script
-└── cognito.tf               # User pool client and groups
+└── cognito.tf                    # User pool client and groups
 ```
 
 ## Migration Logic
