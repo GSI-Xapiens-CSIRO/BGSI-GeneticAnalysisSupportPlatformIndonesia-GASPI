@@ -80,10 +80,10 @@ resource "aws_cognito_user_pool_client" "gaspi_user_pool_client" {
     "ALLOW_USER_PASSWORD_AUTH"
   ]
 
-  access_token_validity  = 5
+  access_token_validity  = var.access-token-minutes
+  id_token_validity      = var.id-token-minutes
+  refresh_token_validity = var.refresh-token-hours
   auth_session_validity  = 3
-  refresh_token_validity = 2
-  id_token_validity      = 5
 
   token_validity_units {
     access_token  = "minutes"
@@ -326,6 +326,8 @@ resource "aws_cognito_user" "guest" {
       attributes["is_medical_director"],
     ]
   }
+
+  depends_on = [aws_lambda_permission.customMessageLambdaTrigger]
 }
 
 resource "aws_cognito_user" "admin" {
@@ -348,6 +350,8 @@ resource "aws_cognito_user" "admin" {
       attributes["is_medical_director"],
     ]
   }
+
+  depends_on = [aws_lambda_permission.customMessageLambdaTrigger]
 }
 
 # 
