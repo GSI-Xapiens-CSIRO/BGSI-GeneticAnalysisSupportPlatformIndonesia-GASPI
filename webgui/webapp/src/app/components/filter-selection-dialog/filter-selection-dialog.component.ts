@@ -151,14 +151,14 @@ export class FilterSelectionDialogComponent implements AfterViewInit {
   }
 
   done(): void {
-    this.dialogRef.close(_.map(this.selected, (v, _) => v));
+    this.dialogRef.close(Object.values(this.selected));
   }
 
   select(filter: any, event: MatCheckboxChange) {
     if (event.checked) {
-      _.set(this.selected, filter.id, filter);
+      this.selected[filter.id] = filter;
     } else {
-      _.unset(this.selected, filter.id);
+      delete this.selected[filter.id];
     }
   }
 
