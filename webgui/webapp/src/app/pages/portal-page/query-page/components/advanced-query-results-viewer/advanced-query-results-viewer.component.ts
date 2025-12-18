@@ -58,6 +58,8 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
   public words: any;
   @Input({ required: true })
   public results: any;
+  @Input({ required: true })
+  public projects: any;
   protected filtersForm: FormArray;
   protected scopeTypes = ScopeTypes;
   protected filterTypes = FilterTypes;
@@ -129,11 +131,12 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
   async searchFilters(filter: FormGroup, index: number) {
     const scope = filter.get('scope')!.value;
     const type = filter.get('type')!.value;
+    const projects = this.projects;
     const { FilterSelectionDialogComponent } = await import(
       'src/app/components/filter-selection-dialog/filter-selection-dialog.component'
     );
     const dialog = this.dg.open(FilterSelectionDialogComponent, {
-      data: { scope, type },
+      data: { scope, type, projects },
     });
 
     dialog.afterClosed().subscribe((filters) => {
@@ -192,9 +195,14 @@ export class AdvancedQueryResultsViewerComponent implements OnChanges {
       .pipe(
         takeUntil(this.destroy$),
         catchError((err: any) => {
-          if (
-            err.response.status === 403 &&
-            err.response.data.code === 'QUOTA_EXCEEDED'
+          if (err?.code === 'ERR_NETWORK') {
+            this.tstr.error(
+              'API request failed. Please check your network connectivity.',
+              'Error',
+            );
+          } else if (
+            err?.response?.status === 403 &&
+            err?.response?.data?.code === 'QUOTA_EXCEEDED'
           ) {
             this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',

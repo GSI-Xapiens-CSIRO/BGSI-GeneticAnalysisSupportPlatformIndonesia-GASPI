@@ -1,3 +1,4 @@
+import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +9,6 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { formatBytes, getTotalStorageSize } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
-import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-user-file-list',
@@ -17,6 +17,7 @@ import { timer } from 'rxjs';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    ClipboardModule,
     MatDialogModule,
     CommonModule,
   ],
@@ -31,13 +32,14 @@ export class UserFileListComponent implements OnInit {
   costEstimation: number = 0;
   totalSize: number = 0;
   totalSizeFormatted: string = '';
-  totalSizeRemainingText: string = '';
+  totalSizeRemainingText: string = '0 B';
 
   loadingUsage: boolean = false;
 
   constructor(
     private dg: MatDialog,
     private uq: UserQuotaService,
+    private cb: Clipboard,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -45,21 +47,7 @@ export class UserFileListComponent implements OnInit {
   }
 
   loadList() {
-    this.currentUsage();
-
-    timer(500).subscribe(() => this.list());
-  }
-
-  generateTotalSize(files: any[]) {
-    const bytesTotal = getTotalStorageSize(files);
-
-    this.totalSize = bytesTotal;
-    this.totalSizeFormatted = formatBytes(bytesTotal, 2);
-
-    this.totalSizeRemainingText = formatBytes(
-      Math.floor(this.quotaSize - this.totalSize),
-      2,
-    );
+    this.list();
   }
 
   async list() {
@@ -69,17 +57,44 @@ export class UserFileListComponent implements OnInit {
     });
 
     this.myFiles = res.results;
-    this.generateTotalSize(this.myFiles);
+    this.currentUsage(this.myFiles);
   }
 
-  async currentUsage() {
+  generateTotalSize(files: any[], quotaSize?: number) {
+    const bytesTotal = getTotalStorageSize(files);
+
+    this.totalSize = bytesTotal;
+    this.totalSizeFormatted = formatBytes(bytesTotal, 2);
+
+    // Use provided quotaSize or fall back to the stored quotaSize
+    const effectiveQuotaSize =
+      quotaSize !== undefined ? quotaSize : this.quotaSize;
+
+    // Calculate remaining, ensure it's not negative
+    const remaining = Math.max(0, effectiveQuotaSize - this.totalSize);
+
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
+  }
+
+  async currentUsage(files: any[]) {
     this.loadingUsage = true;
-    const { quotaSize, costEstimation } = await firstValueFrom(
+
+    const { quotaSize, costEstimation, usageSize } = await firstValueFrom(
       this.uq.getCurrentUsage(),
     );
 
+    // Store quotaSize for later use (e.g., after delete)
     this.quotaSize = quotaSize;
-    this.quotaSizeFormatted = formatBytes(this.quotaSize, 2);
+
+    // Use usageSize from backend instead of calculating from files
+    this.totalSize = usageSize;
+    this.totalSizeFormatted = formatBytes(usageSize, 2);
+
+    // Calculate remaining based on backend usageSize
+    const remaining = Math.max(0, quotaSize - usageSize);
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
+
+    this.quotaSizeFormatted = formatBytes(quotaSize, 2);
     this.costEstimation = costEstimation;
 
     this.loadingUsage = false;
@@ -87,20 +102,21 @@ export class UserFileListComponent implements OnInit {
     return { quotaSize };
   }
 
-  async copy(file: any) {
-    const url = await Storage.get(file.key, {
-      expires: 3600,
-      level: 'private',
-    });
+  copy(file: any) {
+    const command = `gaspifs download -f "${file.key}" -d files`;
+    const pending = this.cb.beginCopy(command);
 
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        console.log('URL copied to clipboard');
-      })
-      .catch((err) => {
-        console.error('Could not copy URL: ', err);
-      });
+    let remainingAttempts = 3;
+    const attempt = () => {
+      const result = pending.copy();
+      if (!result && --remainingAttempts) {
+        setTimeout(attempt);
+      } else {
+        pending.destroy();
+      }
+    };
+
+    attempt();
   }
 
   async delete(file: any) {

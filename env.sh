@@ -20,6 +20,8 @@ source /home/ec2-user/.bashrc
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 source $HOME/.bashrc && nvm install 20
 
+sudo dnf install -y java-17-amazon-corretto-headless
+
 sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker

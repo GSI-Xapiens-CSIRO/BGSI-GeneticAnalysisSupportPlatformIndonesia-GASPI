@@ -1,0 +1,118 @@
+<div class="flex p-4 flex-col lg:flex-row gap-10">
+  <div class="w-full lg:w-[70vw]">
+    <mat-card>
+      <mat-card-content>
+        <div class="flex flex-col gap-4 text-black font-normal p-2">
+          <!-- bread crumb  -->
+          <div class="flex flex-row items-center gap-2 text-sm md:text-lg">
+            <div (click)="handleRouter('clinic')" class="cursor-pointer">
+              Clinic
+            </div>
+            <div>/</div>
+            <div (click)="handleRouter('faq')" class="cursor-pointer">FAQs</div>
+            <div>/</div>
+            <div class="text-primary-50">How to Generate Clinical Report?</div>
+          </div>
+
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/report-1.png"
+            />
+          </div>
+          <div class="font-semibold text-2xl">
+            How to Generate Clinical Report?
+          </div>
+          <div>
+            Enable selection of variant(s) of interest to be reported into a
+            clinical report with the uniquely built report template from each
+            Hub.
+          </div>
+          <div class="font-semibold">
+            Step 1: The User can tick the checkbox for the variant within the
+            result table, click on the Save for Reporting button before being
+            prompted with a box to enter the desired notes
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2 items-center">
+              <div class="flex justify-center items-center bg-gray-50 py-8">
+                <img
+                  class="w-10/12"
+                  alt="result table"
+                  src="assets/images/faq/report-left.png"
+                />
+              </div>
+            </div>
+            <div class="flex flex-col gap-2 items-center">
+              <div class="flex justify-center items-center bg-gray-50 py-8">
+                <img
+                  class="w-10/12"
+                  alt="result table"
+                  src="assets/images/faq/report-right.png"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="font-semibold">
+            Step 2: Upon clicking the Save button, the User will then be able to
+            see the pinned and the custom note within the "Variants Selected for
+            Reporting" section right below the Clinical Annotations section. The
+            user will then be able to click on the Generate Report button to
+            automatically download the clinical report with the selected
+            variant, OR delete the selected variant using the delete icon at the
+            top right corner.Clinical report generation mandates the a
+            validation process by Users with a Medical Director attribute within
+            GASPI.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/report-2.png"
+            />
+          </div>
+          <div class="font-semibold">
+            Step 3: Upon clicking the "Generate Report" button, a download box
+            will be prompted to download the report as a PDF. Currently, it is
+            strongly recommended to fill in the editable fields using Google
+            Chrome's preview functionalities, and then save the document through
+            the Printing feature. This is to ensure that the editable fields
+            within the report template are disabled upon saving, to prevent
+            future unwanted alterations
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/generate-pdf.png"
+            />
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="w-full lg:w-[30vw]">
+    <mat-card>
+      <mat-card-content>
+        <div class="flex flex-col gap-4">
+          <div class="text-2xl font-semibold text-black">Read Other Guides</div>
+          @for (step of stepData; track step.no) {
+            <div
+              class="text-black cursor-pointer"
+              (click)="handleRouter(step.url)"
+            >
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 mb-2"
+              >
+                <img class="w-9/12" alt="result table" [src]="step.image" />
+              </div>
+              <div class="font-semibold">{{ step.title }}</div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

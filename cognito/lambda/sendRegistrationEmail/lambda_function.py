@@ -21,10 +21,10 @@ def lambda_handler(event, context):
         temp_password = body_dict["temporary_password"]
 
         response = ssm_client.get_parameter(Name=BUI_SSM_PARAM_NAME)
-        beacon_ui_url = response.get("Parameter", {}).get("Value", "")
+        beacon_base_url = response.get("Parameter", {}).get("Value", "")
 
-        beacon_ui_url = f"{beacon_ui_url}/login"
-        beacon_img_url = f"{beacon_ui_url}/assets/images/sbeacon.png"
+        beacon_ui_url = f"{beacon_base_url}/login"
+        beacon_img_url = f"{beacon_base_url}/assets/images/sbeacon.png"
         subject = "sBeacon Registration"
         body_html = f"""
 <html>
@@ -55,11 +55,15 @@ def lambda_handler(event, context):
       <h1>Hello {escape(first_name)} {escape(last_name)},</h1>
       <p>Welcome to sBeacon - your sign-in credentials are as follows:</p>
       <p>Email: <strong>{escape(email)}</strong></p>
-      <p>Temporary Password: <strong>{temp_password}</strong></p>
-      <p><a href="{beacon_ui_url}">Access your account</a></p>
-      <div style="max-width:80;">
-        <img src="{beacon_img_url}" alt="sBeacon Logo" style="max-width:80%; width:80%; margin-top:20px;">
-      </div>
+      <p>Temporary Password: <strong>{escape(temp_password)}</strong></p>
+      <p><a href="{beacon_ui_url}" style="color:#33548e; text-decoration:none; font-weight:bold;">Access your account</a></p>
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+        <tr>
+          <td align="center">
+            <img src="{beacon_img_url}" alt="sBeacon Logo" width="400" height="auto" border="0" style="display:block; max-width:100%; height:auto;">
+          </td>
+        </tr>
+      </table>
     </div>
   </body>
 </html>

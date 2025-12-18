@@ -16,6 +16,7 @@
             }
           </mat-select>
           <mat-hint>Select one or more projects</mat-hint>
+          <mat-error>Select at least one project</mat-error>
         </mat-form-field>
       </div>
       <h3>Select scope and granularity</h3>
@@ -30,20 +31,22 @@
             <mat-option [value]="scopeTypes.RUNS">Runs</mat-option>
             <mat-option [value]="scopeTypes.DATASETS">Datasets</mat-option>
           </mat-select>
+          <mat-hint>Scope to fetch filters</mat-hint>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Id</mat-label>
           <input matInput formControlName="id" form />
           @if (form.controls["id"].enabled) {
-            <mat-hint
-              ><a [routerLink]="[]" (click)="searchIds()">Search</a></mat-hint
-            >
+            <mat-hint>
+              <a [routerLink]="[]" (click)="searchIds()">Search</a>
+            </mat-hint>
+          } @else {
+            <mat-hint>Only available in datasets scope</mat-hint>
           }
           @if (form.controls["id"].enabled) {
-            <mat-error
-              >Required (<a [routerLink]="[]" (click)="searchIds()">Search</a
-              >)</mat-error
-            >
+            <mat-error>
+              Required (<a [routerLink]="[]" (click)="searchIds()">Search</a>)
+            </mat-error>
           }
         </mat-form-field>
         <mat-form-field>
@@ -55,6 +58,8 @@
             type="number"
             formControlName="skip"
           />
+          <mat-error>This field is required</mat-error>
+          <mat-hint>Number of entries to skip</mat-hint>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Limit</mat-label>
@@ -66,6 +71,8 @@
             type="number"
             formControlName="limit"
           />
+          <mat-error>Limit must be 1 to 5000 entries</mat-error>
+          <mat-hint>Maximum number of records to return</mat-hint>
         </mat-form-field>
       </div>
       <h3>Use a keyword to refine the query</h3>
@@ -78,15 +85,19 @@
             formControlName="search"
             placeholder="Ontology code/label"
           />
+          <mat-hint>Optional keyword to search for</mat-hint>
         </mat-form-field>
       </div>
-      <div class="bui-visualise-checkbox-container">
-        <h3>
+      <div class="flex flex-row items-center">
+        <h3 class="inline-flex items-center">
           Visualise term frequencies
           <mat-checkbox formControlName="stats" color="primary"></mat-checkbox>
         </h3>
         @if (form.controls["stats"].disabled) {
-          <em>Not available for the selected scope</em>
+          <em>
+            Not available for the selected scope or number of requested records
+            too big (>100).
+          </em>
         }
       </div>
     </form>

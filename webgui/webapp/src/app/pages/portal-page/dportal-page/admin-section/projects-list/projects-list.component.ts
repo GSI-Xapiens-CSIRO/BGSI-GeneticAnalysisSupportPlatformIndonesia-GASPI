@@ -7,6 +7,7 @@ import {
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { DportalService } from 'src/app/services/dportal.service';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import {
@@ -36,6 +37,7 @@ export interface Project {
   name: string;
   description: string;
   files: string[];
+  pendingFiles: string[];
   totalSamples: number;
   ingestedDatasets: string[];
   errorMessages: { file: string; error: string }[];
@@ -68,6 +70,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   imports: [
     ComponentSpinnerComponent,
     MatTableModule,
+    MatSortModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
@@ -87,7 +90,7 @@ export class ProjectsListComponent {
     'name',
     'description',
     'files',
-    'indexed',
+    'ingestedDatasets',
     'actions',
   ];
   protected pageSize = 5;
@@ -96,6 +99,7 @@ export class ProjectsListComponent {
 
   @ViewChild('paginator')
   paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
   private pageTokens = new Map<number, string>();
 
   constructor(
@@ -127,6 +131,24 @@ export class ProjectsListComponent {
         this.setSearchInput(value as string);
         this.list(this.paginator.pageIndex, value as string);
       });
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.sort = this.sort;
+    this.dataSource.sortingDataAccessor = (item: Project, property: string) => {
+      switch (property) {
+        case 'files':
+        case 'ingestedDatasets':
+          return Array.isArray(item[property as keyof Project])
+            ? (item[property as keyof Project] as any[]).length
+            : 0;
+        case 'name':
+        case 'description':
+          return item[property as keyof Project] as string;
+        default:
+          return '';
+      }
+    };
   }
 
   resetPagination() {
@@ -168,6 +190,7 @@ export class ProjectsListComponent {
             description: project.description,
             files: project.files,
             totalSamples: project.total_samples,
+            pendingFiles: project.pending_files,
             ingestedDatasets: project.ingested_datasets,
             errorMessages: project.error_messages,
           }));
@@ -225,6 +248,8 @@ export class ProjectsListComponent {
           .subscribe((res: any) => {
             if (!res) {
               this.tstr.error('API request failed', 'Error');
+            } else if (!res.success) {
+              this.tstr.error(res.message, 'Error');
             } else {
               this.tstr.success(
                 'Indexing is happening in the background. It might take a few minutes.',
@@ -305,6 +330,18 @@ export class ProjectsListComponent {
     });
   }
 
+  async manageUploads(project: any) {
+    const { ManageUploadsDialogComponent } = await import(
+      './manage-uploads-dialog/manage-uploads-dialog.component'
+    );
+
+    this.dg.open(ManageUploadsDialogComponent, {
+      data: {
+        project: project.name,
+      },
+    });
+  }
+
   async createUploadLink(project: any) {
     const { UploadLinkGenerationDialogComponent } = await import(
       './upload-link-generation-dialog/upload-link-generation-dialog.component'
@@ -340,7 +377,9 @@ export class ProjectsListComponent {
       },
     });
     dialog.afterClosed().subscribe((result) => {
-      this.list(this.paginator.pageIndex, '');
+      if (result) {
+        this.list(this.paginator.pageIndex, '');
+      }
     });
   }
 }
