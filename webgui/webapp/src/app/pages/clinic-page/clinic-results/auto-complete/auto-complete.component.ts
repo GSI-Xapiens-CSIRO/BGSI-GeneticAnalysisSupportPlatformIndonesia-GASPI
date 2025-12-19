@@ -37,6 +37,13 @@ export class AutoCompleteComponent implements OnInit {
       startWith(''),
       map((value) => this._filter(value || '')),
     );
+
+    // Emit value changes for freetext input
+    this.myControl.valueChanges.subscribe((value) => {
+      if (value !== null && value !== undefined) {
+        this.optionSelected.emit(value);
+      }
+    });
   }
 
   private _filter(value: string): string[] {
@@ -45,10 +52,6 @@ export class AutoCompleteComponent implements OnInit {
     return this.options.filter((option) =>
       option.toLowerCase().includes(filterValue),
     );
-  }
-
-  handleOptionSelected(value: string) {
-    this.optionSelected.emit(value);
   }
 
   clearFilter() {

@@ -3,7 +3,8 @@
 resource "aws_backup_vault" "gaspi_backup_vault" {
   name = "gaspi_backup_vault"
 
-  tags = var.common-tags
+  tags          = var.common-tags
+  force_destroy = true
 }
 # 
 

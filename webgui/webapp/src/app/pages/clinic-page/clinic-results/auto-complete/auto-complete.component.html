@@ -10,10 +10,7 @@
         [formControl]="myControl"
         [matAutocomplete]="auto"
       />
-      <mat-autocomplete
-        #auto="matAutocomplete"
-        (optionSelected)="handleOptionSelected($event.option.value)"
-      >
+      <mat-autocomplete #auto="matAutocomplete">
         @for (option of filteredOptions | async; track option) {
           <mat-option [value]="option">{{ option }}</mat-option>
         }
