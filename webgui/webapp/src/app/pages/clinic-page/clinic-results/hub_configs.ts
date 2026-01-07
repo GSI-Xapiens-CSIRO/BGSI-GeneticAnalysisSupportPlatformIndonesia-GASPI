@@ -29,7 +29,7 @@ export const COLUMNS: { [key: string]: any } = {
         'Related Diplotypes',
         'Qual',
         'Filter',
-        'Zygosity',
+        'VCF Zygosity',
         'Read Depth', // dp
         'Genotype Quality', // gq
         'Mapping Quality', // mq
@@ -134,6 +134,7 @@ export const COLUMNS: { [key: string]: any } = {
       'Qual',
       'Filter',
       'Read Depth',
+      'VCF Zygosity',
       'Genotype Quality',
       'Mapping Quality',
       'Quality by Depth',
@@ -239,7 +240,7 @@ export const COLUMNS: { [key: string]: any } = {
         'Related Diplotypes',
         'Qual',
         'Filter',
-        'Zygosity',
+        'VCF Zygosity', // gt
         'Read Depth', // dp
         'Genotype Quality', // gq
         'Mapping Quality', // mq
@@ -265,7 +266,7 @@ export const COLUMNS: { [key: string]: any } = {
       'Gene',
       'Alleles',
       'REF/ALT',
-      'Zygosity',
+      'Reference Zygosity',
       'Drugs',
       'Phenotype Categories',
       'Implication',
@@ -280,6 +281,7 @@ export const COLUMNS: { [key: string]: any } = {
       'Qual',
       'Filter',
       'Read Depth',
+      'VCF Zygosity',
       'Genotype Quality',
       'Mapping Quality',
       'Quality by Depth',
