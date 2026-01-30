@@ -7,6 +7,7 @@ import {
   map,
   Observable,
   of,
+  pipe,
   Subject,
   switchMap,
 } from 'rxjs';
@@ -69,29 +70,46 @@ export class ClinicService {
     );
   }
 
-  submitSvepJob(location: string, projectName: string, jobName: string) {
-    let pathPart: string;
-    switch (environment.hub_name) {
-      case 'RSCM':
-      case 'RSSARDJITO':
-        pathPart = 'submit';
-        break;
-      case 'RSPON':
-        pathPart = 'pipeline_pharmcat/submit';
-        break;
-      case 'RSIGNG':
-        pathPart = 'pipeline_lookup/submit';
-        break;
-      default:
-        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
-    }
-
+  submitClinicJob(
+    location: string,
+    projectName: string,
+    jobName: string,
+    missingToRef: boolean,
+  ) {
     return from(Auth.currentCredentials()).pipe(
       switchMap((credentials) => {
         const userId = credentials.identityId;
         return from(
-          API.post(environment.api_endpoint_clinic.name, pathPart, {
-            body: { location, projectName, userId, jobName },
+          API.post(environment.api_endpoint_clinic.name, 'submit', {
+            body: {
+              location,
+              projectName,
+              userId,
+              jobName,
+              missingToRef,
+            },
+          }),
+        );
+      }),
+    );
+  }
+
+  batchSubmitClinicJobs(
+    projectName: string,
+    jobs: Array<{ filename: string; jobName: string }>,
+    missingToRef: boolean,
+  ) {
+    return from(Auth.currentCredentials()).pipe(
+      switchMap((credentials) => {
+        const userId = credentials.identityId;
+        return from(
+          API.post(environment.api_endpoint_clinic.name, 'batch-submit', {
+            body: {
+              projectName,
+              jobs,
+              userId,
+              missingToRef,
+            },
           }),
         );
       }),
@@ -106,36 +124,49 @@ export class ClinicService {
     );
   }
 
+  getQCNotes(projectName: string, fileName: string) {
+    return from(
+      API.get(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+      }),
+    );
+  }
+
+  getClinicJob(project: string, jobId: string) {
+    return from(
+      API.get(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
+  updateQCNotes(projectName: string, fileName: string, notes: string) {
+    return from(
+      API.post(environment.api_endpoint_clinic.name, 'qcnotes', {
+        queryStringParameters: { projectName, fileName },
+        body: notes,
+      }),
+    );
+  }
+
   getClinicResults(
     requestId: string,
     projectName: string,
     chromosome: string | null = null,
     page: number | null = null,
     position: number | null = null,
+    pipeline: string | null = null,
   ): Observable<any> {
     const params = {
       ...(chromosome && { chromosome }),
       ...(page && { page }),
       ...(position && { position }),
+      ...(pipeline && { pipeline }),
     };
-    let pathPart: string;
-    switch (environment.hub_name) {
-      case 'RSCM':
-      case 'RSSARDJITO':
-        pathPart = 'results';
-        break;
-      case 'RSPON':
-        pathPart = 'pipeline_pharmcat/results';
-        break;
-      case 'RSIGNG':
-        pathPart = 'pipeline_lookup/results';
-        break;
-      default:
-        throw new Error(`Unsupported hub_name: ${environment.hub_name}`);
-    }
-
     return from(
-      API.get(environment.api_endpoint_clinic.name, pathPart, {
+      API.get(environment.api_endpoint_clinic.name, 'results', {
         queryStringParameters: {
           request_id: requestId,
           project_name: projectName,
@@ -144,10 +175,13 @@ export class ClinicService {
       }),
     ).pipe(
       switchMap((res: any) => {
+        const filters = res.filters || {};
         if (res.url) {
           return this.http
             .get(res.url, { responseType: 'text' })
-            .pipe(map((res) => ({ pages: [], content: res, page: 1 })));
+            .pipe(
+              map((res) => ({ pages: [], content: res, page: 1, filters })),
+            );
         } else {
           return of(res);
         }
@@ -272,7 +306,51 @@ export class ClinicService {
     return from(
       API.del(
         environment.api_endpoint_sbeacon.name,
-        `dportal/projects/${project}/clinical-workflows/delete-job/${jobId}`,
+        `dportal/projects/${project}/clinical-workflows/${jobId}`,
+        {},
+      ),
+    );
+  }
+
+  addValidation(project: string, jobId: string, name: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeValidation(project: string, jobId: string, name: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/variants/${name}/validation`,
+        {},
+      ),
+    );
+  }
+
+  addNoVariantsValidation(project: string, jobId: string, comment: string) {
+    return from(
+      API.post(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
+        {
+          body: { comment },
+        },
+      ),
+    );
+  }
+
+  removeNoVariantsValidation(project: string, jobId: string) {
+    return from(
+      API.del(
+        environment.api_endpoint_sbeacon.name,
+        `dportal/projects/${project}/clinical-workflows/${jobId}/validation`,
         {},
       ),
     );

@@ -15,11 +15,10 @@ locals {
     "RSSARDJITO",
     "RSUP",
   ]
-  clinic_mode             = contains(local.svep_hubs, var.hub_name) ? "svep" : contains(local.pgxflow_hubs, var.hub_name) ? "pgxflow" : null
-  clinic_api_url          = local.clinic_mode == "svep" ? module.svep[0].api_url : local.clinic_mode == "pgxflow" ? module.pgxflow[0].api_url : null
-  clinic_temp_bucket_name = local.clinic_mode == "svep" ? module.svep[0].temp-bucket-name : local.clinic_mode == "pgxflow" ? module.pgxflow[0].temp-bucket-name : null
-  clinic_temp_bucket_arn  = local.clinic_mode == "svep" ? module.svep[0].temp-bucket-arn : local.clinic_mode == "pgxflow" ? module.pgxflow[0].temp-bucket-arn : null
-
+  clinic_mode              = contains(local.svep_hubs, var.hub_name) ? "svep" : contains(local.pgxflow_hubs, var.hub_name) ? "pgxflow" : null
+  clinic_api_url           = local.clinic_mode == "svep" ? module.svep[0].api_url : local.clinic_mode == "pgxflow" ? module.pgxflow[0].api_url : ""
+  clinic_temp_bucket_names = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-name, module.svep[0].region-bucket-name] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-name] : []
+  clinic_temp_bucket_arns  = local.clinic_mode == "svep" ? [module.svep[0].temp-bucket-arn, module.svep[0].region-bucket-arn] : local.clinic_mode == "pgxflow" ? [module.pgxflow[0].backend-bucket-arn] : []
 }
 
 
@@ -42,25 +41,34 @@ module "cognito" {
 module "pgxflow" {
   count = local.clinic_mode == "pgxflow" ? 1 : 0
 
-  source                         = "./pgxflow"
-  region                         = var.region
-  data-portal-bucket-name        = module.sbeacon.data-portal-bucket
-  data-portal-bucket-arn         = module.sbeacon.data-portal-bucket-arn
-  method-max-request-rate        = var.pgxflow-method-max-request-rate
-  method-queue-size              = var.pgxflow-method-queue-size
-  web_acl_arn                    = module.security.web_acl_arn
-  cognito-user-pool-arn          = module.cognito.cognito_user_pool_arn
-  hub_name                       = var.hub_name
-  pgxflow_configuration          = var.pgxflow_configuration
-  dynamo-project-users-table     = module.sbeacon.dynamo-project-users-table
-  dynamo-project-users-table-arn = module.sbeacon.dynamo-project-users-table-arn
-  dynamo-clinic-jobs-table       = module.sbeacon.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn   = module.sbeacon.dynamo-clinic-jobs-table-arn
-  pgxflow-references-table-name  = var.pgxflow-references-table-name
+  source                               = "./pgxflow"
+  region                               = var.region
+  data-portal-bucket-name              = module.sbeacon.data-portal-bucket
+  data-portal-bucket-arn               = module.sbeacon.data-portal-bucket-arn
+  method-max-request-rate              = var.pgxflow-method-max-request-rate
+  method-queue-size                    = var.pgxflow-method-queue-size
+  web_acl_arn                          = module.security.web_acl_arn
+  cognito-user-pool-arn                = module.cognito.cognito_user_pool_arn
+  cognito-user-pool-id                 = module.cognito.cognito_user_pool_id
+  hub_name                             = var.hub_name
+  pharmcat_configuration               = var.pharmcat_configuration
+  lookup_configuration                 = var.lookup_configuration
+  dynamo-project-users-table           = module.sbeacon.dynamo-project-users-table
+  dynamo-project-users-table-arn       = module.sbeacon.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table             = module.sbeacon.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn         = module.sbeacon.dynamo-clinic-jobs-table-arn
+  clinic-job-email-lambda-function-arn = module.cognito.clinic_job_email_lambda_function_arn
+  pgxflow-references-table-name        = var.pgxflow-references-table-name
 
   common-tags = merge(var.common-tags, {
     "NAME" = "pgxflow-backend"
   })
+  common-tags-backup = var.common-tags-backup
+}
+
+moved {
+  from = module.pgxflow
+  to   = module.pgxflow[0]
 }
 
 module "security" {
@@ -93,40 +101,42 @@ module "sbeacon" {
   web_acl_arn                            = module.security.web_acl_arn
   hub_name                               = var.hub_name
   svep-references-table-name             = var.svep-references-table-name
-  clinic-temp-bucket-name                = local.clinic_temp_bucket_name
-  clinic-temp-bucket-arn                 = local.clinic_temp_bucket_arn
+  clinic-temp-bucket-names               = local.clinic_temp_bucket_names
+  clinic-temp-bucket-arns                = local.clinic_temp_bucket_arns
 
   common-tags = merge(var.common-tags, {
     "NAME" = "sbeacon-backend"
   })
+  common-tags-backup = var.common-tags-backup
 }
 
 module "svep" {
   count = local.clinic_mode == "svep" ? 1 : 0
 
-  source                             = "./svep"
-  region                             = var.region
-  data_portal_bucket_name            = module.sbeacon.data-portal-bucket
-  data_portal_bucket_arn             = module.sbeacon.data-portal-bucket-arn
-  method-max-request-rate            = var.svep-method-max-request-rate
-  method-queue-size                  = var.svep-method-queue-size
-  web_acl_arn                        = module.security.web_acl_arn
-  cognito-user-pool-arn              = module.cognito.cognito_user_pool_arn
-  dynamo-project-users-table         = module.sbeacon.dynamo-project-users-table
-  dynamo-project-users-table-arn     = module.sbeacon.dynamo-project-users-table-arn
-  dynamo-clinic-jobs-table           = module.sbeacon.dynamo-clinic-jobs-table
-  dynamo-clinic-jobs-table-arn       = module.sbeacon.dynamo-clinic-jobs-table-arn
-  dynamo-clinic-jobs-stream-arn      = module.sbeacon.dynamo-clinic-jobs-stream-arn
-  svep-job-email-lambda-function-arn = module.cognito.svep_job_email_lambda_function_arn
-  cognito-user-pool-id               = module.cognito.cognito_user_pool_id
-  hub_name                           = var.hub_name
-  filters                            = var.svep-filters
-  svep-references-table-name         = var.svep-references-table-name
+  source                               = "./svep"
+  region                               = var.region
+  data_portal_bucket_name              = module.sbeacon.data-portal-bucket
+  data_portal_bucket_arn               = module.sbeacon.data-portal-bucket-arn
+  method-max-request-rate              = var.svep-method-max-request-rate
+  method-queue-size                    = var.svep-method-queue-size
+  web_acl_arn                          = module.security.web_acl_arn
+  cognito-user-pool-arn                = module.cognito.cognito_user_pool_arn
+  dynamo-project-users-table           = module.sbeacon.dynamo-project-users-table
+  dynamo-project-users-table-arn       = module.sbeacon.dynamo-project-users-table-arn
+  dynamo-clinic-jobs-table             = module.sbeacon.dynamo-clinic-jobs-table
+  dynamo-clinic-jobs-table-arn         = module.sbeacon.dynamo-clinic-jobs-table-arn
+  dynamo-clinic-jobs-stream-arn        = module.sbeacon.dynamo-clinic-jobs-stream-arn
+  clinic-job-email-lambda-function-arn = module.cognito.clinic_job_email_lambda_function_arn
+  cognito-user-pool-id                 = module.cognito.cognito_user_pool_id
+  hub_name                             = var.hub_name
+  filters                              = var.svep-filters
+  svep-references-table-name           = var.svep-references-table-name
 
 
   common-tags = merge(var.common-tags, {
     "NAME" = "svep-backend"
   })
+  common-tags-backup = var.common-tags-backup
 }
 
 moved {
@@ -135,22 +145,49 @@ moved {
 }
 
 module "webgui" {
-  source                  = "./webgui/terraform-aws"
-  region                  = var.region
-  base_range              = 5000
-  user_pool_id            = module.cognito.cognito_user_pool_id
-  identity_pool_id        = module.cognito.cognito_identity_pool_id
-  user_pool_web_client_id = module.cognito.cognito_client_id
-  data_portal_bucket      = module.sbeacon.data-portal-bucket
-  api_endpoint_sbeacon    = module.sbeacon.api_url
-  api_endpoint_clinic     = local.clinic_api_url
-  clinic_mode             = local.clinic_mode
-  bui-ssm-parameter-name  = var.bui-ssm-parameter-name
-  web_acl_arn             = module.security.web_acl_arn
-  hub_name                = var.hub_name
+  source                    = "./webgui/terraform-aws"
+  region                    = var.region
+  base_range                = 5000
+  user_pool_id              = module.cognito.cognito_user_pool_id
+  identity_pool_id          = module.cognito.cognito_identity_pool_id
+  user_pool_web_client_id   = module.cognito.cognito_client_id
+  data_portal_bucket        = module.sbeacon.data-portal-bucket
+  api_endpoint_sbeacon      = module.sbeacon.api_url
+  api_endpoint_clinic       = local.clinic_api_url
+  clinic_mode               = local.clinic_mode
+  bui-ssm-parameter-name    = var.bui-ssm-parameter-name
+  web_acl_arn               = module.security.web_acl_arn
+  hub_name                  = var.hub_name
+  clinic-warning-thresholds = var.clinic-warning-thresholds
 
   common-tags = merge(var.common-tags, {
     "NAME" = "portal-frontend"
   })
 }
 
+provider "aws" {
+  region = var.region
+  alias  = "error-catcher"
+  default_tags {
+    tags = merge(var.common-tags, {
+      "NAME" = "error-catcher"
+    })
+  }
+}
+
+module "error-catcher" {
+  source           = "./error_catcher"
+  ses-source-email = var.ses-source-email
+  ses-target-email = var.gaspi-admin-email
+  providers = {
+    aws = aws.error-catcher
+  }
+}
+
+module "gaspifs" {
+  source                      = "./gaspifs"
+  region                      = var.region
+  gaspifs_binary_destination  = "s3://${module.sbeacon.data-portal-bucket}/binaries/gaspifs"
+  cognito_user_pool_client_id = module.cognito.cognito_client_id
+  cli_backend_api_url         = module.sbeacon.api_url
+}

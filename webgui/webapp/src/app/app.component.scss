@@ -168,6 +168,9 @@
   padding: 50px 1px;
   text-align: center;
   color: #6f6f6f;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .bui-footer h2 {

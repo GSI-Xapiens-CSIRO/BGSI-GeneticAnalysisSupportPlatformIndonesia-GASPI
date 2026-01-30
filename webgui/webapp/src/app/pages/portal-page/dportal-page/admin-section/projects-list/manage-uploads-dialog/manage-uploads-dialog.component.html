@@ -1,0 +1,134 @@
+<h1 mat-dialog-title>Allow user to upload to: {{ data.project }}</h1>
+<div mat-dialog-content>
+  <h3>Users with active uploads</h3>
+
+  @if (uploadsLoading) {
+    <h4>Loading...</h4>
+  } @else {
+    @if (uploads.length > 0) {
+      <div class="flex flex-col space-y-1">
+        @for (upload of uploads; track $index) {
+          <div class="flex flex-row items-center space-x-2">
+            <button
+              mat-mini-fab
+              color="warn"
+              (click)="removeUpload(upload.email, upload.upload_id)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+            <div class="flex">
+              User: {{ upload.email }} ("{{ upload.file_name }}" with
+              {{ upload.max_mb }} MB max)
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <h4>No users have been allowed to upload to this project yet.</h4>
+    }
+  }
+
+  <p>
+    Please provide a unique name to avoid overwriting an existing file in the
+    project.
+    <br />
+    Please provide the extension of file (eg: .json, .csv, .txt).
+  </p>
+  <form [formGroup]="newUploadForm">
+    <mat-form-field class="w-full">
+      <mat-label>File Name</mat-label>
+      <input
+        matInput
+        formControlName="fileName"
+        type="text"
+        required
+        autocomplete="off"
+        placeholder="eg: transformed-metadata.json"
+      />
+      <mat-error>
+        A name is required (6-30 alphanumeric characters including - and _)
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="w-full py-1" [subscriptSizing]="'dynamic'">
+      <mat-label>Email</mat-label>
+      <input
+        matInput
+        placeholder="eg: user@example.com"
+        formControlName="email"
+        [matAutocomplete]="usersAuto"
+        autocomplete="off"
+      />
+      <mat-autocomplete
+        #usersAuto="matAutocomplete"
+        (optionSelected)="
+          newUploadForm.patchValue({ email: $event.option.value.email })
+        "
+      >
+        @for (user of usersAutocomplete; track user) {
+          <mat-option [value]="user"
+            >{{ user.firstName }} {{ user.lastName }} ({{
+              user.email
+            }})</mat-option
+          >
+        }
+      </mat-autocomplete>
+      <mat-error> Email is required </mat-error>
+    </mat-form-field>
+    <div flex class="flex flex-wrap gap-2 my-4">
+      <mat-form-field class="flex-1 w-full">
+        <mat-label>Max Size (MB)</mat-label>
+        <input
+          matInput
+          formControlName="maxMB"
+          type="number"
+          required
+          autocomplete="off"
+          placeholder="eg: 100"
+        />
+        <mat-error> A max size is required (1-51200) </mat-error>
+      </mat-form-field>
+      <mat-form-field class="flex-1 w-full">
+        <mat-label>Expiration Minutes</mat-label>
+        <input
+          matInput
+          formControlName="expirationMins"
+          type="number"
+          required
+          autocomplete="off"
+          placeholder="eg: 60"
+        />
+        <mat-error> A expiration is required (5-1440) </mat-error>
+      </mat-form-field>
+    </div>
+    <div class="flex flex-row space-x-1">
+      <button
+        mat-raised-button
+        type="button"
+        mat-dialog-close
+        color="primary"
+        class="w-[110px]"
+      >
+        close
+      </button>
+      <button
+        mat-raised-button
+        type="button"
+        [disabled]="newUploadForm.invalid"
+        color="primary"
+        class="w-[110px]"
+        (click)="addNewUpload()"
+      >
+        Generate
+      </button>
+    </div>
+  </form>
+
+  @if (uploadCmd) {
+    <h3 class="mb-2">Share the following command to upload the file:</h3>
+    <p>
+      Please note only the designated file will be uploaded and the command will
+      only work for the specified project and user.
+    </p>
+    <pre class="code-block">{{ uploadCmd }}</pre>
+  }
+</div>

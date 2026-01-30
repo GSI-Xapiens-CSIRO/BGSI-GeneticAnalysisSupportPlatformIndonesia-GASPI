@@ -21,6 +21,7 @@
       class="w-[110px]"
       (click)="index()"
       type="button"
+      matTooltip="Run the index after ingesting/un-ingesting files"
     >
       Index
     </button>
@@ -97,7 +98,9 @@
 
     <!-- Indexed to Beacon Column -->
     <ng-container matColumnDef="ingestedDatasets">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Added to sBeacon</th>
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        Added to sBeacon
+      </th>
       <td mat-cell *matCellDef="let element">
         @if (element.ingestedDatasets.length > 0) {
           <span class="text-cyan-900"
@@ -142,11 +145,11 @@
           </button>
           <button
             mat-mini-fab
-            (click)="createUploadLink(element)"
+            (click)="manageUploads(element)"
             color="primary"
-            matTooltip="Generate file upload link"
+            matTooltip="Manage allowed uploads"
           >
-            <mat-icon>link</mat-icon>
+            <mat-icon>upload_file</mat-icon>
           </button>
           <button
             mat-mini-fab

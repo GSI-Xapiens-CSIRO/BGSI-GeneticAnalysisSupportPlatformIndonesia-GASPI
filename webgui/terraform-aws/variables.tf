@@ -90,3 +90,15 @@ variable "hub_name" {
   type        = string
   description = "Hub name"
 }
+
+variable "clinic-warning-thresholds" {
+  type = object({
+    qual   = optional(number, 0)
+    filter = optional(string, "")
+    dp     = optional(number, 0)
+    gq     = optional(number, 0)
+    mq     = optional(number, 0)
+    qd     = optional(number, 0)
+  })
+  description = "Thresholds before warnings are shown in clinic results page"
+}

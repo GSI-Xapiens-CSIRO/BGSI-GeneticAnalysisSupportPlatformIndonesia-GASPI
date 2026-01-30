@@ -42,3 +42,22 @@ variable "bui-ssm-parameter-name" {
   type        = string
   description = "Name of the ssm parameter storing cloudfront URL"
 }
+
+# Session validity durations
+variable "access-token-minutes" {
+  type        = number
+  description = "Access token duration in minutes"
+  default     = 60
+}
+
+variable "id-token-minutes" {
+  type        = number
+  description = "ID token duration in minutes"
+  default     = 60
+}
+
+variable "refresh-token-hours" {
+  type        = number
+  description = "Refresh token duration in hours"
+  default     = 72
+}

@@ -330,6 +330,18 @@ export class ProjectsListComponent {
     });
   }
 
+  async manageUploads(project: any) {
+    const { ManageUploadsDialogComponent } = await import(
+      './manage-uploads-dialog/manage-uploads-dialog.component'
+    );
+
+    this.dg.open(ManageUploadsDialogComponent, {
+      data: {
+        project: project.name,
+      },
+    });
+  }
+
   async createUploadLink(project: any) {
     const { UploadLinkGenerationDialogComponent } = await import(
       './upload-link-generation-dialog/upload-link-generation-dialog.component'

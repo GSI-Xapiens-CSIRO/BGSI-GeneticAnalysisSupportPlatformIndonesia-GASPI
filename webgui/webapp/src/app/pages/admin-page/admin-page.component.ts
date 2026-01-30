@@ -40,6 +40,8 @@ import { bytesToGigabytes, formatBytes } from 'src/app/utils/file';
 import { MatIconModule } from '@angular/material/icon';
 import { AwsService } from 'src/app/services/aws.service';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
+import { UserInstitutionType } from './components/enums';
+import { UserInfoService } from 'src/app/services/userinfo.service';
 // import { testUsers } from './test_responses/test_users';
 
 // Docs: https://material.angular.io/components/paginator/examples
@@ -102,6 +104,8 @@ export class AdminPageComponent implements OnInit {
     'Size Quota/Usage',
     'Query Quota/Usage',
     'Est Cost',
+    'Institution Type',
+    'Institution Name',
     'Confirmed',
     'MFA Active',
   ];
@@ -182,6 +186,7 @@ export class AdminPageComponent implements OnInit {
     };
 
     dialog.afterClosed().subscribe((data) => {
+      console.log('Dialog closed with data:', data);
       if (_.get(data, 'reload', false)) {
         this.resetPagination();
         this.listUsers(0);
@@ -262,11 +267,17 @@ export class AdminPageComponent implements OnInit {
             return;
           }
 
+          console.log('Response:', response);
+
           const users = _.map(_.get(response, 'users', []), (user: any) => {
             const usageCount = user.Usage?.usageCount ?? 0;
             const usageSize = user.Usage?.usageSize ?? 0;
             const userQuotaCount = user.Usage?.quotaQueryCount;
             const userSize = user.Usage?.quotaSize;
+            const userInfo = user.UserInfo || {
+              institutionType: '',
+              institutionName: '',
+            };
 
             return {
               Sub: _.get(_.find(user.Attributes, { Name: 'sub' }), 'Value', ''),
@@ -298,6 +309,8 @@ export class AdminPageComponent implements OnInit {
               Confirmed:
                 _.get(user, 'UserStatus') === 'CONFIRMED' ? 'Yes' : 'No',
               'MFA Active': _.get(user, 'MFA', []).length > 0 ? 'Yes' : 'No',
+              'Institution Type': _.capitalize(userInfo.institutionType),
+              'Institution Name': userInfo.institutionName,
               usageCount,
               usageSize,
               userQuotaCount,

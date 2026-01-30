@@ -36,6 +36,10 @@ import {
   gigabytesToBytes,
 } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { NotebookRole, UserInstitutionType } from '../enums';
+import { MatRadioModule } from '@angular/material/radio';
+import { ToastrService } from 'ngx-toastr';
+import { UserInfoService } from 'src/app/services/userinfo.service';
 
 @Component({
   selector: 'app-admin-user-click-dialog',
@@ -50,6 +54,7 @@ import { UserQuotaService } from 'src/app/services/userquota.service';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatRadioModule,
   ],
   templateUrl: './admin-user-click-dialog.component.html',
   styleUrls: ['./admin-user-click-dialog.component.scss'],
@@ -69,6 +74,8 @@ export class AdminUserClickDialogComponent implements OnInit {
   protected usageCount = 0;
   protected loadingCostEstimation: boolean = true;
   usageSizeText = '';
+  noteBookRoleValue = NotebookRole;
+  institutionTypeValue = UserInstitutionType;
 
   constructor(
     public dialogRef: MatDialogRef<AdminUserClickDialogComponent>,
@@ -77,6 +84,9 @@ export class AdminUserClickDialogComponent implements OnInit {
     private uq: UserQuotaService,
     private aws: AwsService,
     private dg: MatDialog,
+    private tstr: ToastrService,
+    private ui: UserInfoService,
+
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) {
     this.form = this.fb.group({
@@ -84,6 +94,10 @@ export class AdminUserClickDialogComponent implements OnInit {
       managers: [false],
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
+      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
+      institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
+      institutionName: ['', Validators.required],
+      isMedicalDirector: [false],
     });
   }
 
@@ -167,6 +181,7 @@ export class AdminUserClickDialogComponent implements OnInit {
 
   getUserGroups() {
     this.loading = true;
+
     // Define both observables
     const userQuota$ = this.uq
       .getUserQuota(this.data.sub)
@@ -176,9 +191,17 @@ export class AdminUserClickDialogComponent implements OnInit {
       .listUsersGroups(this.data.email)
       .pipe(catchError(() => of(null)));
 
+    const userInfo$ = this.ui
+      .getUserInfo(this.data.sub)
+      .pipe(catchError(() => of(null)));
+
     // Use forkJoin to run them in parallel
-    forkJoin({ userQuota: userQuota$, userGroups: userGroups$ }).subscribe(
-      ({ userQuota, userGroups }) => {
+    forkJoin({
+      userQuota: userQuota$,
+      userGroups: userGroups$,
+      userInfo: userInfo$,
+    }).subscribe(
+      ({ userQuota, userGroups, userInfo }) => {
         // Process user quota response
         const { success, data } = userQuota;
         if (success) {
@@ -189,12 +212,17 @@ export class AdminUserClickDialogComponent implements OnInit {
           this.form.patchValue({
             quotaSize: bytesToGigabytes(data.Usage.quotaSize),
             quotaQueryCount: data.Usage.quotaQueryCount,
+            notebookRole: data.Usage.notebookRole || '',
+            institutionType:
+              userInfo?.data?.institutionType || UserInstitutionType.INTERNAL,
+            institutionName: userInfo?.data?.institutionName || '',
           });
         }
 
         // Process user groups response
         if (userGroups) {
           const groups = _.get(userGroups, 'groups', []);
+          const attributes = _.get(userGroups, 'attributes', {});
           const user = _.get(userGroups, 'user', null);
           const authorizer = _.get(userGroups, 'authorizer', null);
           const groupNames = _.map(
@@ -206,6 +234,8 @@ export class AdminUserClickDialogComponent implements OnInit {
             userGroupsObj[gn] = true;
           });
           _.merge(this.initialGroups, userGroupsObj);
+          userGroupsObj['isMedicalDirector'] =
+            attributes['isMedicalDirector'] || false;
           this.form.patchValue(userGroupsObj);
 
           if (user === authorizer) {
@@ -240,7 +270,18 @@ export class AdminUserClickDialogComponent implements OnInit {
         this.as
           .deleteUser(this.data.email)
           .pipe(catchError(() => of(null)))
-          .subscribe(() => {
+          .subscribe((res: null | { success: boolean; message: string }) => {
+            let deleted = false;
+            if (!res) {
+              this.tstr.error(
+                'Operation failed, please try again later',
+                'Error',
+              );
+            } else if (!res.success) {
+              this.tstr.error(res.message, 'Error');
+            } else {
+              this.tstr.success('User deleted successfully', 'Success');
+            }
             this.loading = false;
             this.dialogRef.close({ reload: true });
           });
@@ -259,14 +300,26 @@ export class AdminUserClickDialogComponent implements OnInit {
         quotaQueryCount: this.form.value.quotaQueryCount,
         usageSize: this.usageSize, // bytes
         usageCount: this.usageCount,
+        notebookRole: this.form.value.notebookRole,
       })
+      .pipe(catchError(() => of(null)));
+  }
+
+  updateUserInstitution() {
+    return this.ui
+      .storeUserInfo(
+        this.data.sub,
+        this.form.value.institutionType,
+        this.form.value.institutionName,
+      )
       .pipe(catchError(() => of(null)));
   }
 
   updateUser() {
     const groups = _.pick(this.form.value, ['administrators', 'managers']);
+    const attributes = _.pick(this.form.value, ['isMedicalDirector']);
 
-    return this.as.updateUsersGroups(this.data.email, groups).pipe(
+    return this.as.updateUsersGroups(this.data.email, groups, attributes).pipe(
       // when update success call parent function to update data.
       tap((response) => {
         if (response) {
@@ -285,10 +338,15 @@ export class AdminUserClickDialogComponent implements OnInit {
 
     const updateQuota$ = this.updateQuota();
     const updateUser$ = this.updateUser();
+    const updateUserInstitution$ = this.updateUserInstitution();
 
-    forkJoin([updateQuota$, updateUser$]).subscribe(() => {
-      this.loading = false;
-      this.dialogRef.close();
-    });
+    forkJoin([updateQuota$, updateUserInstitution$, updateUser$]).subscribe(
+      () => {
+        this.loading = false;
+        this.dialogRef.close({
+          reload: true,
+        });
+      },
+    );
   }
 }

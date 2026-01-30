@@ -1,0 +1,8 @@
+.no-subscript ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.no-subscript ::ng-deep .mat-mdc-form-field-infix {
+  min-height: auto;
+  padding: 8px 0;
+}

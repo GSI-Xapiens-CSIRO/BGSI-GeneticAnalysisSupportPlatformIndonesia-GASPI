@@ -8,13 +8,16 @@
         selectedItem of cs.selectedVariants | async | keyvalue;
         track $index
       ) {
-        <div>
+        <div class="text-wrap break-words">
           <strong
             class="cursor-pointer"
             (click)="cs.selection(selectedItem.value, false)"
             >[ <span class="text-red-500">X</span> ]</strong
           >
-          @for (item of selectedItem.value | keyvalue; track $index) {
+          @for (
+            item of filterCols(selectedItem.value) | keyvalue;
+            track $index
+          ) {
             {{ item.key }}: {{ item.value }}
             @if (!$last) {
               |

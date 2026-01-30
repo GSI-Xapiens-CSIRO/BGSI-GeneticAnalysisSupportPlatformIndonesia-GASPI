@@ -12,6 +12,7 @@
         <h1><a [routerLink]="['/']">WELCOME TO DATA PORTAL</a></h1>
       </div>
     </div>
+    <app-heart-beat />
   } @else {
     <div class="bui-header">
       <div class="bui-logo">
@@ -62,9 +63,12 @@
   </div>
 </div>
 <div class="bui-footer">
+  <h3 class="text-primary-60">
+    Research Use Only
+  </h3>
   <p class="bui-byline text-primary-60">
     BGSi Data Portal &#64;2024 | Kementerian Kesehatan Indonesia | Software
-    Build Version - XYZ
+    Build {{ buildVersion }}
   </p>
 </div>
 <app-global-spinner />
