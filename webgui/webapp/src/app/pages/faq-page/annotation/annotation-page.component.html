@@ -1,0 +1,166 @@
+<div class="flex p-4 flex-col lg:flex-row gap-10">
+  <div class="w-full lg:w-[70vw]">
+    <mat-card>
+      <mat-card-content>
+        <!-- bread crumb  -->
+        <div class="flex flex-row items-center gap-2 text-sm md:text-lg">
+          <div (click)="handleRouter('clinic')" class="cursor-pointer">
+            Clinic
+          </div>
+          <div>/</div>
+          <div (click)="handleRouter('faq')" class="cursor-pointer">FAQs</div>
+          <div>/</div>
+          <div class="text-primary-50">How to Add Custom Annotation?</div>
+        </div>
+
+        <div class="flex flex-col gap-4 text-black font-normal p-2">
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-1/2"
+              alt="result table"
+              src="assets/images/faq/annotation-1.png"
+            />
+          </div>
+          <div class="font-semibold text-2xl">
+            How to Add Custom Annotation?
+          </div>
+          <div>
+            Enable pinning and adding custom notes/annotations from Users for
+            particular variant(s) of interest for further analysis/discussion.
+            The steps to utilise this function are described below:
+          </div>
+          <div class="font-semibold">
+            Step 1: The user can tick the checkbox for the variant within the
+            result table and click on the Annotate button. The user will then be
+            prompted with a box to enter the desired notes.
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2 items-center">
+              <div class="flex justify-center items-center bg-gray-50 py-8">
+                <img
+                  class="w-11/12"
+                  alt="result table"
+                  src="assets/images/faq/annotation-1-left-rev.png"
+                />
+              </div>
+            </div>
+            <div class="flex flex-col gap-2 items-center">
+              <div class="flex justify-center items-center bg-gray-50 py-8">
+                <img
+                  class="w-11/12"
+                  alt="result table"
+                  src="assets/images/faq/annotation-1-right-rev.png"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="font-semibold">
+            Step 2: Upon clicking the Save button, the annotated variant(s) will
+            be highlighted in the result table.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-11/12"
+              alt="result table"
+              src="assets/images/faq/annotation-2.png"
+            />
+          </div>
+          <div class="font-semibold">
+            Step 3.1: The annotated variant(s) will also be visible under the
+            "Clinical Annotations" section, right below the result table.
+          </div>
+          <div class="flex justify-center items-center bg-gray-50 py-8">
+            <img
+              class="w-11/12"
+              alt="result table"
+              src="assets/images/faq/annotation-3.png"
+            />
+          </div>
+          <div class="font-semibold">
+            Step 3.2: In this "Clinical Annotations" section, there are three
+            actionable buttons:
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="flex flex-col justify-center items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 w-full mb-2 py-8"
+              >
+                <img
+                  class="w-1/5"
+                  alt="result table"
+                  src="assets/images/faq/annotation-3-1.png"
+                />
+              </div>
+              <div>View Detail Variants</div>
+            </div>
+            <div class="flex flex-col justify-center items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 w-full mb-2 py-8"
+              >
+                <img
+                  class="w-1/5"
+                  alt="result table"
+                  src="assets/images/faq/annotation-3-2.png"
+                />
+              </div>
+              <div>Add to reporting</div>
+            </div>
+            <div class="flex flex-col justify-center items-center">
+              <div
+                class="flex justify-center items-center bg-gray-50 w-full mb-2 py-8"
+              >
+                <img
+                  class="w-1/5"
+                  alt="result table"
+                  src="assets/images/faq/annotation-3-3.png"
+                />
+              </div>
+              <div>Delete Annotations</div>
+            </div>
+          </div>
+          <div>
+            <strong>View detail variants</strong>: Clicking this button will
+            filter the result table to only show the chosen annotated
+            variant(s).
+          </div>
+          <div>
+            <strong>Add to reporting</strong>: This button behaves the same as
+            the "Save for Reporting" button, which will be discussed in the next
+            section. However, this button is a shortcut to enable Users to add
+            the variants directly for clinical report generation.
+          </div>
+          <div>
+            <strong>Delete Annotations</strong>: Clicking this button will
+            delete the annotated variants and their annotations from this
+            "Clinical Annotations" section. This feature will also remove the
+            highlighted borders surrounding the previously annotated variants in
+            the result table.
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="w-full lg:w-[30vw]">
+    <mat-card>
+      <mat-card-content>
+        <div class="flex flex-col gap-4">
+          <div class="text-2xl font-semibold text-black">Read Other Guides</div>
+          @for (step of stepData; track step.no) {
+            <div
+              class="text-black cursor-pointer"
+              (click)="handleRouter(step.url)"
+            >
+              <div
+                class="flex justify-center items-center bg-gray-50 py-8 mb-2"
+              >
+                <img class="w-9/12" alt="result table" [src]="step.image" />
+              </div>
+              <div class="font-semibold">{{ step.title }}</div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

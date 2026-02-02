@@ -7,7 +7,7 @@ resource "aws_wafv2_web_acl" "security-all-cloudfront" {
   default_action {
     allow {}
   }
-  
+
   rule {
     name     = "security-all-cloudfront-IP-rate-limiting"
     priority = 1
@@ -35,13 +35,21 @@ resource "aws_wafv2_web_acl" "security-all-cloudfront" {
     priority = 2
 
     override_action {
-        none {}
+      none {}
     }
 
     statement {
       managed_rule_group_statement {
-        name = "AWSManagedRulesCommonRuleSet"
+        name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
+
+        rule_action_override {
+          action_to_use {
+            count {}
+          }
+
+          name = "SizeRestrictions_BODY"
+        }
       }
     }
 

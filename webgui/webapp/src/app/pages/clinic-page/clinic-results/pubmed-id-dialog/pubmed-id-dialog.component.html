@@ -1,0 +1,25 @@
+<h1 mat-dialog-title>PubMed IDs associated with {{ data.rsid }}</h1>
+<div mat-dialog-content>
+  @if (pubmedIDs.length > 0) {
+    <ul>
+      @for (id of pubmedIDs; track $index) {
+        <li>
+          <a
+            href="https://pubmed.ncbi.nlm.nih.gov/{{ id }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ id }}
+          </a>
+        </li>
+      }
+    </ul>
+  } @else if (loading) {
+    <p>Loading PubMed IDs...</p>
+  } @else {
+    <p>No PubMed IDs found for this variant.</p>
+  }
+  <div>
+    <button mat-raised-button color="primary" mat-dialog-close>close</button>
+  </div>
+</div>

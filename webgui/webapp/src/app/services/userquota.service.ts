@@ -3,6 +3,7 @@ import { API } from 'aws-amplify';
 import { catchError, filter, from, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AuthService } from './auth.service';
+import { NotebookRole } from '../pages/admin-page/components/enums';
 
 @Injectable({
   providedIn: 'root',
@@ -48,6 +49,7 @@ export class UserQuotaService {
     usageCount: number;
     usageSize: number;
     costEstimation: number;
+    notebookRole: string;
   }> {
     return this.auth.user.pipe(
       filter((u) => !!u),
@@ -66,6 +68,7 @@ export class UserQuotaService {
                 quotaSize: 0,
                 usageSize: 0,
                 costEstimation: 0,
+                notebookRole: NotebookRole.BASIC,
               };
             }
 
@@ -75,6 +78,7 @@ export class UserQuotaService {
               usageCount: data?.Usage.usageCount,
               quotaSize: data?.Usage.quotaSize,
               usageSize: data?.Usage.usageSize,
+              notebookRole: data?.Usage.notebookRole,
               costEstimation: data?.CostEstimation,
             };
           }),

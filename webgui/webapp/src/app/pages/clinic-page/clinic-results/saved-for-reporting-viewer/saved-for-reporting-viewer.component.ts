@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   ElementRef,
+  EventEmitter,
   Injectable,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -24,8 +26,10 @@ import { catchError, of, Subject, Subscription } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { environment } from 'src/environments/environment';
-import { CONFIGS } from '../hub_configs';
+import { REPORTING_CONFIGS } from '../hub_configs';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from 'src/app/services/auth.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 type SavedVariants = {
   name: string;
@@ -33,7 +37,28 @@ type SavedVariants = {
   variants: any[];
   annotations: string[];
   createdAt: string;
+  validatedByMedicalDirector: boolean;
+  validationComment: string;
+  validatedAt: string;
   user?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  validator?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+};
+
+type JobEntry = {
+  job_id: string;
+  job_name: string;
+  validatedByMedicalDirector: boolean;
+  validationComment: string;
+  validatedAt: string;
+  validator?: {
     email: string;
     firstName: string;
     lastName: string;
@@ -69,6 +94,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatButtonModule,
     MatIconModule,
     MatCardModule,
+    MatTooltipModule,
   ],
   templateUrl: './saved-for-reporting-viewer.component.html',
   styleUrl: './saved-for-reporting-viewer.component.scss',
@@ -78,16 +104,20 @@ export class SavedForReportingViewerComponent
 {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
+  @Output() listReports = new EventEmitter<any>(); // array of objects
   @ViewChild('paginator')
   paginator!: MatPaginator;
   @ViewChild('downloadLink') downloadLink!: ElementRef<HTMLAnchorElement>;
   protected variants: SavedVariants[] = [];
   protected pageSize = 5;
-  protected hub = environment.hub_name in CONFIGS ? environment.hub_name : null;
+  protected hub =
+    environment.hub_name in REPORTING_CONFIGS ? environment.hub_name : null;
+  protected jobEntry: JobEntry | null = null;
   private pageTokens = new Map<number, any>();
   private savedVariantsChangedSubscription: Subscription | null = null;
 
   constructor(
+    protected auth: AuthService,
     private cs: ClinicService,
     private dg: MatDialog,
     private ss: SpinnerService,
@@ -107,6 +137,12 @@ export class SavedForReportingViewerComponent
     }
   }
 
+  noValidatedVariants() {
+    return this.variants.every(
+      (variant) => !variant.validatedByMedicalDirector,
+    );
+  }
+
   resetPagination() {
     this.pageTokens = new Map<number, string>();
   }
@@ -115,6 +151,7 @@ export class SavedForReportingViewerComponent
     try {
       this.resetPagination();
       this.list(0);
+      this.loadJobStatus();
     } catch (error) {
       console.log(error);
     }
@@ -122,6 +159,7 @@ export class SavedForReportingViewerComponent
 
   ngOnChanges(_: SimpleChanges): void {
     this.list(0);
+    this.loadJobStatus();
   }
 
   pageChange(event: PageEvent) {
@@ -132,6 +170,91 @@ export class SavedForReportingViewerComponent
     } else {
       this.list(event.pageIndex);
     }
+  }
+
+  async loadJobStatus() {
+    this.cs
+      .getClinicJob(this.projectName, this.requestId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        if (res) {
+          if (!res.success) {
+            this.tstr.error(res.message, 'Error');
+          } else {
+            this.jobEntry = res.job;
+            console.log(res);
+          }
+        } else {
+          this.tstr.error('Failed to load job status', 'Error');
+        }
+      });
+  }
+
+  async addValidation(name?: string) {
+    const { ValidateVariantToReportDialogComponent } = await import(
+      '../validate-variant-to-report-dialog/validate-variant-to-report-dialog.component'
+    );
+
+    const dialogRef = this.dg.open(ValidateVariantToReportDialogComponent, {
+      data: {
+        name,
+        requestId: this.requestId,
+        projectName: this.projectName,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.loadJobStatus();
+    });
+  }
+
+  async removeValidation(name?: string) {
+    const { ActionConfirmationDialogComponent } = await import(
+      '../../../../components/action-confirmation-dialog/action-confirmation-dialog.component'
+    );
+
+    const dialogRef = this.dg.open(ActionConfirmationDialogComponent, {
+      data: {
+        title: name ? 'Invalidate Variants' : 'Invalidate negative reporting',
+        message: name
+          ? `Are you sure you want to invalidate these variants?`
+          : `Are you sure you want to invalidate negative reporting?`,
+        confirmText: 'Invalidate',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.ss.start();
+        if (name) {
+          this.cs
+            .removeValidation(this.projectName, this.requestId, name)
+            .pipe(catchError(() => of(null)))
+            .subscribe((res) => {
+              if (res) {
+                this.tstr.success('Annotation invalidated', 'Success');
+                this.cs.savedVariantsChanged.next();
+              } else {
+                this.tstr.error('Failed to invalidate annotation', 'Error');
+              }
+              this.ss.end();
+            });
+        } else {
+          this.cs
+            .removeNoVariantsValidation(this.projectName, this.requestId)
+            .pipe(catchError(() => of(null)))
+            .subscribe((res) => {
+              if (res) {
+                this.tstr.success('Annotation invalidated', 'Success');
+                this.cs.savedVariantsChanged.next();
+              } else {
+                this.tstr.error('Failed to invalidate annotation', 'Error');
+              }
+              this.ss.end();
+            });
+        }
+      }
+    });
   }
 
   async deleteSavedVariants(name: string) {
@@ -167,6 +290,29 @@ export class SavedForReportingViewerComponent
   }
 
   generateReportRSCM() {
+    this.ss.start();
+    this.cs
+      .generateReport(this.projectName, this.requestId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((res: any) => {
+        if (res && res.success) {
+          console.log(res);
+          const dataUrl = `data:application/pdf;base64,${res.content}`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${
+            this.requestId
+          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.href = dataUrl;
+          this.downloadLink.nativeElement.click();
+        } else if (res && !res.success) {
+          this.tstr.error(res.message, 'Error');
+        } else {
+          this.tstr.error('Failed to generate report', 'Error');
+        }
+        this.ss.end();
+      });
+  }
+
+  generateReportRSJPD() {
     this.ss.start();
     this.cs
       .generateReport(this.projectName, this.requestId)
@@ -258,6 +404,18 @@ export class SavedForReportingViewerComponent
       });
   }
 
+  handleListVariants(data: any, shouldEmit: boolean = false) {
+    const output = data.reduce((acc: any, item: any) => {
+      if (Array.isArray(item.variants)) acc.push(...item.variants);
+      return acc;
+    }, [] as any[]);
+
+    // Only emit when explicitly requested (fresh data load, not during search/filter)
+    if (shouldEmit) {
+      this.listReports.emit(output);
+    }
+  }
+
   list(page: number) {
     // not the first page but the page token is not set
     if (!this.pageTokens.get(page) && page > 0) {
@@ -285,6 +443,7 @@ export class SavedForReportingViewerComponent
             return;
           }
           this.variants = res.variants;
+          this.handleListVariants(res.variants, true);
           // set next page token
           this.pageTokens.set(page + 1, res.last_evaluated_key);
         }

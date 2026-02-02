@@ -1,13 +1,12 @@
 import {
   Component,
-  Output,
-  EventEmitter,
   ViewChild,
   Injectable,
   ChangeDetectorRef,
 } from '@angular/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { catchError, of, Subject } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
@@ -19,16 +18,15 @@ import {
   MatPaginatorModule,
   PageEvent,
 } from '@angular/material/paginator';
-import { isEmpty } from 'lodash';
 import { ToastrService } from 'ngx-toastr';
-import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
-import { ClinicService } from 'src/app/services/clinic.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { SelectedProjectType } from '../clinic-submit.component';
+import { ProjectItemComponent } from './project-item/project-item.component';
+import { environment } from 'src/environments/environment';
 
 interface ProjectFile {
   filename: string;
-  hasindex: boolean;
+  disabled: boolean;
 }
 
 interface Project {
@@ -74,24 +72,21 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   providers: [{ provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl }],
   standalone: true,
   imports: [
-    MatTableModule,
     MatButtonModule,
+    MatCardModule,
     MatIconModule,
     MatRadioModule,
     MatPaginatorModule,
     ComponentSpinnerComponent,
-    MatTooltip,
     MatTooltipModule,
+    ProjectItemComponent,
   ],
   templateUrl: './projects-list.component.html',
   styleUrl: './projects-list.component.scss',
 })
 export class ProjectsListComponent {
-  @Output() filesSelected = new EventEmitter<FileSelectEvent>();
-  @Output() selectProject = new EventEmitter<SelectedProjectType>();
-
   loading = true;
-  dataSource = new MatTableDataSource<Project>();
+  projects: Project[] = [];
   displayedColumns: string[] = ['name', 'description', 'files', 'actions'];
   assignTo: string | null = null;
   viewUsers: string | null = null;
@@ -103,6 +98,8 @@ export class ProjectsListComponent {
     projectName: '',
   };
 
+  protected clinicMode =
+    environment.clinic_mode === 'svep' ? 'sVEP' : 'PGxFlow';
   protected pageSize = 5;
   @ViewChild('paginator')
   paginator!: MatPaginator;
@@ -113,8 +110,8 @@ export class ProjectsListComponent {
     private dps: DportalService,
     private tstr: ToastrService,
     private cd: ChangeDetectorRef,
-    private cs: ClinicService,
     private dg: MatDialog,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -136,6 +133,7 @@ export class ProjectsListComponent {
     if (!this.pageTokens.get(page) && page > 0) {
       this.paginator.pageIndex--;
       this.tstr.warning('No more items to show', 'Warning');
+      this.loading = false;
       return;
     }
 
@@ -151,7 +149,7 @@ export class ProjectsListComponent {
       .subscribe((response: any) => {
         if (!response) {
           this.tstr.error('API request failed', 'Error');
-          this.dataSource.data = [];
+          this.projects = [];
         } else {
           //handle if there no data on next page (set page index and last page to prev value)
           if (
@@ -165,7 +163,7 @@ export class ProjectsListComponent {
             return;
           }
 
-          this.dataSource.data = response.data.map((project: any) => {
+          this.projects = response.data.map((project: any) => {
             const vcfFiles = project.files.filter(
               (file: string) =>
                 file.endsWith('.vcf.gz') || file.endsWith('.bcf.gz'),
@@ -202,31 +200,27 @@ export class ProjectsListComponent {
   }
 
   refresh() {
-    try {
-      this.resetPagination();
-      this.list(0);
-    } catch (error) {
-      console.log(error);
-    }
+    this.resetPagination();
+    this.list(0);
   }
 
-  showQC(filename: string, projectName: string) {
-    const disabled = this.findDisableStatus(filename);
-    if (!disabled) {
-      const selectedProject: SelectedProjectType = {
-        projectName: projectName,
-        fileName: filename,
-      };
-      this.selectProject.emit(selectedProject);
-    }
+  handleSubmitQuery(file: ProjectFile, project: Project) {
+    if (file.disabled) return;
+    this.openJobDialog(file.filename, project.name);
   }
 
-  findDisableStatus(fileToFind: string) {
-    const foundFile: any = this.dataSource.data
-      .flatMap((group) => group.files)
-      .find((file) => file.filename === fileToFind);
+  handleBatchSubmitQuery(checkedFiles: Set<string>, project: Project) {
+    this.openBatchJobDialog(checkedFiles, project.name);
+  }
 
-    return foundFile.disabled;
+  handleViewQcReport(file: ProjectFile, project: Project) {
+    if (file.disabled) return;
+    this.router.navigate(['/clinic/clinic-submit/qc-report'], {
+      queryParams: {
+        projectName: project.name,
+        fileName: file.filename,
+      },
+    });
   }
 
   async openJobDialog(file: string, projectName: string) {
@@ -237,6 +231,21 @@ export class ProjectsListComponent {
     this.dg.open(SubmitQueryDialogComponent, {
       data: {
         file: file,
+        projectName: projectName,
+        list: () => this.list(0),
+      },
+    });
+  }
+
+  async openBatchJobDialog(checkedFiles: Set<string>, projectName: string) {
+    const { BatchSubmitQueryDialogComponent } = await import(
+      './batch-submit-query-dialog/batch-submit-query-dialog.component'
+    );
+
+    this.dg.open(BatchSubmitQueryDialogComponent, {
+      width: '700px',
+      data: {
+        checkedFiles: checkedFiles,
         projectName: projectName,
         list: () => this.list(0),
       },

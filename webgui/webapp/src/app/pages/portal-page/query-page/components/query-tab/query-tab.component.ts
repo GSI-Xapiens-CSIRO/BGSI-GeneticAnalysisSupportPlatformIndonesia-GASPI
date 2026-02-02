@@ -25,8 +25,10 @@ import {
 } from 'src/app/utils/parsers';
 import { MatDialog } from '@angular/material/dialog';
 import { FilterTypes, ScopeTypes } from 'src/app/utils/interfaces';
-import { catchError, of, Subscription } from 'rxjs';
+import { catchError, firstValueFrom, of, Subscription } from 'rxjs';
 import _ from 'lodash';
+import { Storage } from 'aws-amplify';
+import { getTotalStorageSize } from 'src/app/utils/file';
 import { QueryResultViewerContainerComponent } from '../query-result-viewer-container/query-result-viewer-container.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -156,6 +158,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
     private tstr: ToastrService,
     private ss: SpinnerService,
     private sanitizer: DomSanitizer,
+    private uq: UserQuotaService,
   ) {
     this.form = this.fb.group({
       projects: [[], Validators.required],
@@ -362,7 +365,8 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
             );
           } else if (
             err?.response?.status === 403 &&
-            err?.response?.data?.code === 'QUOTA_EXCEEDED'
+            (err?.response?.data?.code === 'QUOTA_EXCEEDED' ||
+              err?.response?.data?.code === 'NO_QUOTA')
           ) {
             this.tstr.error(
               'Cannot run Query because Quota Limit reached. Please contact administrator to increase your quota.',
@@ -390,7 +394,64 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  // Calculate total size from storage and current query result
+  async totalStorage(queryResults: any) {
+    // Get files in the storage
+    const res = await Storage.list(``, {
+      pageSize: 'ALL',
+      level: 'private',
+    });
+
+    // Get total size from storage
+    const bytesTotal = getTotalStorageSize(res.results);
+
+    // Get size from current query result
+    const blob = new Blob([JSON.stringify(queryResults, null, 2)], {
+      type: 'text/json;charset=utf-8;',
+    });
+
+    return bytesTotal + blob.size;
+  }
+
+  updateUserQuota(userQuota: any, currentTotalSize: number) {
+    this.uq
+      .upsertUserQuota(userQuota.userSub, userQuota.costEstimation, {
+        quotaSize: userQuota.quotaSize,
+        quotaQueryCount: userQuota.quotaQueryCount,
+        usageSize: currentTotalSize,
+        usageCount: userQuota.usageCount,
+      })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+  }
+
   async makeCohort() {
+    const userQuota = await firstValueFrom(this.uq.getCurrentUsage());
+    const form: any = this.form.value;
+    const query = {
+      jobId: '',
+      projects: form.projects,
+      scope: form.scope,
+      query: {
+        filters: serializeFilters(form.filters, form.scope),
+        requestedGranularity: form.granularity,
+      },
+      meta: {
+        apiVersion: 'v2.0',
+      },
+    };
+
+    const currentTotalSize = await this.totalStorage(query);
+
+    // Check if the current total size is greater than the user's quota size
+    if (currentTotalSize >= userQuota.quotaSize) {
+      this.tstr.error(
+        'Cannot create cohort because Quota Limit reached. Please contact administrator to increase your quota.',
+        'Error',
+      );
+      return;
+    }
+
     const { CohortJobIdDialogComponent } = await import(
       './cohort-job-id-dialog/cohort-job-id-dialog.component'
     );
@@ -403,19 +464,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!jobId) {
         return;
       }
-      const form: any = this.form.value;
-      const query = {
-        jobId: jobId,
-        projects: form.projects,
-        scope: form.scope,
-        query: {
-          filters: serializeFilters(form.filters, form.scope),
-          requestedGranularity: form.granularity,
-        },
-        meta: {
-          apiVersion: 'v2.0',
-        },
-      };
+      query.jobId = jobId;
       if (form.scope === ScopeTypes.GENOMIC_VARIANTS) {
         _.set(
           query,
@@ -433,6 +482,7 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
               'Cohort job created successfully. Please check the status in My Data section.',
               'Success',
             );
+            this.updateUserQuota(userQuota, currentTotalSize);
           } else {
             this.tstr.error('Unable to create cohort job.', 'Error');
           }
@@ -645,14 +695,13 @@ export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {
         const parsed = parseFilters(filters, scope);
         original.splice(index, 0, ...parsed);
         const combined = original;
-
         (this.form.get('filters') as FormArray).clear();
         _.range(combined.length).forEach(() => {
           this.addFilter(this.form.get('filters') as FormArray);
         });
 
         this.form.patchValue({
-          filters: parseFilters(combined, scope),
+          filters: combined,
         });
       }
     });

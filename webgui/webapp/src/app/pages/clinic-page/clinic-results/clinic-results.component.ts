@@ -17,6 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { SvepResultsViewerComponent } from './svep-results-viewer/svep-results-viewer.component';
 import { PharmcatResultsViewerComponent } from './pharmcat-results-viewer/pharmcat-results-viewer.component';
 import { LookupResultsViewerComponent } from './lookup-results-viewer/lookup-results-viewer.component';
+import { HybridResultsViewerComponent } from './hybrid-results-viewer/hybrid-results-viewer.component';
 import { MatCardModule } from '@angular/material/card';
 import { DportalService } from 'src/app/services/dportal.service';
 import { AnnotationViewerComponent } from './annotation-viewer/annotation-viewer.component';
@@ -44,6 +45,7 @@ interface Project {
     SvepResultsViewerComponent,
     PharmcatResultsViewerComponent,
     LookupResultsViewerComponent,
+    HybridResultsViewerComponent,
     AnnotationViewerComponent,
     MatCardModule,
     MatOptionModule,
@@ -68,6 +70,12 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
   private paramSubscription: Subscription | null = null;
   filteredOptions: Observable<Project[]> | undefined;
   @ViewChild(ListJobComponent) jobListViewer!: ListJobComponent;
+  @ViewChild(SvepResultsViewerComponent)
+  SvepResultsViewerComponent!: SvepResultsViewerComponent;
+
+  receivedData: any = [];
+  selectedData: any = [];
+  listReports: any = [];
 
   constructor(
     private fb: FormBuilder,
@@ -163,5 +171,17 @@ export class ClinicResultsComponent implements OnInit, OnDestroy {
       this.requestIdFormControl.setValue(this.requestId ?? '');
       this.projectNameFormControl.setValue(this.projectName ?? '');
     });
+  }
+
+  handleChildData(data: any) {
+    this.receivedData = data;
+  }
+
+  handleSelectedAnotation(data: any) {
+    this.SvepResultsViewerComponent.filterByAnotation(data);
+  }
+
+  handleSetListReports(data: any) {
+    this.listReports = data;
   }
 }

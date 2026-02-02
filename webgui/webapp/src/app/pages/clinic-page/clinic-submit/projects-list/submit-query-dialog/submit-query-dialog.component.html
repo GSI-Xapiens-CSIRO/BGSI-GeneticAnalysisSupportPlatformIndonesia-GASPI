@@ -24,6 +24,13 @@
         <mat-error >Enter a Job name of 3-20 alphanumeric characters.</mat-error
       >
       </mat-form-field>
+      @if (showMissingToRefOption) {
+        <div>
+          <mat-checkbox formControlName="missingToRef">
+            Treat missing variants as reference
+          </mat-checkbox>
+        </div>
+      }
     </form>
   </div>
   <div class="flex flex-row space-x-1 items-center my-2">

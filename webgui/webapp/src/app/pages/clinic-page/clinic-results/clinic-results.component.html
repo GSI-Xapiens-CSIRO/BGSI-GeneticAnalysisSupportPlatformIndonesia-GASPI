@@ -59,15 +59,43 @@
     </mat-card-content>
   </mat-card>
   @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
-    <app-svep-results-viewer [requestId]="requestId" [projectName]="projectName" />
+    <app-svep-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listData]="receivedData"
+      [selectedData]="selectedData"
+      [listReports]="listReports"
+    />
   } @else if (["RSPON"].includes(hubName)) {
-    <app-pharmcat-results-viewer [requestId]="requestId" [projectName]="projectName" />
+    <app-pharmcat-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
   } @else if (["RSIGNG"].includes(hubName)) {
-    <app-lookup-results-viewer [requestId]="requestId" [projectName]="projectName" />
+    <app-lookup-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
+  } @else if (["RSJPD"].includes(hubName)) {
+    <app-hybrid-results-viewer
+      [requestId]="requestId"
+      [projectName]="projectName"
+      [listReports]="listReports"
+    />
   }
-  <app-annotation-viewer [requestId]="requestId" [projectName]="projectName" />
+
+  <app-annotation-viewer
+    [requestId]="requestId"
+    [projectName]="projectName"
+    (dataSent)="handleChildData($event)"
+    (selectAnotation)="handleSelectedAnotation($event)"
+    [listReports]="listReports"
+  />
   <app-saved-for-reporting-viewer
     [requestId]="requestId"
     [projectName]="projectName"
+    (listReports)="handleSetListReports($event)"
   />
 }
