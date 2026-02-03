@@ -69,8 +69,8 @@ export class QcReportComponent {
       retries: 0,
     },
     {
-      title: 'Boxplot: Genotype Quality',
-      desc: 'Here is the bar graph: Genotype Quality, where each genomic position (POS) on the x-axis has a distribution of genotype quality (QUAL) values on the y-axis. The bar shows the median, quartiles, and potential outliers for each position',
+      title: 'Histogram: Genotype Quality',
+      desc: 'Here is the histogram for Genotype Quality, showing the distribution of GQ values across all the variants and samples. Missing GQ values are recorded as -1.',
       key: 'gq',
       status: 'success',
       retries: 0,
