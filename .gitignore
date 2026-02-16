@@ -5,3 +5,7 @@ builds
 errored.tfstate
 *.tfvars
 backend.tf
+.github/agents
+_bmad
+_bmad-output
+.claude
