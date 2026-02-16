@@ -7,6 +7,7 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -20,6 +21,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 import { ToastrService } from 'ngx-toastr';
 import { RoleService, Role } from '../../services/role.service';
 import { catchError, of } from 'rxjs';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-admin-roles-tab',
@@ -40,6 +42,7 @@ import { catchError, of } from 'rxjs';
     MatIconModule,
     MatTooltipModule,
     MatCardModule,
+    MatDialogModule,
     ComponentSpinnerComponent,
   ],
 })
@@ -58,7 +61,8 @@ export class AdminRolesTabComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private dialog: MatDialog
   ) {
     this.filterForm = this.fb.group({
       status: ['all'],
@@ -102,33 +106,76 @@ export class AdminRolesTabComponent implements OnInit {
     this.loadRoles();
   }
 
-  addRole(): void {
-    this.toastr.info('Add role dialog - coming soon', 'Info');
-    // TODO: Open add role dialog
+  async addRole(): Promise<void> {
+    const { AdminRoleDialogComponent } = await import(
+      '../admin-role-dialog/admin-role-dialog.component'
+    );
+
+    const dialogRef = this.dialog.open(AdminRoleDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {},
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (_.get(result, 'reload', false)) {
+        this.loadRoles();
+      }
+    });
   }
 
-  editRole(role: Role): void {
-    this.toastr.info(`Edit role: ${role.role_name} - coming soon`, 'Info');
-    // TODO: Open edit role dialog
+  async editRole(role: Role): Promise<void> {
+    const { AdminRoleDialogComponent } = await import(
+      '../admin-role-dialog/admin-role-dialog.component'
+    );
+
+    const dialogRef = this.dialog.open(AdminRoleDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: { role },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (_.get(result, 'reload', false)) {
+        this.loadRoles();
+      }
+    });
   }
 
-  deleteRole(role: Role): void {
-    if (!confirm(`Are you sure you want to delete role "${role.role_name}"? This will remove the role from ${role.user_count || 0} user(s).`)) {
-      return;
-    }
+  async deleteRole(role: Role): Promise<void> {
+    const { ActionConfirmationDialogComponent } = await import(
+      'src/app/components/action-confirmation-dialog/action-confirmation-dialog.component'
+    );
 
-    this.loading = true;
-    this.roleService
-      .deleteRole(role.role_id)
-      .pipe(catchError(() => of(null)))
-      .subscribe((response) => {
-        if (!response || !response.success) {
-          this.toastr.error('Failed to delete role', 'Error');
-        } else {
-          this.toastr.success(`Role "${role.role_name}" deleted successfully`, 'Success');
-          this.loadRoles();
-        }
-        this.loading = false;
-      });
+    const dialog = this.dialog.open(ActionConfirmationDialogComponent, {
+      data: {
+        title: 'Delete Role',
+        message: `Are you sure you want to delete role "${role.role_name}"? This will remove the role from ${role.user_count || 0} user(s).`,
+      },
+    });
+
+    dialog.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.loading = true;
+      this.roleService
+        .deleteRole(role.role_id)
+        .pipe(catchError(() => of(null)))
+        .subscribe((response) => {
+          if (!response || !response.success) {
+            const errorMessage = response?.message || 'Failed to delete role';
+            this.toastr.error(errorMessage, 'Error');
+          } else {
+            const successMessage = response.message || `Role "${role.role_name}" deleted successfully`;
+            this.toastr.success(successMessage, 'Success');
+            this.loadRoles();
+          }
+          this.loading = false;
+        });
+    });
   }
 }

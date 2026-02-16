@@ -83,6 +83,14 @@ body {
   background-color: theme("colors.primary-10");
 }
 
-button {
-  color: white !important;
+// Only apply white text to raised/flat buttons with color background
+button.mat-mdc-raised-button,
+button.mat-mdc-flat-button,
+button.mat-mdc-fab,
+button.mat-mdc-mini-fab {
+  &[color="primary"],
+  &[color="accent"],
+  &[color="warn"] {
+    color: white !important;
+  }
 }
