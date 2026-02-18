@@ -22,16 +22,16 @@
     <form [formGroup]="filterForm" (ngSubmit)="filterRoles()">
       <div class="grid max-w-[500px] md:max-w-full md:grid-cols-3 lg:grid-cols-4 gap-4">
         <mat-form-field>
-          <mat-label>Filter</mat-label>
+          <mat-label>Status Filter</mat-label>
           <mat-select formControlName="status">
-            <mat-option value="all">None</mat-option>
+            <mat-option value="all">All</mat-option>
             <mat-option value="active">Active</mat-option>
             <mat-option value="inactive">Inactive</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field>
-          <mat-label>Filter</mat-label>
-          <input matInput placeholder="Search by role name" formControlName="query" />
+          <mat-label>Search</mat-label>
+          <input matInput placeholder="Search by role name" [formControl]="searchControl" />
         </mat-form-field>
       </div>
       <button
@@ -108,6 +108,14 @@
         *matRowDef="let row; columns: displayedColumns"
       ></tr>
     </table>
+
+    <!-- Paginator -->
+    <mat-paginator
+      #paginator
+      [pageSizeOptions]="[5, 10, 20, 50]"
+      [pageSize]="pageSize"
+      length="9999"
+    ></mat-paginator>
   </mat-card-content>
 </mat-card>
 

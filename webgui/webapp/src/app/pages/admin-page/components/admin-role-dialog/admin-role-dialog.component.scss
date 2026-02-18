@@ -138,9 +138,15 @@ mat-dialog-actions {
     padding: 0 !important;
   }
 
-  .mat-mdc-checkbox {
-    .mdc-checkbox__background {
-      border-color: rgba(0, 0, 0, 0.54) !important;
+  .mat-mdc-checkbox.mat-mdc-checkbox-checked {
+    .mdc-checkbox__checkmark {
+      color: #fff !important;
+    }
+  }
+
+  .mat-mdc-checkbox-indeterminate {
+    .mdc-checkbox__mixedmark {
+      border-color: #fff !important;
     }
   }
 }

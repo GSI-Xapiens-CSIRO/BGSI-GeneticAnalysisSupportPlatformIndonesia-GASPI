@@ -35,6 +35,7 @@ export interface RolesResponse {
   success: boolean;
   roles: Role[];
   total: number;
+  last_evaluated_key?: string;
 }
 
 export interface RoleDetailResponse {
@@ -63,11 +64,30 @@ export class RoleService {
   /**
    * Get all roles
    * @param status Filter by status: 'active' | 'inactive' | 'all'
+   * @param search Search term for role name
+   * @param limit Number of items to return
+   * @param lastEvaluatedKey Pagination key from previous request
    */
-  getRoles(status: string = 'all'): Observable<RolesResponse> {
+  getRoles(
+    status: string = 'all',
+    search?: string,
+    limit: number = 2,
+    lastEvaluatedKey?: string
+  ): Observable<RolesResponse> {
+    const lim = 1
+    const queryStringParameters: any = { status, limit: limit.toString() };
+
+    if (search) {
+      queryStringParameters.search = search;
+    }
+
+    if (lastEvaluatedKey) {
+      queryStringParameters.last_evaluated_key = lastEvaluatedKey;
+    }
+
     return from(
       API.get(environment.api_endpoint_sbeacon.name, 'admin/roles', {
-        queryStringParameters: { status },
+        queryStringParameters,
       }),
     );
   }
@@ -147,11 +167,12 @@ export class RoleService {
   }
 
   /**
-   * Assign role to user
+   * Set user role (1 user = 1 role)
+   * Replaces any existing role with the new one
    */
-  assignRoleToUser(uid: string, roleId: string): Observable<any> {
+  setUserRole(uid: string, roleId: string): Observable<any> {
     return from(
-      API.post(
+      API.put(
         environment.api_endpoint_sbeacon.name,
         `admin/users/${uid}/roles`,
         {
@@ -162,28 +183,26 @@ export class RoleService {
   }
 
   /**
-   * Remove role from user
+   * Get user's current role
    */
-  removeRoleFromUser(uid: string, roleId: string): Observable<any> {
-    return from(
-      API.del(
-        environment.api_endpoint_sbeacon.name,
-        `admin/users/${uid}/roles/${roleId}`,
-        {},
-      ),
-    );
-  }
-
-  /**
-   * Get user's roles
-   */
-  getUserRoles(uid: string): Observable<any> {
+  getUserRole(uid: string): Observable<{ success: boolean; uid: string; roles: Role[]; total: number }> {
     return from(
       API.get(
         environment.api_endpoint_sbeacon.name,
         `admin/users/${uid}/roles`,
         {},
       ),
+    );
+  }
+
+  /**
+   * Get all active roles for dropdown selection
+   */
+  getActiveRoles(): Observable<RolesResponse> {
+    return from(
+      API.get(environment.api_endpoint_sbeacon.name, 'admin/roles', {
+        queryStringParameters: { status: 'active', limit: '100' },
+      }),
     );
   }
 }

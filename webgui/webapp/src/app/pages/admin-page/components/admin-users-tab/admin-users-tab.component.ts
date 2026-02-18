@@ -147,6 +147,7 @@ export class AdminUsersTabComponent implements OnInit {
 
     const dialog = this.dg.open(AdminUserClickDialogComponent, {
       data: {
+        mode: 'edit',
         sub: row.Sub,
         name: `${row['First name']} ${row['Last name']}`,
         email: row.Email,
@@ -172,10 +173,12 @@ export class AdminUsersTabComponent implements OnInit {
   }
 
   async addNewUser() {
-    const { AdminCreateUserComponent } = await import(
-      'src/app/pages/admin-page/components/admin-create-user-dialog/admin-create-user-dialog.component'
+    const { AdminUserClickDialogComponent } = await import(
+      'src/app/pages/admin-page/components/admin-user-click-dialog/admin-user-click-dialog.component'
     );
-    const dialog = this.dg.open(AdminCreateUserComponent, {});
+    const dialog = this.dg.open(AdminUserClickDialogComponent, {
+      data: { mode: 'create' },
+    });
     dialog.afterClosed().subscribe((data) => {
       if (_.get(data, 'reload', false)) {
         this.resetPagination();
