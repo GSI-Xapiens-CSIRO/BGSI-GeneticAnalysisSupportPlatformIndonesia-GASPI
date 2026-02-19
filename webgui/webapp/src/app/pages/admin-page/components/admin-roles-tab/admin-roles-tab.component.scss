@@ -22,3 +22,20 @@
 table {
   margin-top: 1rem;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  line-height: 36px;
+
+  ::ng-deep .mat-mdc-button-touch-target {
+    height: 36px;
+  }
+}

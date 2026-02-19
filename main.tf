@@ -96,6 +96,7 @@ module "sbeacon" {
   cognito-admin-group-name               = module.cognito.cognito_admin_group_name
   cognito-manager-group-name             = module.cognito.cognito_manager_group_name
   registration-email-lambda-function-arn = module.cognito.registration_email_lambda_function_arn
+  cognito-admin-user-sub                 = module.cognito.cognito_admin_user_sub
   method-max-request-rate                = var.sbeacon-method-max-request-rate
   method-queue-size                      = var.sbeacon-method-queue-size
   web_acl_arn                            = module.security.web_acl_arn
