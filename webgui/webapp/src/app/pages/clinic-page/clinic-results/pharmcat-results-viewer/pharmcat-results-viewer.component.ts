@@ -66,8 +66,17 @@ import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
-import { AutoCompleteComponent } from '../auto-complete/auto-complete.component';
 import { Router } from '@angular/router';
+import { FilterModalComponent } from '../../../../components/filter-modal/filter-modal.component';
+import {
+  PHARMGKB_FILTER_FIELDS_DIPLOTYPES,
+  PHARMGKB_FILTER_FIELDS_VARIANTS,
+} from './pharmcat-results-viewer.types';
+import {
+  evaluateGroup,
+  GetFilterSummaryText,
+  FilterGroup,
+} from 'src/app/utils/filter';
 
 type PharmcatResult = {
   url?: string;
@@ -140,7 +149,6 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     RsponBoxDataViewComponent,
     NoResultsAlertComponent,
-    AutoCompleteComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -215,6 +223,9 @@ export class PharmcatResultsViewerComponent implements OnInit {
   filteredColumnsVariants: Observable<string[]> | undefined;
   filterValuesVariants: { [key: string]: string } = {};
   filterMasterDataVariants: { [key: string | number]: any[] } = {};
+
+  protected group!: FilterGroup;
+  protected typeFilter!: FilterType | null;
 
   constructor(
     protected cs: ClinicService,
@@ -766,8 +777,6 @@ export class PharmcatResultsViewerComponent implements OnInit {
       this.listReports,
       this.cs.selectedVariants.value,
     );
-    console.log(this.listReports);
-    console.log(this.cs.selectedVariants.value);
     if (found) {
       this.tstr.error(
         'This variant(s) was already selected for reporting, please see the "Variant selected for reporting" below',
@@ -816,7 +825,6 @@ export class PharmcatResultsViewerComponent implements OnInit {
         if (!data) {
           this.tstr.error('Failed to load data', 'Error');
         } else {
-          console.log(data);
           if (data?.noResultsMessage) {
             const noResultsMessageType = data.noResultsMessageType || 'Warning';
             if (noResultsMessageType === 'Error') {
@@ -861,7 +869,6 @@ export class PharmcatResultsViewerComponent implements OnInit {
       return variantRow;
     });
 
-    console.log('Variants:', this.variantOriginalRows);
     this.variantHasRows = this.variantOriginalRows.length > 0;
 
     const warnings = resultJson.messages;
@@ -883,4 +890,60 @@ export class PharmcatResultsViewerComponent implements OnInit {
     const isMarked = validationReportsObject(this.listReports, bObj);
     return isMarked;
   };
+
+  openAdvancedFilter(type: FilterType) {
+    const colomnFields =
+      type === 'variants'
+        ? PHARMGKB_FILTER_FIELDS_VARIANTS
+        : PHARMGKB_FILTER_FIELDS_DIPLOTYPES;
+    this.dg
+      .open(FilterModalComponent, {
+        width: '950px',
+        maxHeight: '90vh',
+        data: { fields: colomnFields },
+      })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        this.group = result;
+        this.typeFilter = type;
+        if (type === 'variants') {
+          this.applyAdvancedFilterToVariants(result);
+        } else {
+          this.applyAdvancedFilterToDiplotypes(result);
+        }
+      });
+  }
+
+  private applyAdvancedFilterToDiplotypes(filter: any) {
+    const filtered = this.diplotypeOriginalRows.filter((row) =>
+      evaluateGroup(filter, row),
+    );
+
+    this.diplotypeDataRows.next(filtered);
+  }
+
+  private applyAdvancedFilterToVariants(filter: any) {
+    const filtered = this.variantOriginalRows.filter((row) =>
+      evaluateGroup(filter, row),
+    );
+
+    this.variantDataRows.next(filtered);
+  }
+
+  get summaryText(): string {
+    return GetFilterSummaryText(this.group);
+  }
+
+  resetAdvanceFilter(type: 'variants' | 'diplotypes') {
+    if (type === 'variants') {
+      this.typeFilter = null;
+      this.variantDataRows.next([...this.variantOriginalRows]);
+    }
+
+    if (type === 'diplotypes') {
+      this.typeFilter = null;
+      this.diplotypeDataRows.next([...this.diplotypeOriginalRows]);
+    }
+  }
 }

@@ -62,6 +62,9 @@ import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { Router } from '@angular/router';
+import { evaluateGroup, FilterGroup, GetFilterSummaryText } from 'src/app/utils/filter';
+import { FilterModalComponent } from 'src/app/components/filter-modal/filter-modal.component';
+import { LOOKUP_FILTER_FIELDS } from './lookup-results-viewer.types';
 
 type LookupResult = {
   url?: string;
@@ -160,6 +163,9 @@ export class LookupResultsViewerComponent
   protected pageIndex = 0;
   filteredColumns: Observable<string[]> | undefined;
   protected isLoading = false;
+
+  protected group!: FilterGroup;
+  protected hasAppliedAdvancedFilter = false;
 
   constructor(
     protected cs: ClinicService,
@@ -538,7 +544,6 @@ export class LookupResultsViewerComponent
   }
 
   updateTable(result: LookupResult): void {
-    console.log(result);
     if (!this.originalRows) {
       console.warn('updateTable ran before originalRows was initialised');
     }
@@ -667,4 +672,38 @@ export class LookupResultsViewerComponent
     const isMarked = validationReportsObject(this.listReports, bObj);
     return isMarked;
   };
+
+  openAdvancedFilter() {
+    this.dg
+      .open(FilterModalComponent, {
+        width: '950px',
+        maxHeight: '90vh',
+        data: { fields: LOOKUP_FILTER_FIELDS },
+      })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        this.group = result;
+        this.applyAdvancedFilter(result);
+      });
+  }
+
+  private applyAdvancedFilter(filter: any) {
+    const filtered = this.originalRows.filter((row) =>
+      evaluateGroup(filter, row)
+    );
+  
+    this.hasAppliedAdvancedFilter = true;
+    this.dataRows.next(filtered);
+  }
+  
+
+  resetAdvanceFilter() {
+    this.hasAppliedAdvancedFilter = false;
+    this.dataRows.next([...this.originalRows]);
+  }
+
+  get summaryText(): string {
+    return GetFilterSummaryText(this.group);
+  }
 }

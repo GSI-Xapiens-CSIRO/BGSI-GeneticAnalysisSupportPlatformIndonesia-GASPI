@@ -1,0 +1,67 @@
+import { Component, Inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FilterGroup, FieldConfig } from 'src/app/utils/filter';
+import { FilterBuilderComponent } from './filter-builder.component';
+
+@Component({
+  selector: 'app-filter-modal',
+  standalone: true,
+  imports: [CommonModule, FormsModule, FilterBuilderComponent],
+  templateUrl: './filter-modal.component.html',
+  styleUrls: ['./filter-modal.component.scss'],
+})
+export class FilterModalComponent {
+  filter: FilterGroup = {
+    type: 'group',
+    condition: 'AND',
+    children: [],
+  };
+
+  constructor(
+    private dialogRef: MatDialogRef<FilterModalComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { fields: FieldConfig[] },
+  ) {}
+
+  get fields(): FieldConfig[] {
+    return this.data.fields;
+  }
+
+  private hasValidFilter(group: FilterGroup): boolean {
+    for (const child of group.children) {
+      if (child.type === 'rule') {
+        if (this.isValidRule(child)) return true;
+      }
+
+      if (child.type === 'group') {
+        if (this.hasValidFilter(child)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isValidRule(rule: any): boolean {
+    if (!rule.field) return false;
+    if (!rule.operator) return false;
+
+    if (rule.dataType === 'boolean') {
+      return rule.value === true || rule.value === false;
+    }
+
+    return rule.value !== null && rule.value !== undefined && rule.value !== '';
+  }
+
+  onApply() {
+    if (!this.hasValidFilter(this.filter)) {
+      return;
+    }
+
+    this.dialogRef.close(this.filter);
+  }
+
+  onCancel() {
+    this.dialogRef.close();
+  }
+}

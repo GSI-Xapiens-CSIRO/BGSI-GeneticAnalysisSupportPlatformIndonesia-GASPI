@@ -191,7 +191,7 @@
     }
 
     <h2>Diplotypes Table</h2>
-    @if (diplotypeHasRows) {
+    <!-- @if (diplotypeHasRows) {
       <div class="flex flex-row space-x-1 items-center mb-2">
         @if (!diplotypeScopeReduced) {
           <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
@@ -243,10 +243,10 @@
           </button>
         }
       </div>
-    }
+    } -->
 
     <!-- start advanced filter diplotypes -->
-    @if (!diplotypeScopeReduced && diplotypeHasRows) {
+    <!-- @if (!diplotypeScopeReduced && diplotypeHasRows) {
       <div class="mb-2">
         <mat-accordion>
           <mat-expansion-panel
@@ -334,8 +334,7 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div>
-    }
-    <!-- end advanced filter  -->
+    } -->
     <div
       class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
     >
@@ -350,6 +349,40 @@
         Learn more in the FAQ
       </div>
     </div>
+
+    <!-- advance filter diplotypes -->
+    <div
+      class="bg-[#FFFFFF] flex items-center justify-between gap-3 text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base w-full max-w-[1280px]"
+    >
+      <span class="text-xl text-[#333333] font-semibold">
+        Advanced Filter
+      </span>
+
+      <div class="flex flex-row gap-2">
+        <button 
+          *ngIf="summaryText && typeFilter === 'diplotypes'"
+          class="bg-[#FFA705] text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+          (click)="resetAdvanceFilter('diplotypes')"
+        >
+          Reset Filter
+        </button>
+        <button
+          class="bg-primary-60 text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+          (click)="openAdvancedFilter('diplotypes')"
+        >
+          + Add Filter
+        </button>
+      </div>
+    </div>
+
+    <div
+      *ngIf="summaryText && typeFilter === 'diplotypes'"
+      class="result-container"
+    >
+      <div style="font-size: medium; font-weight: 400">Show data where</div>
+      <div class="filter-summary" [innerHTML]="summaryText"></div>
+    </div>
+
     @if (diplotypeDataRows.value.length > 0) {
       <div
         class="overflow-x-auto border-solid border-1 rounded-[4px] border-cyan-700 p-2"
@@ -387,143 +420,39 @@
 
   <mat-card-content>
     <h2>Variants Table</h2>
-    @if (variantHasRows) {
-      <div class="flex flex-row space-x-1 items-center mb-2">
-        @if (!variantScopeReduced) {
-          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
-            <mat-label>Filter term</mat-label>
-            <input matInput [formControl]="variantFilterField" />
-          </mat-form-field>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="filterVariants()"
-            class="w-[110px]"
-          >
-            Filter
-          </button>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="resetVariants()"
-            class="w-[110px]"
-          >
-            Reset
-          </button>
-        } @else {
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="resetRelatedVariants()"
-            class="w-[200px]"
-          >
-            Clear Variant Filter
-          </button>
-        }
+
+    <!-- advance filter -->
+    <div
+      class="bg-[#FFFFFF] flex items-center justify-between gap-3 text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base w-full max-w-[1280px]"
+    >
+      <span class="text-xl text-[#333333] font-semibold">
+        Advanced Filter
+      </span>
+
+      <div class="flex flex-row gap-2">
+        <button
+          *ngIf="summaryText && typeFilter === 'variants'"
+          class="bg-[#FFA705] text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+          (click)="resetAdvanceFilter('variants')"
+        >
+          Reset Filter
+        </button>
+        <button
+          class="bg-primary-60 text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+          (click)="openAdvancedFilter('variants')"
+        >
+          + Add Filter
+        </button>
       </div>
-    }
+    </div>
 
-    @if (variantHasRows && !variantScopeReduced) {
-      <!-- start advanced filter  -->
-      <div class="mb-2">
-        <mat-accordion>
-          <mat-expansion-panel
-            (opened)="panelOpenState.set(true)"
-            (closed)="panelOpenState.set(false)"
-          >
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <span class="text-lg text-primary-50 font-semibold"
-                  >Advanced Filter Term</span
-                >
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <div class="flex flex-col">
-              <div class="flex flex-row space-x-1 items-end gap-2 mb-4">
-                <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
-                  <mat-label>Filter</mat-label>
-                  <input
-                    type="text"
-                    placeholder="Pick Filter"
-                    aria-label="Search Filter"
-                    matInput
-                    [formControl]="advancedFilterVariants"
-                    [matAutocomplete]="auto"
-                  />
-                  <!-- need to know why it cant  -->
-                  <mat-autocomplete #auto="matAutocomplete">
-                    @for (
-                      option of filteredColumnsVariants | async;
-                      track option
-                    ) {
-                      @if (option !== "selected" && option !== "Status") {
-                        <mat-option [value]="option">
-                          {{ option }}
-                        </mat-option>
-                      }
-                    }
-                  </mat-autocomplete>
-                </mat-form-field>
-                <button
-                  mat-raised-button
-                  color="primary"
-                  class="mb-2"
-                  (click)="addFilter('variants')"
-                  [disabled]="
-                    !advancedFilterVariants.value ||
-                    advancedFilterVariants.value.trim() === ''
-                  "
-                >
-                  Add Filter
-                </button>
-                <mat-icon
-                  class="text-primary-50 mb-[1.25rem]"
-                  [matTooltip]="
-                    'The filter uses the AND logic to combine the values within the available result columns to pinpoint the variant(s) containing the specified entries.'
-                  "
-                >
-                  info
-                </mat-icon>
-              </div>
-
-              <div class="flex flex-wrap gap-4">
-                @for (
-                  item of filterValuesVariants | keyvalue: compareFn;
-                  track item.key
-                ) {
-                  <auto-complete-component
-                    [label]="item.key"
-                    [options]="filterMasterDataVariants[item.key]"
-                    (optionSelected)="
-                      onSelectChange($event, item.key, 'variants')
-                    "
-                    (deleteFilter)="removeFilterVariants(item.key)"
-                  />
-                }
-              </div>
-
-              <div class="gap-2 flex flex-row">
-                <button
-                  mat-raised-button
-                  style="background: #ffa705"
-                  (click)="resetFilterVariants()"
-                >
-                  Reset Filter
-                </button>
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="setFilterVariants()"
-                >
-                  Filter
-                </button>
-              </div>
-            </div>
-          </mat-expansion-panel>
-        </mat-accordion>
-      </div>
-      <!-- end advanced filter  -->
-    }
+    <div
+      *ngIf="summaryText && typeFilter === 'variants'"
+      class="result-container"
+    >
+      <div style="font-size: medium; font-weight: 400">Show data where</div>
+      <div class="filter-summary" [innerHTML]="summaryText"></div>
+    </div>
 
     @if (variantDataRows.value.length > 0) {
       <div class="mb-2">
