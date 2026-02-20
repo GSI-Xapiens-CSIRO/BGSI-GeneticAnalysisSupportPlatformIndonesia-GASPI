@@ -102,7 +102,7 @@
     }
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
-      <div class="flex flex-row space-x-1 items-center mb-2">
+      <!-- <div class="flex flex-row space-x-1 items-center mb-2">
         <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
           <mat-label>Filter term</mat-label>
           <input matInput [formControl]="filterField" />
@@ -133,10 +133,41 @@
             Save for Reporting
           </button>
         }
-      </div>
+      </div> -->
 
       <!-- advanced filter  -->
-      <div class="mb-2">
+      <div
+        class="bg-[#FFFFFF] flex items-center justify-between gap-3 text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base w-full "
+      >
+        <span class="text-xl text-[#333333] font-semibold">
+          Advanced Filter
+        </span>
+
+        <div class="flex flex-row gap-2">
+          <button
+            *ngIf="summaryText && hasAppliedAdvancedFilter"
+            class="bg-[#FFA705] text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+            (click)="resetAdvanceFilter()"
+          >
+            Reset Filter
+          </button>
+          <button
+            class="bg-primary-60 text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
+            (click)="openAdvancedFilter()"
+          >
+            + Add Filter
+          </button>
+        </div>
+      </div>
+
+      <div
+        *ngIf="summaryText && hasAppliedAdvancedFilter"
+        class="result-container"
+      >
+        <div style="font-size: medium; font-weight: 400">Show data where</div>
+        <div class="filter-summary" [innerHTML]="summaryText"></div>
+      </div>
+      <!-- <div class="mb-2">
         <mat-accordion>
           <mat-expansion-panel
             (opened)="panelOpenState.set(true)"
@@ -219,7 +250,7 @@
             </div>
           </mat-expansion-panel>
         </mat-accordion>
-      </div>
+      </div> -->
 
       <div
         class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
