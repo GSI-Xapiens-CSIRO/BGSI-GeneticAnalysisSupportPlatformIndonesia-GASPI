@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Auth, Hub } from 'aws-amplify';
+import { Auth, Hub, API } from 'aws-amplify';
 import { BehaviorSubject } from 'rxjs';
 import _ from 'lodash';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -74,6 +75,7 @@ export class AuthService {
 
   async signOut() {
     await Auth.signOut();
+    localStorage.removeItem('x-permissions-token');
     await this.refresh();
     window.location.href = '/login';
   }
@@ -97,6 +99,21 @@ export class AuthService {
         new Set(user.signInUserSession.idToken.payload['cognito:groups']),
       );
       this.user.next(user);
+
+      // Fetch and store permissions token
+      try {
+        const response = await API.get(
+          environment.api_endpoint_sbeacon.name,
+          'admin/users/permissions',
+          {},
+        );
+        if (response && response.token) {
+          localStorage.setItem('x-permissions-token', response.token);
+        }
+      } catch (err) {
+        console.error('Error fetching permissions token', err);
+      }
+
       return true;
     } catch (error) {
       this.userGroups.next(new Set([]));
