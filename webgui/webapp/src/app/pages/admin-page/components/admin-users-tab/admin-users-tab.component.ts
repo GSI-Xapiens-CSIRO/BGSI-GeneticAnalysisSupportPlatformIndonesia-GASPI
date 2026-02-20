@@ -85,6 +85,7 @@ export class AdminUsersTabComponent implements OnInit {
   protected usersTableDisplayedColumns: string[] = [
     'First name',
     'Last name',
+    'Role',
     'Email',
     'Size Quota/Usage',
     'Query Quota/Usage',
@@ -272,6 +273,7 @@ export class AdminUsersTabComponent implements OnInit {
                 'Value',
                 '',
               ),
+              'Role': user.Role?.role_name || '-',
               'Size Quota/Usage': this.formatData(
                 user.Usage?.quotaSize ?? 0,
                 usageSize,
