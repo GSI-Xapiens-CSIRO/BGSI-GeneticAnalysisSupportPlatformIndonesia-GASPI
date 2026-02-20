@@ -64,7 +64,7 @@ import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.co
 import { Router } from '@angular/router';
 import { evaluateGroup, FilterGroup, GetFilterSummaryText } from 'src/app/utils/filter';
 import { FilterModalComponent } from 'src/app/components/filter-modal/filter-modal.component';
-import { LOOKUP_FILTER_FIELDS } from './lookup-results-viewer.types';
+import { LOOKUP_FILTER_FIELDS_RSIGNG, LOOKUP_FILTER_FIELDS_RSJPD } from './lookup-results-viewer.types';
 
 type LookupResult = {
   url?: string;
@@ -107,7 +107,6 @@ interface FlagInfo {
     ScrollingModule,
     MatCardModule,
     MatExpansionModule,
-    AutoCompleteComponent,
     MatIconModule,
     MatTooltipModule,
     MatAutocompleteModule,
@@ -158,6 +157,8 @@ export class LookupResultsViewerComponent
     ]),
     annotation: new FormControl('', [Validators.required]),
   });
+
+  protected hubName: string = environment.hub_name;
   protected Object = Object;
   protected resultsLength = 0;
   protected pageIndex = 0;
@@ -674,11 +675,16 @@ export class LookupResultsViewerComponent
   };
 
   openAdvancedFilter() {
+
+    const colomnField = this.hubName === "RSIGNG" 
+      ? LOOKUP_FILTER_FIELDS_RSIGNG 
+      : LOOKUP_FILTER_FIELDS_RSJPD;
+
     this.dg
       .open(FilterModalComponent, {
         width: '950px',
         maxHeight: '90vh',
-        data: { fields: LOOKUP_FILTER_FIELDS },
+        data: { fields: colomnField },
       })
       .afterClosed()
       .subscribe((result) => {

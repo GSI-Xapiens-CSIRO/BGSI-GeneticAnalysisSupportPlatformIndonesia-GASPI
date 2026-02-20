@@ -69,8 +69,10 @@ import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.co
 import { Router } from '@angular/router';
 import { FilterModalComponent } from '../../../../components/filter-modal/filter-modal.component';
 import {
-  PHARMGKB_FILTER_FIELDS_DIPLOTYPES,
-  PHARMGKB_FILTER_FIELDS_VARIANTS,
+  PHARMGKB_FILTER_FIELDS_RSJPD_DIPLOTYPES,
+  PHARMGKB_FILTER_FIELDS_RSJPD_VARIANTS,
+  PHARMGKB_FILTER_FIELDS_RSPON_DIPLOTYPES,
+  PHARMGKB_FILTER_FIELDS_RSPON_VARIANTS,
 } from './pharmcat-results-viewer.types';
 import {
   evaluateGroup,
@@ -176,6 +178,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
   protected warningColumns: string[] =
     COLUMNS[environment.hub_name].pharmcatCols.warningCols;
 
+  protected hubName: string = environment.hub_name;
   protected diplotypeOriginalRows: any[] = [];
   protected diplotypeHasRows: boolean = false;
   protected diplotypeDataRows = new BehaviorSubject<any[]>([]);
@@ -892,10 +895,16 @@ export class PharmcatResultsViewerComponent implements OnInit {
   };
 
   openAdvancedFilter(type: FilterType) {
+    const hubName = this.hubName;
     const colomnFields =
-      type === 'variants'
-        ? PHARMGKB_FILTER_FIELDS_VARIANTS
-        : PHARMGKB_FILTER_FIELDS_DIPLOTYPES;
+      type === 'diplotypes'
+        ? ['RSIGNG'].includes(hubName)
+          ? PHARMGKB_FILTER_FIELDS_RSPON_DIPLOTYPES
+          : PHARMGKB_FILTER_FIELDS_RSJPD_DIPLOTYPES
+        : ['RSIGNG'].includes(hubName)
+          ? PHARMGKB_FILTER_FIELDS_RSPON_VARIANTS
+          : PHARMGKB_FILTER_FIELDS_RSJPD_VARIANTS;
+
     this.dg
       .open(FilterModalComponent, {
         width: '950px',
