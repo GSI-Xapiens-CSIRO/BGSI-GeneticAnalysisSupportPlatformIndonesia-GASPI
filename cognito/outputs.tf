@@ -53,6 +53,11 @@ output "cognito_admin_user_sub" {
   description = "Cognito admin user's unique identifier (sub)"
 }
 
+output "cognito_guest_user_sub" {
+  value       = aws_cognito_user.guest.sub
+  description = "Cognito guest user's unique identifier (sub)"
+}
+
 output "admin_login_command" {
   value       = "aws cognito-idp admin-initiate-auth --user-pool-id ${aws_cognito_user_pool.gaspi_user_pool.id} --region ${var.region} --client-id ${aws_cognito_user_pool_client.gaspi_user_pool_client.id} --auth-flow ADMIN_USER_PASSWORD_AUTH --auth-parameters USERNAME=${var.gaspi-admin-username},PASSWORD=${var.gaspi-admin-password} --output json --query AuthenticationResult.IdToken"
   description = "Command to sign in an admin"
