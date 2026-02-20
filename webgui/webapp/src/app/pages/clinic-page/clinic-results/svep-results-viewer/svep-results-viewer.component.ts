@@ -68,6 +68,16 @@ import { environment } from 'src/environments/environment';
 import { isEqual } from 'lodash';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { Router } from '@angular/router';
+import { FilterModalComponent } from '../../../../components/filter-modal/filter-modal.component';
+import {
+  DX_FILTER_FIELDS_RSCM,
+  DX_FILTER_FIELDS_RSSARDJITO,
+} from './svep-results-viewer.types';
+import {
+  evaluateGroup,
+  GetFilterSummaryText,
+  FilterGroup,
+} from 'src/app/utils/filter';
 
 type SVEPResult = {
   url?: string;
@@ -153,7 +163,8 @@ export class SvepResultsViewerComponent
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
   protected results: SVEPResult | null = null;
-  protected columns: string[] = COLUMNS[environment.hub_name].svepCols;
+  protected hubName: string = environment.hub_name;
+  protected columns: string[] = COLUMNS[this.hubName].svepCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -181,6 +192,8 @@ export class SvepResultsViewerComponent
 
   expandedMap = new Map<string, boolean>();
   protected isLoading = false;
+
+  protected group!: FilterGroup;
 
   constructor(
     protected cs: ClinicService,
@@ -649,4 +662,42 @@ export class SvepResultsViewerComponent
     const isMarked = validationReportsObject(this.listReports, bObj);
     return isMarked;
   };
+
+  openAdvancedFilter() {
+    const hubName = this.hubName;
+    const colomnFields = ['RSCM'].includes(hubName)
+      ? DX_FILTER_FIELDS_RSCM
+      : ['RSSARDJITO'].includes(hubName)
+        ? DX_FILTER_FIELDS_RSSARDJITO
+        : [];
+
+    this.dg
+      .open(FilterModalComponent, {
+        width: '950px',
+        maxHeight: '90vh',
+        data: { fields: colomnFields },
+      })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        this.group = result;
+        this.applyAdvancedFilter(result);
+      });
+  }
+
+  private applyAdvancedFilter(filter: any) {
+    const filtered = this.originalRows.filter((row) =>
+      evaluateGroup(filter, row),
+    );
+
+    this.dataRows.next(filtered);
+  }
+
+  get summaryText(): string {
+    return GetFilterSummaryText(this.group);
+  }
+
+  resetAdvanceFilter() {
+    this.dataRows.next([...this.originalRows]);
+  }
 }
