@@ -144,6 +144,22 @@
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
 
+      <!-- FAQ box -->
+      <div
+        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+      >
+        <div class="flex flex-row gap-2 items-center">
+          <mat-icon class="text-primary-50"> info </mat-icon>
+          <div>Need help understanding filters?</div>
+        </div>
+        <div
+          (click)="handleRedirectFAQ()"
+          class="font-medium text-primary-60 cursor-pointer"
+        >
+          Learn more in the FAQ
+        </div>
+      </div>
+
       <!-- advanced filter -->
       <div class="mb-6">
         <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
@@ -184,20 +200,6 @@
         <div class="filter-summary" [innerHTML]="summaryText"></div>
       </div>
 
-      <div
-        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <mat-icon class="text-primary-50"> info </mat-icon>
-          <div>Need help understanding filters?</div>
-        </div>
-        <div
-          (click)="handleRedirectFAQ()"
-          class="font-medium text-primary-60 cursor-pointer"
-        >
-          Learn more in the FAQ
-        </div>
-      </div>
 
       @if (dataRows.value.length > 0) {
         <div class="w-full" id="myTarget">
