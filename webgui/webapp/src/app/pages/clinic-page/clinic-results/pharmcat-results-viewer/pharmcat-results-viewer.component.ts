@@ -924,7 +924,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
       });
   }
 
-  private applyAdvancedFilterToDiplotypes(filter: any) {
+  private applyAdvancedFilterToDiplotypes(filter: FilterGroup) {
     const filtered = this.diplotypeOriginalRows.filter((row) =>
       evaluateGroup(filter, row),
     );
@@ -932,7 +932,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
     this.diplotypeDataRows.next(filtered);
   }
 
-  private applyAdvancedFilterToVariants(filter: any) {
+  private applyAdvancedFilterToVariants(filter: FilterGroup) {
     const filtered = this.variantOriginalRows.filter((row) =>
       evaluateGroup(filter, row),
     );

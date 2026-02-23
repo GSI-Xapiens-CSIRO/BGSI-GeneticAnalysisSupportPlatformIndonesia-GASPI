@@ -135,28 +135,38 @@
         }
       </div> -->
 
-      <!-- advanced filter  -->
-      <div
-        class="bg-[#FFFFFF] flex items-center justify-between gap-3 text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base w-full "
-      >
-        <span class="text-xl text-[#333333] font-semibold">
-          Advanced Filter
-        </span>
+      <!-- advanced filter -->
+      <div class="mb-6">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
+          <!-- Header / Title bar -->
+          <div class="px-5 py-4 border-b border-gray-200 bg-white">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-semibold text-gray-800">
+                Advanced Filter
+              </h2>
 
-        <div class="flex flex-row gap-2">
-          <button
-            *ngIf="summaryText && hasAppliedAdvancedFilter"
-            class="bg-[#FFA705] text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
-            (click)="resetAdvanceFilter()"
-          >
-            Reset Filter
-          </button>
-          <button
-            class="bg-primary-60 text-white px-6 py-4 rounded-md font-medium border-none cursor-pointer"
-            (click)="openAdvancedFilter()"
-          >
-            + Add Filter
-          </button>
+              <div class="flex items-center gap-3">
+                <!-- Reset button (only shown when filters are active) -->
+                <button
+                  *ngIf="summaryText && hasAppliedAdvancedFilter"
+                  mat-raised-button
+                  class="min-w-[120px] shadow-none"
+                  style="background-color: #ffa705; color: white;"
+                  (click)="resetAdvanceFilter()">
+                  Reset Filter
+                </button>
+
+                <!-- Add Filter button -->
+                <button
+                  mat-raised-button
+                  color="primary"
+                  class="min-w-[140px] shadow-none"
+                  (click)="openAdvancedFilter()">
+                  + Add Filter
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
