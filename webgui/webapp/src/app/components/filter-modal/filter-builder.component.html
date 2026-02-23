@@ -12,6 +12,8 @@
             <mat-select
               [value]="group.condition"
               (selectionChange)="onGroupConditionChange($event.value)"
+              disableOptionCentering
+              panelClass="filter-modal-select-panel"
             >
               <mat-option value="AND">AND</mat-option>
               <mat-option value="OR">OR</mat-option>
@@ -26,6 +28,8 @@
               <mat-select
                 [(value)]="child.field"
                 (selectionChange)="onFieldChange(child)"
+                disableOptionCentering
+                panelClass="filter-modal-select-panel"
               >
                 <mat-option *ngFor="let f of fields" [value]="f.field">
                   {{ f.field }}
@@ -38,7 +42,7 @@
               appearance="outline"
               [color]="isOperatorInvalid(child) ? 'warn' : 'primary'"
             >
-              <mat-select [(value)]="child.operator">
+              <mat-select [(value)]="child.operator" disableOptionCentering panelClass="filter-modal-select-panel">
                 <mat-option
                   *ngFor="let op of operatorMap[child.dataType]"
                   [value]="op"
@@ -109,7 +113,7 @@
                     appearance="outline"
                     class="value-field"
                   >
-                    <mat-select [(value)]="child.value">
+                    <mat-select [(value)]="child.value" disableOptionCentering panelClass="filter-modal-select-panel">
                       <mat-option [value]="true">True</mat-option>
                       <mat-option [value]="false">False</mat-option>
                     </mat-select>
@@ -169,6 +173,8 @@
             <mat-select
               [(value)]="group.condition"
               (selectionChange)="onGroupConditionChange($event.value)"
+              disableOptionCentering
+              panelClass="filter-modal-select-panel"
             >
               <mat-option value="AND">AND</mat-option>
               <mat-option value="OR">OR</mat-option>

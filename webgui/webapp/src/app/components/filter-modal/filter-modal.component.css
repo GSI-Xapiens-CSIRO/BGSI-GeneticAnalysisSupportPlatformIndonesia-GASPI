@@ -6,6 +6,7 @@
   background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
+  position: relative;
   padding: 10px;
 }
 
@@ -43,7 +44,10 @@
 .modal-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
+  padding-bottom: 40px;
+  min-height: 350px;
   background: #ffffff;
 }
 
