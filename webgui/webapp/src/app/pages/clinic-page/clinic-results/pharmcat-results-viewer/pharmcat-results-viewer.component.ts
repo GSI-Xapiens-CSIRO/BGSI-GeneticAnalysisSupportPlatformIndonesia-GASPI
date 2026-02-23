@@ -909,7 +909,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
       .open(FilterModalComponent, {
         width: '950px',
         maxHeight: '90vh',
-        data: { fields: colomnFields },
+        data: { fields: colomnFields, existingFilter: this.group },
       })
       .afterClosed()
       .subscribe((result) => {
@@ -954,5 +954,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
       this.typeFilter = null;
       this.diplotypeDataRows.next([...this.diplotypeOriginalRows]);
     }
+
+    this.group = undefined!;
   }
 }

@@ -684,7 +684,7 @@ export class LookupResultsViewerComponent
       .open(FilterModalComponent, {
         width: '950px',
         maxHeight: '90vh',
-        data: { fields: colomnField },
+        data: { fields: colomnField, existingFilter: this.group },
       })
       .afterClosed()
       .subscribe((result) => {
@@ -706,6 +706,7 @@ export class LookupResultsViewerComponent
 
   resetAdvanceFilter() {
     this.hasAppliedAdvancedFilter = false;
+    this.group = undefined!;
     this.dataRows.next([...this.originalRows]);
   }
 
