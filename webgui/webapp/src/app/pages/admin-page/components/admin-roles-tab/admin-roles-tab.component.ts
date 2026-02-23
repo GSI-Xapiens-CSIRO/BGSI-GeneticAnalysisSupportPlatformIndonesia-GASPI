@@ -231,6 +231,23 @@ export class AdminRolesTabComponent implements OnInit {
   }
 
   async deleteRole(role: Role): Promise<void> {
+    // Check if role has users assigned
+    if (role.user_count && role.user_count > 0) {
+      const { ActionConfirmationDialogComponent } = await import(
+        'src/app/components/action-confirmation-dialog/action-confirmation-dialog.component'
+      );
+
+      this.dialog.open(ActionConfirmationDialogComponent, {
+        data: {
+          title: 'Cannot Delete Role',
+          message: `Role "${role.role_name}" cannot be deleted because it is assigned to ${role.user_count} user(s). Please reassign or remove users from this role first.`,
+          confirmText: 'OK',
+          hideCancel: true,
+        },
+      });
+      return;
+    }
+
     const { ActionConfirmationDialogComponent } = await import(
       'src/app/components/action-confirmation-dialog/action-confirmation-dialog.component'
     );
@@ -238,7 +255,7 @@ export class AdminRolesTabComponent implements OnInit {
     const dialog = this.dialog.open(ActionConfirmationDialogComponent, {
       data: {
         title: 'Delete Role',
-        message: `Are you sure you want to delete role "${role.role_name}"? This will remove the role from ${role.user_count || 0} user(s).`,
+        message: `Are you sure you want to delete role "${role.role_name}"?`,
       },
     });
 

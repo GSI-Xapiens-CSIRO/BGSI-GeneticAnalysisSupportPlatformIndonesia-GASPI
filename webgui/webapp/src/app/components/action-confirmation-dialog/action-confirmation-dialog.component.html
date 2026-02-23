@@ -2,16 +2,18 @@
 <div mat-dialog-content>
   <p>{{ data.message }}</p>
   <div>
-    <button
-      mat-raised-button
-      color="primary"
-      [mat-dialog-close]="false"
-      class="mr-2.5"
-    >
-      Cancel
-    </button>
+    @if (!data.hideCancel) {
+      <button
+        mat-raised-button
+        color="primary"
+        [mat-dialog-close]="false"
+        class="mr-2.5"
+      >
+        Cancel
+      </button>
+    }
     <button mat-raised-button color="primary" [mat-dialog-close]="true">
-      Yes
+      {{ data.confirmText || 'Yes' }}
     </button>
   </div>
 </div>
