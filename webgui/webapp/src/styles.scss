@@ -99,3 +99,29 @@ button.mat-mdc-mini-fab {
 .filter-modal-select-panel {
   max-height: 200px !important;
 }
+
+// Searchable select panel - styles for the embedded search input
+.filter-modal-searchable-panel {
+  .select-search-box {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+    padding: 8px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .select-search-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: #16b3ac;
+    }
+  }
+}

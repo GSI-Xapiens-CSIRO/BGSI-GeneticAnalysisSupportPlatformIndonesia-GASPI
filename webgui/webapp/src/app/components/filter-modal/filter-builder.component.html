@@ -29,9 +29,23 @@
                 [(value)]="child.field"
                 (selectionChange)="onFieldChange(child)"
                 disableOptionCentering
-                panelClass="filter-modal-select-panel"
+                panelClass="filter-modal-select-panel filter-modal-searchable-panel"
+                (openedChange)="onSelectOpenedChange($event, 'field')"
               >
-                <mat-option *ngFor="let f of fields" [value]="f.field">
+                <div class="select-search-box">
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Search field..."
+                    [(ngModel)]="fieldSearchTerm"
+                    (keydown)="$event.stopPropagation()"
+                    class="select-search-input"
+                  />
+                </div>
+                <mat-option
+                  *ngFor="let f of getFilteredFields()"
+                  [value]="f.field"
+                >
                   {{ f.field }}
                 </mat-option>
               </mat-select>
@@ -42,9 +56,24 @@
               appearance="outline"
               [color]="isOperatorInvalid(child) ? 'warn' : 'primary'"
             >
-              <mat-select [(value)]="child.operator" disableOptionCentering panelClass="filter-modal-select-panel">
+              <mat-select
+                [(value)]="child.operator"
+                disableOptionCentering
+                panelClass="filter-modal-select-panel filter-modal-searchable-panel"
+                (openedChange)="onSelectOpenedChange($event, 'operator')"
+              >
+                <div class="select-search-box">
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Search operator..."
+                    [(ngModel)]="operatorSearchTerm"
+                    (keydown)="$event.stopPropagation()"
+                    class="select-search-input"
+                  />
+                </div>
                 <mat-option
-                  *ngFor="let op of operatorMap[child.dataType]"
+                  *ngFor="let op of getFilteredOperators(child.dataType)"
                   [value]="op"
                 >
                   {{ operatorLabels[op] || op }}
