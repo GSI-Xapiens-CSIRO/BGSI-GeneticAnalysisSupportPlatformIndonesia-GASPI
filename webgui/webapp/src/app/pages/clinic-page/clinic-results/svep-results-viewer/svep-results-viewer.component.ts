@@ -194,6 +194,7 @@ export class SvepResultsViewerComponent
   protected isLoading = false;
 
   protected group!: FilterGroup;
+  protected hasAppliedAdvancedFilter = false;
 
   constructor(
     protected cs: ClinicService,
@@ -685,11 +686,12 @@ export class SvepResultsViewerComponent
       });
   }
 
-  private applyAdvancedFilter(filter: any) {
+  private applyAdvancedFilter(filter: FilterGroup) {
     const filtered = this.originalRows.filter((row) =>
       evaluateGroup(filter, row),
     );
 
+    this.hasAppliedAdvancedFilter = true;
     this.dataRows.next(filtered);
   }
 
@@ -698,6 +700,7 @@ export class SvepResultsViewerComponent
   }
 
   resetAdvanceFilter() {
+    this.hasAppliedAdvancedFilter = false;
     this.dataRows.next([...this.originalRows]);
   }
 }

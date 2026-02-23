@@ -157,7 +157,7 @@
               <div class="flex items-center gap-3">
                 <!-- Reset button (only shown when filters are active) -->
                 <button
-                  *ngIf="summaryText"
+                  *ngIf="summaryText && hasAppliedAdvancedFilter"
                   mat-raised-button
                   class="min-w-[120px] shadow-none"
                   style="background-color: #ffa705; color: white;"
