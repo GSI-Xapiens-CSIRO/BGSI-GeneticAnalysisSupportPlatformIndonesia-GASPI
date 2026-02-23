@@ -701,7 +701,7 @@ export class SvepResultsViewerComponent
 
   resetAdvanceFilter() {
     this.hasAppliedAdvancedFilter = false;
-    this.group = undefined!;
+    this.group = { type: 'group', condition: 'AND', children: [] };
     this.dataRows.next([...this.originalRows]);
   }
 }

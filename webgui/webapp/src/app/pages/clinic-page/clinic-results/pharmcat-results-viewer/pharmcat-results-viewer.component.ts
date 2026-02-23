@@ -955,6 +955,6 @@ export class PharmcatResultsViewerComponent implements OnInit {
       this.diplotypeDataRows.next([...this.diplotypeOriginalRows]);
     }
 
-    this.group = undefined!;
+    this.group = { type: 'group', condition: 'AND', children: [] };
   }
 }
