@@ -676,8 +676,8 @@ export class LookupResultsViewerComponent
 
   openAdvancedFilter() {
 
-    const colomnField = this.hubName === "RSIGNG" 
-      ? LOOKUP_FILTER_FIELDS_RSIGNG 
+    const colomnField = this.hubName === "RSIGNG"
+      ? LOOKUP_FILTER_FIELDS_RSIGNG
       : LOOKUP_FILTER_FIELDS_RSJPD;
 
     this.dg
@@ -694,15 +694,15 @@ export class LookupResultsViewerComponent
       });
   }
 
-  private applyAdvancedFilter(filter: any) {
+  private applyAdvancedFilter(filter: FilterGroup) {
     const filtered = this.originalRows.filter((row) =>
       evaluateGroup(filter, row)
     );
-  
+
     this.hasAppliedAdvancedFilter = true;
     this.dataRows.next(filtered);
   }
-  
+
 
   resetAdvanceFilter() {
     this.hasAppliedAdvancedFilter = false;
