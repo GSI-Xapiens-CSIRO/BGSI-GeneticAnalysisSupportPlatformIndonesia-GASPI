@@ -9,6 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { formatBytes, getTotalStorageSize } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 @Component({
   selector: 'app-user-file-list',
@@ -20,6 +21,7 @@ import { UserQuotaService } from 'src/app/services/userquota.service';
     ClipboardModule,
     MatDialogModule,
     CommonModule,
+    HasPermissionDirective,
   ],
   templateUrl: './user-file-list.component.html',
   styleUrl: './user-file-list.component.scss',
@@ -40,7 +42,7 @@ export class UserFileListComponent implements OnInit {
     private dg: MatDialog,
     private uq: UserQuotaService,
     private cb: Clipboard,
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
     this.loadList();

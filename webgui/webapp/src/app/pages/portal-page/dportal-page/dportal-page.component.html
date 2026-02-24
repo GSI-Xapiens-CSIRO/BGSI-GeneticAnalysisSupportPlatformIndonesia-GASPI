@@ -1,8 +1,5 @@
-@if (
-  (auth.userGroups | async)!.has("administrators") ||
-  (auth.userGroups | async)!.has("managers")
-) {
-  <app-admin-section />
-  <br />
+@if (auth.user | async) {
+<app-admin-section *hasPermission="'admin.read'" />
+<br />
 }
 <app-user-section />

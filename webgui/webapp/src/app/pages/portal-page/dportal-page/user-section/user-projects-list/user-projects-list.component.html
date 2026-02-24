@@ -1,26 +1,15 @@
 <div class="flex flex-col min-h-full max-h-[85vh]">
   <div class="flex flex-row justify-between w-full items-center">
     <h2 class="flex">My Projects</h2>
-    <button
-      mat-mini-fab
-      color="primary"
-      class="flex items-center"
-      (click)="refresh()"
-    >
+    <button mat-mini-fab color="primary" class="flex items-center" (click)="refresh()">
       <mat-icon>refresh</mat-icon>
     </button>
   </div>
-  <div
-    class="no-scrollbar flex flex-col justify-between flex-1 overflow-scroll"
-  >
+  <div class="no-scrollbar flex flex-col justify-between flex-1 overflow-scroll">
     <table mat-table [dataSource]="dataSource">
       <!-- Name Column -->
       <ng-container matColumnDef="name">
-        <td
-          mat-cell
-          *matCellDef="let element"
-          class="flex justify-start align-top border-0"
-        >
+        <td mat-cell *matCellDef="let element" class="flex justify-start align-top border-0">
           <div class="flex flex-col w-full">
             <div class="flex flex-row justify-between w-full items-center">
               <div class="flex flex-col">
@@ -30,36 +19,26 @@
                 </div>
               </div>
               @if (element.files.length > 0) {
-                <button
-                  mat-mini-fab
-                  color="primary"
-                  class="flex items-center .bui-btn-project"
-                  matTooltip="Click to view files"
-                  (click)="element.expanded = !element.expanded"
-                >
-                  <mat-icon class="text-[1.5rem]">folder_open</mat-icon>
-                </button>
+              <button *hasPermission="'my_project.read'" mat-mini-fab color="primary"
+                class="flex items-center .bui-btn-project" matTooltip="Click to view files"
+                (click)="element.expanded = !element.expanded">
+                <mat-icon class="text-[1.5rem]">folder_open</mat-icon>
+              </button>
               }
             </div>
             @if (element.expanded) {
-              <div class="flex flex-col ml-2 space-y-1">
-                @for (file of element.files; track file) {
-                  <div class="flex flex-row items-center space-x-2">
-                    <button
-                      mat-mini-fab
-                      color="primary"
-                      class="flex items-center mt-2 mb-2 justify-center bui-btn-project"
-                      matTooltip="Copy command for notebook download"
-                      (click)="copy(element.name, file)"
-                    >
-                      <mat-icon class="text-[1.3rem] pt-[0.3rem]"
-                        >file_copy</mat-icon
-                      >
-                    </button>
-                    <div>{{ file.split("/").pop() }}</div>
-                  </div>
-                }
+            <div class="flex flex-col ml-2 space-y-1">
+              @for (file of element.files; track file) {
+              <div class="flex flex-row items-center space-x-2">
+                <button *hasPermission="'my_project.download'" mat-mini-fab color="primary"
+                  class="flex items-center mt-2 mb-2 justify-center bui-btn-project"
+                  matTooltip="Copy command for notebook download" (click)="copy(element.name, file)">
+                  <mat-icon class="text-[1.3rem] pt-[0.3rem]">file_copy</mat-icon>
+                </button>
+                <div>{{ file.split("/").pop() }}</div>
               </div>
+              }
+            </div>
             }
           </div>
         </td>
@@ -68,11 +47,6 @@
     </table>
   </div>
   <div class="mt-auto">
-    <mat-paginator
-      #paginator
-      [pageSizeOptions]="[5, 10, 50]"
-      [pageSize]="pageSize"
-      length="9999"
-    ></mat-paginator>
+    <mat-paginator #paginator [pageSizeOptions]="[5, 10, 50]" [pageSize]="pageSize" length="9999"></mat-paginator>
   </div>
 </div>

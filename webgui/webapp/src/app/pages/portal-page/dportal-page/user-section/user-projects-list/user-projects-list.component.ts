@@ -20,6 +20,7 @@ import { Subject, catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
 import * as _ from 'lodash';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 interface Project {
   name: string;
@@ -59,6 +60,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ClipboardModule,
     MatTableModule,
     MatPaginatorModule,
+    HasPermissionDirective,
   ],
   templateUrl: './user-projects-list.component.html',
   styleUrl: './user-projects-list.component.scss',

@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DportalService } from 'src/app/services/dportal.service';
 import { InstanceInfo } from '../admin-notebooks-list.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 import { catchError, of } from 'rxjs';
 
 export enum Status {
@@ -26,7 +27,7 @@ export enum Status {
 @Component({
   selector: 'app-admin-notebook-item',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule],
+  imports: [MatButtonModule, MatIconModule, MatDialogModule, HasPermissionDirective],
   templateUrl: './admin-notebook-item.component.html',
   styleUrl: './admin-notebook-item.component.scss',
 })
@@ -39,7 +40,7 @@ export class AdminNotebookItemComponent implements OnChanges {
   constructor(
     private dps: DportalService,
     private dg: MatDialog,
-  ) {}
+  ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     // cache the initial status

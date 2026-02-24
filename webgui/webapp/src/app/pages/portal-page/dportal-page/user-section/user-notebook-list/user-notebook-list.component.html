@@ -3,25 +3,15 @@
     <div class="flex flex-row justify-between w-full items-center">
       <h2 class="flex">My Notebooks</h2>
       <div class="flex space-x-1">
-        <button
-          mat-mini-fab
-          color="primary"
-          class="flex items-center"
-          (click)="cliHelp()"
-        >
+        <button mat-mini-fab color="primary" class="flex items-center" (click)="cliHelp()">
           <mat-icon>help_outline</mat-icon>
         </button>
-        <button
-          mat-mini-fab
-          color="primary"
-          class="flex items-center"
-          (click)="refresh()"
-        >
+        <button mat-mini-fab color="primary" class="flex items-center" (click)="refresh()">
           <mat-icon>refresh</mat-icon>
         </button>
       </div>
     </div>
-    <mat-expansion-panel #panel class="mb-4">
+    <mat-expansion-panel *hasPermission="'my_notebook.create'" #panel class="mb-4">
       <mat-expansion-panel-header>
         <mat-panel-title> New Instance </mat-panel-title>
         <mat-panel-description>
@@ -29,38 +19,30 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
 
-      <form
-        [formGroup]="instanceForm"
-        class="flex flex-col space-y-1 border-2 border-solid rounded-md p-2 border-primary-50"
-      >
+      <form [formGroup]="instanceForm"
+        class="flex flex-col space-y-1 border-2 border-solid rounded-md p-2 border-primary-50">
         <mat-form-field class="w-full">
           <mat-label>Notebook Name</mat-label>
-          <input
-            matInput
-            formControlName="instanceName"
-            placeholder="5-30 character name"
-          />
-          <mat-error
-            >Enter a name. It can include hyphens (-), not spaces</mat-error
-          >
+          <input matInput formControlName="instanceName" placeholder="5-30 character name" />
+          <mat-error>Enter a name. It can include hyphens (-), not spaces</mat-error>
         </mat-form-field>
 
         <mat-form-field class="w-full">
           <mat-label>Instance Type</mat-label>
           <mat-select formControlName="instanceType">
             @for (group of instanceGroups; track group) {
-              <mat-optgroup [label]="group.name">
-                @for (instance of group.instances; track instance) {
-                  <mat-option [value]="instance.name">
-                    {{ instance.name }} ( RAM: {{ instance.ram }} CPU:
-                    {{ instance.cpu }}
-                    @if (group.gpu) {
-                      GPU: {{ instance.gpu }} VRAM: {{ instance.vram }}
-                    }
-                    )
-                  </mat-option>
+            <mat-optgroup [label]="group.name">
+              @for (instance of group.instances; track instance) {
+              <mat-option [value]="instance.name">
+                {{ instance.name }} ( RAM: {{ instance.ram }} CPU:
+                {{ instance.cpu }}
+                @if (group.gpu) {
+                GPU: {{ instance.gpu }} VRAM: {{ instance.vram }}
                 }
-              </mat-optgroup>
+                )
+              </mat-option>
+              }
+            </mat-optgroup>
             }
           </mat-select>
           <mat-error>Please select a type</mat-error>
@@ -69,53 +51,37 @@
           <mat-label>Volume (5 GB to 16384 GB)</mat-label>
           <mat-select formControlName="volumeSize">
             @for (vol of volumeSizes; track vol) {
-              <mat-option [value]="vol.size">
-                {{ vol.note }}
-              </mat-option>
+            <mat-option [value]="vol.size">
+              {{ vol.note }}
+            </mat-option>
             }
           </mat-select>
           <mat-error>Please select a volume</mat-error>
         </mat-form-field>
 
         @if (estimatedPrice) {
-          <div class="text-red-500 font-semibold">
-            Cost Estimation ${{ estimatedPrice }}/Month
-          </div>
+        <div class="text-red-500 font-semibold">
+          Cost Estimation ${{ estimatedPrice }}/Month
+        </div>
         }
 
         <div class="flex flex-row space-x-[10px]">
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="resetForm()"
-            type="button"
-          >
+          <button mat-raised-button color="primary" (click)="resetForm()" type="button">
             Reset
           </button>
-          <button
-            mat-raised-button
-            color="primary"
-            [disabled]="instanceForm.invalid"
-            (click)="create(instanceForm.value, panel)"
-            type="button"
-          >
+          <button mat-raised-button color="primary" [disabled]="instanceForm.invalid"
+            (click)="create(instanceForm.value, panel)" type="button">
             Start
           </button>
         </div>
       </form>
     </mat-expansion-panel>
   </div>
-  <div
-    class="flex flex-col space-y-1 relative flex-1 overflow-scroll no-scrollbar"
-  >
+  <div class="flex flex-col space-y-1 relative flex-1 overflow-scroll no-scrollbar">
     @for (notebook of notebooks; track notebook) {
-      <app-notebook-item
-        #notebook
-        [notebook]="notebook"
-        (deleted)="remove(notebook)"
-      />
+    <app-notebook-item #notebook [notebook]="notebook" (deleted)="remove(notebook)" />
     } @empty {
-      <div>No notebooks yet! Please start a notebook to continue.</div>
+    <div>No notebooks yet! Please start a notebook to continue.</div>
     }
   </div>
 </div>

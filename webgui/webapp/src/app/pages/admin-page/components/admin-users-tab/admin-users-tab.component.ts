@@ -36,6 +36,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { bytesToGigabytes, formatBytes } from 'src/app/utils/file';
 import { MatIconModule } from '@angular/material/icon';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
+import { AuthService } from 'src/app/services/auth.service';
 import { AwsService } from 'src/app/services/aws.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -77,6 +79,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatPaginatorModule,
     MatIconModule,
     MatCardModule,
+    HasPermissionDirective,
   ],
 })
 export class AdminUsersTabComponent implements OnInit {
@@ -104,6 +107,7 @@ export class AdminUsersTabComponent implements OnInit {
   private pageTokens = new Map<number, string>();
 
   constructor(
+    public auth: AuthService,
     private adminServ: AdminService,
     private fb: FormBuilder,
     private cd: ChangeDetectorRef,
@@ -142,6 +146,9 @@ export class AdminUsersTabComponent implements OnInit {
   }
 
   async userClick(row: any) {
+    if (!this.auth.hasPermission('user_management.update')) {
+      return;
+    }
     const { AdminUserClickDialogComponent } = await import(
       'src/app/pages/admin-page/components/admin-user-click-dialog/admin-user-click-dialog.component'
     );

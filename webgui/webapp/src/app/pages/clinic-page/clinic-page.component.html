@@ -2,7 +2,7 @@
   <mat-card-content>
     <mat-tab-group [(selectedIndex)]="selectedIndex" (selectedIndexChange)="onTabChange($event)">
       <mat-tab label="CLINICAL WORKFLOW EXECUTIONS"> </mat-tab>
-      <mat-tab label="IGV VIEWER"> </mat-tab>
+      <mat-tab label="IGV VIEWER" *hasPermission="'igv_viewer.read'"> </mat-tab>
       <mat-tab label="CLINICAL WORKFLOW RESULTS"> </mat-tab>
     </mat-tab-group>
   </mat-card-content>

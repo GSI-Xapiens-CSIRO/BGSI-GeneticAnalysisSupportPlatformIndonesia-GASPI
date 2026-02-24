@@ -23,6 +23,7 @@ import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/
 
 import { DportalService } from 'src/app/services/dportal.service';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 interface ProjectFile {
   filename: string;
@@ -76,6 +77,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ComponentSpinnerComponent,
     MatCardModule,
     IgvViewerComponent,
+    HasPermissionDirective,
   ],
   templateUrl: './clinic-igv.component.html',
   styleUrl: './clinic-igv.component.scss',
@@ -95,7 +97,7 @@ export class ClinicIGVComponent {
     private dps: DportalService,
     private tstr: ToastrService,
     private cd: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.list(0);

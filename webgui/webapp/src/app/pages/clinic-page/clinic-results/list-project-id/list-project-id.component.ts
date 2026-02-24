@@ -39,6 +39,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from 'src/app/services/auth.service';
 import { AsyncPipe } from '@angular/common';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 import dayjs from 'dayjs';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import { clinicResort } from 'src/app/utils/clinic';
@@ -156,6 +157,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatSelectModule,
     AsyncPipe,
     MatSortModule,
+    HasPermissionDirective,
   ],
   templateUrl: './list-project-id.component.html',
   styleUrl: './list-project-id.component.scss',

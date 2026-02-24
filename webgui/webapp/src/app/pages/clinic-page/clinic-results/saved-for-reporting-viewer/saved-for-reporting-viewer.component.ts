@@ -13,7 +13,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import {
   MatPaginator,
@@ -30,6 +30,7 @@ import { REPORTING_CONFIGS } from '../hub_configs';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/services/auth.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 type SavedVariants = {
   name: string;
@@ -95,13 +96,14 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatIconModule,
     MatCardModule,
     MatTooltipModule,
+    MatDialogModule,
+    HasPermissionDirective,
   ],
   templateUrl: './saved-for-reporting-viewer.component.html',
   styleUrl: './saved-for-reporting-viewer.component.scss',
 })
 export class SavedForReportingViewerComponent
-  implements OnInit, OnChanges, OnDestroy
-{
+  implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @Output() listReports = new EventEmitter<any>(); // array of objects
@@ -122,7 +124,7 @@ export class SavedForReportingViewerComponent
     private dg: MatDialog,
     private ss: SpinnerService,
     private tstr: ToastrService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.savedVariantsChangedSubscription =
@@ -298,9 +300,8 @@ export class SavedForReportingViewerComponent
         if (res && res.success) {
           console.log(res);
           const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${this.requestId
+            }_${new Date().toISOString()}_report.pdf`;
           this.downloadLink.nativeElement.href = dataUrl;
           this.downloadLink.nativeElement.click();
         } else if (res && !res.success) {
@@ -321,9 +322,8 @@ export class SavedForReportingViewerComponent
         if (res && res.success) {
           console.log(res);
           const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${this.requestId
+            }_${new Date().toISOString()}_report.pdf`;
           this.downloadLink.nativeElement.href = dataUrl;
           this.downloadLink.nativeElement.click();
         } else if (res && !res.success) {
@@ -344,9 +344,8 @@ export class SavedForReportingViewerComponent
         if (res && res.success) {
           console.log(res);
           const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${this.requestId
+            }_${new Date().toISOString()}_report.pdf`;
           this.downloadLink.nativeElement.href = dataUrl;
           this.downloadLink.nativeElement.click();
         } else if (res && !res.success) {
@@ -367,9 +366,8 @@ export class SavedForReportingViewerComponent
         if (res && res.success) {
           console.log(res);
           const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${this.requestId
+            }_${new Date().toISOString()}_report.pdf`;
           this.downloadLink.nativeElement.href = dataUrl;
           this.downloadLink.nativeElement.click();
         } else if (res && !res.success) {
@@ -390,9 +388,8 @@ export class SavedForReportingViewerComponent
         if (res && res.success) {
           console.log(res);
           const dataUrl = `data:application/pdf;base64,${res.content}`;
-          this.downloadLink.nativeElement.download = `${this.projectName}_${
-            this.requestId
-          }_${new Date().toISOString()}_report.pdf`;
+          this.downloadLink.nativeElement.download = `${this.projectName}_${this.requestId
+            }_${new Date().toISOString()}_report.pdf`;
           this.downloadLink.nativeElement.href = dataUrl;
           this.downloadLink.nativeElement.click();
         } else if (res && !res.success) {

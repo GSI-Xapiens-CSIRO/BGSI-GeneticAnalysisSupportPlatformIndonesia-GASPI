@@ -7,6 +7,7 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 @Component({
   selector: 'app-admin-folder-list',
@@ -17,6 +18,7 @@ import { DportalService } from 'src/app/services/dportal.service';
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
+    HasPermissionDirective,
   ],
   templateUrl: './admin-folder-list.component.html',
   styleUrl: './admin-folder-list.component.scss',
@@ -31,7 +33,7 @@ export class AdminFolderListComponent implements OnInit, AfterViewInit {
     private dps: DportalService,
     private tstr: ToastrService,
     private dg: MatDialog,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.list();

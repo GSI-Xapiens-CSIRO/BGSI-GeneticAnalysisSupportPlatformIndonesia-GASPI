@@ -43,6 +43,7 @@ import { UserQuotaService } from 'src/app/services/userquota.service';
 import { NotebookRole } from 'src/app/pages/admin-page/components/enums';
 import { Router, NavigationEnd } from '@angular/router';
 import { MatTooltip } from '@angular/material/tooltip';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 export type InstanceName = string;
 
@@ -67,6 +68,7 @@ export interface InstanceStartInfo {
     NotebookItemComponent,
     MatExpansionModule,
     MatTooltip,
+    HasPermissionDirective,
   ],
   templateUrl: './user-notebook-list.component.html',
   styleUrl: './user-notebook-list.component.scss',
@@ -204,7 +206,7 @@ export class UserNotebookListComponent implements OnInit {
       maxHeight: '90vh',
     });
 
-    dialog.afterClosed().subscribe(() => {});
+    dialog.afterClosed().subscribe(() => { });
   }
 
   remove(notebook: InstanceName) {

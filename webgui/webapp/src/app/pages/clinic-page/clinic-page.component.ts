@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterOutlet, UrlTree } from '@angular/router';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 @Component({
   selector: 'app-filters-page',
   templateUrl: './clinic-page.component.html',
   styleUrls: ['./clinic-page.component.scss'],
   standalone: true,
-  imports: [MatTabsModule, MatCardModule, RouterOutlet],
+  imports: [MatTabsModule, MatCardModule, RouterOutlet, HasPermissionDirective],
   animations: [],
 })
 export class ClinicPageComponent implements OnInit {

@@ -2,12 +2,7 @@
   <mat-card-content>
     <div class="flex flex-row justify-between items-center">
       <h2>Clinical Annotations</h2>
-      <button
-        mat-mini-fab
-        color="primary"
-        class="flex items-center"
-        (click)="refresh()"
-      >
+      <button mat-mini-fab color="primary" class="flex items-center" (click)="refresh()">
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
@@ -16,114 +11,77 @@
     <div class="flex flex-col md:flex-row gap-4 mt-4 mb-4">
       <mat-form-field class="flex-1" appearance="outline">
         <mat-label>Search annotations</mat-label>
-        <input
-          matInput
-          [(ngModel)]="searchTerm"
-          (input)="onSearchChange($event)"
-          placeholder="Search by annotation, name, user, or variants..."
-        />
+        <input matInput [(ngModel)]="searchTerm" (input)="onSearchChange($event)"
+          placeholder="Search by annotation, name, user, or variants..." />
         <mat-icon matSuffix>search</mat-icon>
         @if (searchTerm) {
-          <button
-            matSuffix
-            mat-mini-fab
-            color="primary"
-            class="mr-2"
-            (click)="clearSearch()"
-            matTooltip="Clear search"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
+        <button matSuffix mat-mini-fab color="primary" class="mr-2" (click)="clearSearch()" matTooltip="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
         }
       </mat-form-field>
 
 
     </div>
 
-    <div
-      class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2"
-    >
+    <div class="flex flex-col border-solid border-1 rounded-[4px] border-cyan-700 p-2 mt-2">
       @for (annot of annotations; track $index) {
-        <div>
-          <div class="flex flex-row justify-between items-center">
-            <h3>{{ annot.annotation }}</h3>
-            <div class="flex flex-row items-center gap-2">
-              @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
-                <button
-                  matTooltip="View detail variants"
-                  mat-mini-fab
-                  color="primary"
-                  class="flex items-center"
-                  (click)="handleSelectAnotation(annot)"
-                >
-                  <mat-icon>open_in_new</mat-icon>
-                </button>
-              }
-              <button
-                mat-mini-fab
-                matTooltip="Add to reporting"
-                color="primary"
-                class="flex items-center"
-                (click)="openAddToReportingDialog(annot.variants)"
-              >
-                <mat-icon>add</mat-icon>
-              </button>
-              <button
-                mat-mini-fab
-                matTooltip="Delete annotations"
-                color="primary"
-                class="flex items-center"
-                (click)="deleteAnnotation(annot.name)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+      <div>
+        <div class="flex flex-row justify-between items-center">
+          <h3>{{ annot.annotation }}</h3>
+          <div class="flex flex-row items-center gap-2">
+            @if (["RSCM", "RSSARDJITO"].includes(hubName)) {
+            <button matTooltip="View detail variants" mat-mini-fab color="primary" class="flex items-center"
+              (click)="handleSelectAnotation(annot)">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+            }
+            <button *hasPermission="'clinic_workflow_result.create'" mat-mini-fab matTooltip="Add to reporting"
+              color="primary" class="flex items-center" (click)="openAddToReportingDialog(annot.variants)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button *hasPermission="'clinic_workflow_annotation.delete'" mat-mini-fab matTooltip="Delete annotations"
+              color="primary" class="flex items-center" (click)="deleteAnnotation(annot.name)">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
-          <div class="text-wrap break-words mt-1">
-            @for (info of annot.variants; track $index; let itemLast = $last) {
-              <div>
-                @for (item of info | keyvalue; track $index) {
-                  {{ item.key }}: {{ item.value }}
-                  @if (!$last) {
-                    |
-                  }
-                }
-              </div>
-              @if (!itemLast) {
-                <hr class="bg-primary-50 h-0.5 border-0" />
-              }
+        </div>
+        <div class="text-wrap break-words mt-1">
+          @for (info of annot.variants; track $index; let itemLast = $last) {
+          <div>
+            @for (item of info | keyvalue; track $index) {
+            {{ item.key }}: {{ item.value }}
+            @if (!$last) {
+            |
+            }
             }
           </div>
-          <span class="text-xs"
-            >Annotated by: {{ annot.user?.firstName }}
-            {{ annot.user?.lastName }} ({{ annot.user?.email }})</span
-          >
-          <br />
-          <span class="text-xs"
-            >Annotated at:
-            {{ annot.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span
-          >
-          <br />
-        </div>
-        @if (!$last) {
-          <div class="w-full h-1 bg-primary-60 my-2"></div>
-        }
-      } @empty {
-        <div class="text-center">
-          @if (searchTerm) {
-            No annotations found matching "{{ searchTerm }}"
-          } @else {
-            No annotations available
+          @if (!itemLast) {
+          <hr class="bg-primary-50 h-0.5 border-0" />
+          }
           }
         </div>
+        <span class="text-xs">Annotated by: {{ annot.user?.firstName }}
+          {{ annot.user?.lastName }} ({{ annot.user?.email }})</span>
+        <br />
+        <span class="text-xs">Annotated at:
+          {{ annot.createdAt | date: "yyyy-MM-dd HH:mm:ss" }}</span>
+        <br />
+      </div>
+      @if (!$last) {
+      <div class="w-full h-1 bg-primary-60 my-2"></div>
+      }
+      } @empty {
+      <div class="text-center">
+        @if (searchTerm) {
+        No annotations found matching "{{ searchTerm }}"
+        } @else {
+        No annotations available
+        }
+      </div>
       }
     </div>
-    <mat-paginator
-      #paginator
-      [pageSizeOptions]="[5, 10, 50]"
-      [pageSize]="pageSize"
-      length="9999"
-      (page)="pageChange($event)"
-    ></mat-paginator>
+    <mat-paginator #paginator [pageSizeOptions]="[5, 10, 50]" [pageSize]="pageSize" length="9999"
+      (page)="pageChange($event)"></mat-paginator>
   </mat-card-content>
 </mat-card>

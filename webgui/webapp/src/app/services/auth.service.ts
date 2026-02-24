@@ -10,6 +10,7 @@ import { environment } from 'src/environments/environment';
 export class AuthService {
   public user = new BehaviorSubject<any | null>(null);
   public userGroups = new BehaviorSubject<Set<string>>(new Set([]));
+  public permissions = new BehaviorSubject<Set<string>>(new Set([]));
   public promptReloadAndLogin = new BehaviorSubject<boolean>(false);
   private tempUser: any = null;
 
@@ -22,6 +23,27 @@ export class AuthService {
           break;
       }
     });
+  }
+
+  private decodeToken(token: string): any {
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const payload = parts[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decoded);
+    } catch (e) {
+      console.error('Error decoding token', e);
+      return null;
+    }
+  }
+
+  public hasPermission(permission: string | string[]): boolean {
+    const currentPermissions = this.permissions.value;
+    if (Array.isArray(permission)) {
+      return permission.some((p) => currentPermissions.has(p));
+    }
+    return currentPermissions.has(permission);
   }
 
   async signIn(username: string, password: string) {
@@ -114,9 +136,23 @@ export class AuthService {
         console.error('Error fetching permissions token', err);
       }
 
+      // Load permissions from local storage
+      const token = localStorage.getItem('x-permissions-token');
+      if (token) {
+        const decoded = this.decodeToken(token);
+        if (decoded && decoded.permissions) {
+          this.permissions.next(new Set(decoded.permissions));
+        } else {
+          this.permissions.next(new Set([]));
+        }
+      } else {
+        this.permissions.next(new Set([]));
+      }
+
       return true;
     } catch (error) {
       this.userGroups.next(new Set([]));
+      this.permissions.next(new Set([]));
       this.user.next(null);
       return false;
     }

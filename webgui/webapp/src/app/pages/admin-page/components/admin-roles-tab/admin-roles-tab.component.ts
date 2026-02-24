@@ -22,6 +22,9 @@ import { MatPaginator, MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { ToastrService } from 'ngx-toastr';
 import { RoleService, Role } from '../../services/role.service';
+import { ActionConfirmationDialogComponent } from 'src/app/components/action-confirmation-dialog/action-confirmation-dialog.component';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
+import { AuthService } from 'src/app/services/auth.service';
 import { catchError, of, debounceTime, distinctUntilChanged, BehaviorSubject, Subject } from 'rxjs';
 import * as _ from 'lodash';
 
@@ -70,6 +73,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatDialogModule,
     MatPaginatorModule,
     ComponentSpinnerComponent,
+    HasPermissionDirective,
   ],
 })
 export class AdminRolesTabComponent implements OnInit {
@@ -92,6 +96,7 @@ export class AdminRolesTabComponent implements OnInit {
   paginator!: MatPaginator;
 
   constructor(
+    public auth: AuthService,
     private fb: FormBuilder,
     private roleService: RoleService,
     private toastr: ToastrService,

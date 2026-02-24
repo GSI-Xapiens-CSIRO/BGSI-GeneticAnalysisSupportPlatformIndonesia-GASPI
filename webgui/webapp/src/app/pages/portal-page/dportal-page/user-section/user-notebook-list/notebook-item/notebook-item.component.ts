@@ -7,6 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { catchError, of } from 'rxjs';
 import { AwsService } from 'src/app/services/aws.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 
 export enum Status {
   PENDING = 'Pending',
@@ -31,7 +32,13 @@ export interface SignedNotebookUrl {
 @Component({
   selector: 'app-notebook-item',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    MatTooltipModule,
+    HasPermissionDirective,
+  ],
   templateUrl: './notebook-item.component.html',
   styleUrl: './notebook-item.component.scss',
 })
@@ -46,7 +53,7 @@ export class NotebookItemComponent implements OnInit {
     private dps: DportalService,
     private dg: MatDialog,
     private aws: AwsService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.getStatus();

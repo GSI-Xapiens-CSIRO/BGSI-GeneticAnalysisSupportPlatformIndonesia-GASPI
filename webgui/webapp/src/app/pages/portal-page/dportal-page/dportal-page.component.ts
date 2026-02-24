@@ -1,4 +1,5 @@
 import { AsyncPipe } from '@angular/common';
+import { HasPermissionDirective } from 'src/app/directives/has-permission.directive';
 import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { AuthService } from 'src/app/services/auth.service';
@@ -21,10 +22,11 @@ import { AdminSectionComponent } from './admin-section/admin-section.component';
     UserProjectsListComponent,
     UserSectionComponent,
     AdminSectionComponent,
+    HasPermissionDirective,
   ],
   templateUrl: './dportal-page.component.html',
   styleUrl: './dportal-page.component.scss',
 })
 export class DportalPageComponent {
-  constructor(protected auth: AuthService) {}
+  constructor(protected auth: AuthService) { }
 }
