@@ -50,11 +50,18 @@ Amplify.configure({
         ...environment.api_endpoint_clinic,
         custom_header: async () => {
           try {
-            return {
+            const headers: any = {
               Authorization: `Bearer ${(await Auth.currentSession())
                 .getIdToken()
                 .getJwtToken()}`,
             };
+
+            const permToken = localStorage.getItem('x-permissions-token');
+            if (permToken) {
+              headers['X-Permissions-Token'] = permToken;
+            }
+
+            return headers;
           } catch (error) {
             return {};
           }
