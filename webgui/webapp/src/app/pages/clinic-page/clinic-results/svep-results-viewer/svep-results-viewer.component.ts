@@ -676,7 +676,7 @@ export class SvepResultsViewerComponent
       .open(FilterModalComponent, {
         width: '950px',
         maxHeight: '90vh',
-        data: { fields: colomnFields },
+        data: { fields: colomnFields, existingFilter: this.group },
       })
       .afterClosed()
       .subscribe((result) => {
@@ -701,6 +701,7 @@ export class SvepResultsViewerComponent
 
   resetAdvanceFilter() {
     this.hasAppliedAdvancedFilter = false;
+    this.group = { type: 'group', condition: 'AND', children: [] };
     this.dataRows.next([...this.originalRows]);
   }
 }

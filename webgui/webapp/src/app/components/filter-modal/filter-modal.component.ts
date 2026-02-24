@@ -13,16 +13,17 @@ import { FilterBuilderComponent } from './filter-builder.component';
   styleUrls: ['./filter-modal.component.scss'],
 })
 export class FilterModalComponent {
-  filter: FilterGroup = {
-    type: 'group',
-    condition: 'AND',
-    children: [],
-  };
+  filter: FilterGroup;
 
   constructor(
     private dialogRef: MatDialogRef<FilterModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { fields: FieldConfig[] },
-  ) {}
+    @Inject(MAT_DIALOG_DATA) public data: { fields: FieldConfig[]; existingFilter?: FilterGroup },
+  ) {
+    // If an existing filter is provided, deep-clone it so edits don't mutate the caller's state
+    this.filter = data.existingFilter
+      ? JSON.parse(JSON.stringify(data.existingFilter))
+      : { type: 'group', condition: 'AND', children: [] };
+  }
 
   get fields(): FieldConfig[] {
     return this.data.fields;

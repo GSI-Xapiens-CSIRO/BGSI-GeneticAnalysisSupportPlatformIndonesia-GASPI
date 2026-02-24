@@ -336,6 +336,22 @@
       </div>
     } -->
 
+    <!-- FAQ box -->
+    <div
+      class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+    >
+      <div class="flex flex-row gap-2 items-center">
+        <mat-icon class="text-primary-50"> info </mat-icon>
+        <div>Need help understanding filters?</div>
+      </div>
+      <div
+        (click)="handleRedirectFAQ()"
+        class="font-medium text-primary-60 cursor-pointer"
+      >
+        Learn more in the FAQ
+      </div>
+    </div>
+
     <!-- advance filter diplotypes -->
     <div class="mb-6">
       <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
@@ -372,27 +388,15 @@
     </div>
 
     <div
-      class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
-    >
-      <div class="flex flex-row gap-2 items-center">
-        <mat-icon class="text-primary-50"> info </mat-icon>
-        <div>Need help understanding filters?</div>
-      </div>
-      <div
-        (click)="handleRedirectFAQ()"
-        class="font-medium text-primary-60 cursor-pointer"
-      >
-        Learn more in the FAQ
-      </div>
-    </div>
-
-    <div
       *ngIf="summaryText && typeFilter === 'diplotypes'"
       class="result-container"
     >
       <div style="font-size: medium; font-weight: 400">Show data where</div>
       <div class="filter-summary" [innerHTML]="summaryText"></div>
     </div>
+
+
+    
 
     @if (diplotypeDataRows.value.length > 0) {
       <div

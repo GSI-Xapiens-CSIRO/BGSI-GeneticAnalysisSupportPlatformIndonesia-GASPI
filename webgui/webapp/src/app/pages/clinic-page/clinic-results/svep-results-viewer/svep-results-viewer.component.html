@@ -144,6 +144,22 @@
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
 
+      <!-- FAQ box -->
+      <div
+        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+      >
+        <div class="flex flex-row gap-2 items-center">
+          <mat-icon class="text-primary-50"> info </mat-icon>
+          <div>Need help understanding filters?</div>
+        </div>
+        <div
+          (click)="handleRedirectFAQ()"
+          class="font-medium text-primary-60 cursor-pointer"
+        >
+          Learn more in the FAQ
+        </div>
+      </div>
+
       <!-- advanced filter -->
       <div class="mb-6">
         <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
@@ -184,52 +200,44 @@
         <div class="filter-summary" [innerHTML]="summaryText"></div>
       </div>
 
-      <div
-        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
-      >
-        <div class="flex flex-row gap-2 items-center">
-          <mat-icon class="text-primary-50"> info </mat-icon>
-          <div>Need help understanding filters?</div>
-        </div>
-        <div
-          (click)="handleRedirectFAQ()"
-          class="font-medium text-primary-60 cursor-pointer"
-        >
-          Learn more in the FAQ
-        </div>
-      </div>
 
-      <div class="w-full" id="myTarget">
-        <cdk-virtual-scroll-viewport
-          [style.height.px]="900"
-          class="no-scrollbar"
+      @if (dataRows.value.length > 0) {
+        <div class="w-full" id="myTarget">
+          <cdk-virtual-scroll-viewport
+            [style.height.px]="900"
+            class="no-scrollbar"
+          >
+            @if (rows.length > 0) {
+              <div class="flex flex-col gap-2">
+                @for (row of rows; track row) {
+                  <box-data-component
+                    [row]="row"
+                    [rows]="rows"
+                    [expanded]="expandedMap.get(row.id) ?? false"
+                    (panelToggled)="onToggle(row.id, $event)"
+                    [isSelected]="handleIsSelected(row)"
+                    [isBookmark]="checkIsMarked(row)"
+                  />
+                }
+              </div>
+            }
+          </cdk-virtual-scroll-viewport>
+        </div>
+        <mat-paginator
+          showFirstLastButtons
+          #paginator
+          hidePageSize
+          pageSize="1"
+          [length]="resultsLength"
+          [pageIndex]="pageIndex"
+          (page)="pageChange($event)"
         >
-          @if (rows.length > 0) {
-            <div class="flex flex-col gap-2">
-              @for (row of rows; track row) {
-                <box-data-component
-                  [row]="row"
-                  [rows]="rows"
-                  [expanded]="expandedMap.get(row.id) ?? false"
-                  (panelToggled)="onToggle(row.id, $event)"
-                  [isSelected]="handleIsSelected(row)"
-                  [isBookmark]="checkIsMarked(row)"
-                />
-              }
-            </div>
-          }
-        </cdk-virtual-scroll-viewport>
-      </div>
-      <mat-paginator
-        showFirstLastButtons
-        #paginator
-        hidePageSize
-        pageSize="1"
-        [length]="resultsLength"
-        [pageIndex]="pageIndex"
-        (page)="pageChange($event)"
-      >
-      </mat-paginator>
+        </mat-paginator>
+      } @else {
+        <div class="flex flex-row space-x-1 items-center mb-2">
+          <p>No results to show.</p>
+        </div>
+      }
     } @else {
       <div class="flex flex-row space-x-1 items-center mb-2">
         <p>No results to show.</p>

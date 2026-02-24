@@ -40,8 +40,39 @@ export class FilterBuilderComponent {
 
   operatorMap = operatorMap;
   operatorLabels = OperatorLabels;
+
+  // Search terms for searchable dropdowns
+  fieldSearchTerm = '';
+  operatorSearchTerm = '';
+
   get summaryText(): string {
     return GetFilterSummaryText(this.group);
+  }
+
+  /** Return fields filtered by search term */
+  getFilteredFields(): FieldConfig[] {
+    if (!this.fieldSearchTerm) return this.fields;
+    const term = this.fieldSearchTerm.toLowerCase();
+    return this.fields.filter(f => f.field.toLowerCase().includes(term));
+  }
+
+  /** Return operators filtered by search term */
+  getFilteredOperators(dataType: DataType): string[] {
+    const ops = operatorMap[dataType] || [];
+    if (!this.operatorSearchTerm) return ops;
+    const term = this.operatorSearchTerm.toLowerCase();
+    return ops.filter(op => {
+      const label = (this.operatorLabels[op] || op).toLowerCase();
+      return label.includes(term);
+    });
+  }
+
+  /** Clear search term when a select panel is closed */
+  onSelectOpenedChange(opened: boolean, type: 'field' | 'operator') {
+    if (!opened) {
+      if (type === 'field') this.fieldSearchTerm = '';
+      if (type === 'operator') this.operatorSearchTerm = '';
+    }
   }
 
   emitChange() {
