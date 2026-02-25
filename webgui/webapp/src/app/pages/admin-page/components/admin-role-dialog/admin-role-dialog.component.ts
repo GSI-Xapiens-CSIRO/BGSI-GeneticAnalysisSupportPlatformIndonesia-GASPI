@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { ToastrService } from 'ngx-toastr';
 import { RoleService, Role, PermissionsMatrix } from '../../services/role.service';
@@ -38,6 +39,7 @@ import { catchError, of } from 'rxjs';
     MatButtonModule,
     MatCheckboxModule,
     MatSlideToggleModule,
+    MatTooltipModule,
     ComponentSpinnerComponent,
   ],
 })
@@ -101,7 +103,10 @@ export class AdminRoleDialogComponent implements OnInit {
       });
   }
 
-  togglePermission(permissionId: string): void {
+  togglePermission(permission: any): void {
+    if (!permission || permission.disabled) return;
+
+    const permissionId = permission.id;
     if (this.selectedPermissions.has(permissionId)) {
       this.selectedPermissions.delete(permissionId);
     } else {
@@ -109,32 +114,49 @@ export class AdminRoleDialogComponent implements OnInit {
     }
   }
 
-  isPermissionChecked(permissionId: string): boolean {
-    return this.selectedPermissions.has(permissionId);
+  isPermissionChecked(permission: any): boolean {
+    if (!permission) return false;
+    return this.selectedPermissions.has(permission.id);
+  }
+
+  isPermissionDisabled(permission: any): boolean {
+    return permission?.disabled === true;
   }
 
   toggleAllResourcePermissions(resource: any): void {
     const allChecked = this.areAllResourcePermissionsChecked(resource);
 
-    Object.values(resource.permissions).forEach((permissionId: any) => {
+    Object.values(resource.permissions).forEach((permission: any) => {
+      // Skip disabled permissions
+      if (!permission || permission.disabled) return;
+
       if (allChecked) {
-        this.selectedPermissions.delete(permissionId);
+        this.selectedPermissions.delete(permission.id);
       } else {
-        this.selectedPermissions.add(permissionId);
+        this.selectedPermissions.add(permission.id);
       }
     });
   }
 
   areAllResourcePermissionsChecked(resource: any): boolean {
-    return Object.values(resource.permissions).every((permissionId: any) =>
-      this.selectedPermissions.has(permissionId)
+    const enabledPermissions = Object.values(resource.permissions).filter(
+      (p: any) => p && !p.disabled
+    );
+    if (enabledPermissions.length === 0) return false;
+
+    return enabledPermissions.every((permission: any) =>
+      this.selectedPermissions.has(permission.id)
     );
   }
 
   areSomeResourcePermissionsChecked(resource: any): boolean {
-    const permissions = Object.values(resource.permissions) as string[];
-    const checkedCount = permissions.filter(p => this.selectedPermissions.has(p)).length;
-    return checkedCount > 0 && checkedCount < permissions.length;
+    const enabledPermissions = Object.values(resource.permissions).filter(
+      (p: any) => p && !p.disabled
+    );
+    const checkedCount = enabledPermissions.filter((p: any) =>
+      this.selectedPermissions.has(p.id)
+    ).length;
+    return checkedCount > 0 && checkedCount < enabledPermissions.length;
   }
 
   onSubmit(): void {
