@@ -149,4 +149,28 @@ mat-dialog-actions {
       border-color: #fff !important;
     }
   }
+
+  // Styling for disabled checkboxes
+  .mat-mdc-checkbox.mat-mdc-checkbox-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5;
+
+    .mdc-checkbox {
+      cursor: not-allowed !important;
+    }
+
+    .mdc-checkbox__background {
+      background-color: #e0e0e0 !important;
+      border-color: #bdbdbd !important;
+    }
+
+    .mdc-checkbox__checkmark {
+      color: #9e9e9e !important;
+    }
+
+    label {
+      cursor: not-allowed !important;
+      color: #9e9e9e !important;
+    }
+  }
 }

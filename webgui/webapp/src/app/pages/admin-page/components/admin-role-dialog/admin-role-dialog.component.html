@@ -55,8 +55,10 @@
                 <mat-checkbox
                   *ngIf="resource.permissions[action]"
                   [checked]="isPermissionChecked(resource.permissions[action])"
+                  [disabled]="isPermissionDisabled(resource.permissions[action])"
                   (change)="togglePermission(resource.permissions[action])"
-                  color="primary"
+                  [color]="isPermissionDisabled(resource.permissions[action]) ? 'warn' : 'primary'"
+                  [matTooltip]="isPermissionDisabled(resource.permissions[action]) ? 'This permission combination is not available' : ''"
                 >
                 </mat-checkbox>
                 <span *ngIf="!resource.permissions[action]" class="no-permission">—</span>

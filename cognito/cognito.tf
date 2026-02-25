@@ -257,7 +257,6 @@ resource "aws_cognito_user" "guest" {
     ignore_changes = [
       password,
       attributes["identity_id"],
-      attributes["is_medical_director"],
     ]
   }
 
@@ -281,7 +280,6 @@ resource "aws_cognito_user" "admin" {
     ignore_changes = [
       password,
       attributes["identity_id"],
-      attributes["is_medical_director"],
     ]
   }
 
