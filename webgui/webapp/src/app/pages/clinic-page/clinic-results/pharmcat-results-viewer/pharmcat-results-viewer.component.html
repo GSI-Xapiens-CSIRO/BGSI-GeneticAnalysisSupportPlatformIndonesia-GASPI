@@ -189,8 +189,6 @@
         </span>
       </div>
     }
-
-    <h2>Diplotypes Table</h2>
     <!-- @if (diplotypeHasRows) {
       <div class="flex flex-row space-x-1 items-center mb-2">
         @if (!diplotypeScopeReduced) {
@@ -244,6 +242,30 @@
         }
       </div>
     } -->
+
+    <div class="flex flex-row space-x-1 items-center justify-between">
+      <h2>Diplotypes Table</h2>
+      @if ((cs.selectedVariants | async)!.size > 0) {
+        <div class="flex gap-2">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        </div>
+      }
+    </div>
 
     <!-- start advanced filter diplotypes -->
     <!-- @if (!diplotypeScopeReduced && diplotypeHasRows) {
@@ -354,13 +376,13 @@
 
     <!-- advance filter diplotypes -->
     <div class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
+      <div
+        class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden"
+      >
         <!-- Header / Title bar -->
         <div class="px-5 py-4 border-b border-gray-200 bg-white">
           <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-800">
-              Advanced Filter
-            </h2>
+            <h2 class="text-xl font-semibold text-gray-800">Advanced Filter</h2>
 
             <div class="flex items-center gap-3">
               <!-- Reset button (only shown when filters are active) -->
@@ -368,8 +390,9 @@
                 *ngIf="summaryText && typeFilter === 'diplotypes'"
                 mat-raised-button
                 class="min-w-[120px] shadow-none"
-                style="background-color: #ffa705; color: white;"
-                (click)="resetAdvanceFilter('diplotypes')">
+                style="background-color: #ffa705; color: white"
+                (click)="resetAdvanceFilter('diplotypes')"
+              >
                 Reset Filter
               </button>
 
@@ -378,7 +401,8 @@
                 mat-raised-button
                 color="primary"
                 class="min-w-[140px] shadow-none"
-                (click)="openAdvancedFilter('diplotypes')">
+                (click)="openAdvancedFilter('diplotypes')"
+              >
                 + Add Filter
               </button>
             </div>
@@ -394,9 +418,6 @@
       <div style="font-size: medium; font-weight: 400">Show data where</div>
       <div class="filter-summary" [innerHTML]="summaryText"></div>
     </div>
-
-
-    
 
     @if (diplotypeDataRows.value.length > 0) {
       <div
@@ -438,13 +459,13 @@
 
     <!-- advance filter -->
     <div class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
+      <div
+        class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden"
+      >
         <!-- Header / Title bar -->
         <div class="px-5 py-4 border-b border-gray-200 bg-white">
           <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-gray-800">
-              Advanced Filter
-            </h2>
+            <h2 class="text-xl font-semibold text-gray-800">Advanced Filter</h2>
 
             <div class="flex items-center gap-3">
               <!-- Reset button (only shown when filters are active) -->
@@ -452,8 +473,9 @@
                 *ngIf="summaryText && typeFilter === 'variants'"
                 mat-raised-button
                 class="min-w-[120px] shadow-none"
-                style="background-color: #ffa705; color: white;"
-                (click)="resetAdvanceFilter('variants')">
+                style="background-color: #ffa705; color: white"
+                (click)="resetAdvanceFilter('variants')"
+              >
                 Reset Filter
               </button>
 
@@ -462,7 +484,8 @@
                 mat-raised-button
                 color="primary"
                 class="min-w-[140px] shadow-none"
-                (click)="openAdvancedFilter('variants')">
+                (click)="openAdvancedFilter('variants')"
+              >
                 + Add Filter
               </button>
             </div>

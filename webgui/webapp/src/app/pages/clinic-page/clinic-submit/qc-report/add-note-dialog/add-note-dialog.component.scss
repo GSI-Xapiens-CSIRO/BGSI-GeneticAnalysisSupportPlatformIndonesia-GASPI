@@ -1,0 +1,43 @@
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #000000;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.dialog-title-icon {
+  color: #128f8a;
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+
+.dialog-btn-cancel {
+  background-color: #FFA705;
+  color: #fff;
+}
+
+.dialog-btn-save {
+  background-color: #128f8a;
+  color: #fff;
+}

@@ -100,7 +100,29 @@
         </mat-expansion-panel>
       </mat-accordion>
     }
-    <h2>Results Table</h2>
+    <div class="flex flex-row space-x-1 items-center justify-between mt-2">
+      <h2>Results Table</h2>
+      @if ((cs.selectedVariants | async)!.size > 0) {
+        <div class="flex gap-2">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        </div>
+      }
+    </div>
     @if (originalRows.length > 0) {
       <!-- <div class="flex flex-row space-x-1 items-center mb-2">
         <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
@@ -136,8 +158,8 @@
       </div> -->
 
       <!-- FAQ box -->
-       <div
-        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
+      <div
+        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-2 shadow-md border-2 border-red-500 rounded-md text-base"
       >
         <div class="flex flex-row gap-2 items-center">
           <mat-icon class="text-primary-50"> info </mat-icon>
@@ -153,7 +175,9 @@
 
       <!-- advanced filter -->
       <div class="mb-6">
-        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden">
+        <div
+          class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden"
+        >
           <!-- Header / Title bar -->
           <div class="px-5 py-4 border-b border-gray-200 bg-white">
             <div class="flex items-center justify-between">
@@ -167,8 +191,9 @@
                   *ngIf="summaryText && hasAppliedAdvancedFilter"
                   mat-raised-button
                   class="min-w-[120px] shadow-none"
-                  style="background-color: #ffa705; color: white;"
-                  (click)="resetAdvanceFilter()">
+                  style="background-color: #ffa705; color: white"
+                  (click)="resetAdvanceFilter()"
+                >
                   Reset Filter
                 </button>
 
@@ -177,7 +202,8 @@
                   mat-raised-button
                   color="primary"
                   class="min-w-[140px] shadow-none"
-                  (click)="openAdvancedFilter()">
+                  (click)="openAdvancedFilter()"
+                >
                   + Add Filter
                 </button>
               </div>
@@ -277,7 +303,6 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div> -->
-
 
       <!-- @if (dataRows.value.length > 0) { -->
       <div class="mb-2">

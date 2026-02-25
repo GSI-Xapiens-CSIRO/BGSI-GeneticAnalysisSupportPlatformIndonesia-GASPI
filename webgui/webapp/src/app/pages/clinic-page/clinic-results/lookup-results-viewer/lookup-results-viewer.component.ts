@@ -62,9 +62,16 @@ import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { Router } from '@angular/router';
-import { evaluateGroup, FilterGroup, GetFilterSummaryText } from 'src/app/utils/filter';
+import {
+  evaluateGroup,
+  FilterGroup,
+  GetFilterSummaryText,
+} from 'src/app/utils/filter';
 import { FilterModalComponent } from 'src/app/components/filter-modal/filter-modal.component';
-import { LOOKUP_FILTER_FIELDS_RSIGNG, LOOKUP_FILTER_FIELDS_RSJPD } from './lookup-results-viewer.types';
+import {
+  LOOKUP_FILTER_FIELDS_RSIGNG,
+  LOOKUP_FILTER_FIELDS_RSJPD,
+} from './lookup-results-viewer.types';
 
 type LookupResult = {
   url?: string;
@@ -675,10 +682,10 @@ export class LookupResultsViewerComponent
   };
 
   openAdvancedFilter() {
-
-    const colomnField = this.hubName === "RSIGNG"
-      ? LOOKUP_FILTER_FIELDS_RSIGNG
-      : LOOKUP_FILTER_FIELDS_RSJPD;
+    const colomnField =
+      this.hubName === 'RSIGNG'
+        ? LOOKUP_FILTER_FIELDS_RSIGNG
+        : LOOKUP_FILTER_FIELDS_RSJPD;
 
     this.dg
       .open(FilterModalComponent, {
@@ -696,13 +703,12 @@ export class LookupResultsViewerComponent
 
   private applyAdvancedFilter(filter: FilterGroup) {
     const filtered = this.originalRows.filter((row) =>
-      evaluateGroup(filter, row)
+      evaluateGroup(filter, row),
     );
 
     this.hasAppliedAdvancedFilter = true;
     this.dataRows.next(filtered);
   }
-
 
   resetAdvanceFilter() {
     this.hasAppliedAdvancedFilter = false;

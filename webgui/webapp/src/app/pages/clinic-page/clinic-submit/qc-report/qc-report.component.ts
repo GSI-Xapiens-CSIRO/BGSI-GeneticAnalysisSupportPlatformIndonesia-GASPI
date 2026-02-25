@@ -14,11 +14,19 @@ import {
   throwError,
 } from 'rxjs';
 import { ClinicService } from 'src/app/services/clinic.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { AddNoteDialogComponent } from './add-note-dialog/add-note-dialog.component';
+import { DeleteNoteDialogComponent } from './delete-note-dialog/delete-note-dialog.component';
 
 export interface FileSelectEvent {
   projectName: string;
@@ -35,16 +43,30 @@ export interface QCItem {
   loading?: boolean;
 }
 
+export interface NoteItem {
+  id: string;
+  user: string;
+  email: string;
+  createdAt: string;
+  title: string;
+  description: string;
+}
+
 @Component({
   selector: 'qc-report',
   providers: [],
   standalone: true,
   imports: [
+    CommonModule,
     MatCardModule,
     ComponentSpinnerComponent,
     MatButtonModule,
     MatIconModule,
     MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatDialogModule,
+    MatTooltipModule,
     FormsModule,
   ],
   templateUrl: './qc-report.component.html',
@@ -92,18 +114,44 @@ export class QcReportComponent {
   ];
 
   loading = false;
-  notes = 'Loading...';
-  editNotes = false;
-  editNotesText = '';
+
+  // Notes
+  notesList: NoteItem[] = [];
+  filteredNotesList: NoteItem[] = [];
+  notesLoading = false;
+  searchText = '';
+  sortOrder = 'newest';
+  filterAuthor = '';
+  currentUserName = '';
+  currentUserEmail = '';
+
+  // Unique authors derived from text-filtered results
+  get filteredAuthors(): string[] {
+    let filtered = [...this.notesList];
+    if (this.searchText.trim()) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter(
+        (n) =>
+          n.title.toLowerCase().includes(search) ||
+          n.description.toLowerCase().includes(search) ||
+          n.user.toLowerCase().includes(search),
+      );
+    }
+    const authors = filtered.map((n) => n.user);
+    return [...new Set(authors)];
+  }
+
   private autoRetryInterval: any;
   maxRetries = 2;
 
   constructor(
     private tstr: ToastrService,
     private cs: ClinicService,
+    private authService: AuthService,
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -113,6 +161,26 @@ export class QcReportComponent {
     this.cd.detectChanges();
     this.runAllQC().then(() => this.startAutoRetry());
 
+    // Get current user
+    this.authService.user.subscribe((user) => {
+      if (user) {
+        this.currentUserName = user.username || 'Unknown';
+        this.currentUserEmail = user.attributes?.email || '';
+      }
+    });
+
+    // Load notes
+    this.loadNotes();
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.autoRetryInterval);
+  }
+
+  // ===== Notes Methods =====
+
+  loadNotes(): void {
+    this.notesLoading = true;
     this.cs
       .getQCNotes(this.projectName || '', this.fileName || '')
       .pipe(
@@ -124,24 +192,125 @@ export class QcReportComponent {
           return of(null);
         }),
       )
-      .subscribe((notes) => {
-        if (notes) {
-          this.notes = notes.notes || '';
+      .subscribe((res) => {
+        if (res) {
+          try {
+            const parsed = JSON.parse(res.notes || '[]');
+            this.notesList = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            // Legacy single-string notes — wrap into a note item if non-empty
+            if (res.notes && res.notes.trim()) {
+              this.notesList = [
+                {
+                  id: 'legacy_' + Date.now(),
+                  user: 'System',
+                  email: '',
+                  createdAt: new Date().toISOString(),
+                  title: 'Legacy Note',
+                  description: res.notes,
+                },
+              ];
+            } else {
+              this.notesList = [];
+            }
+          }
         } else {
-          this.notes = 'Failed to load notes.';
+          this.notesList = [];
         }
+        this.applyNotesFilter();
+        this.notesLoading = false;
+        this.cd.detectChanges();
       });
   }
 
-  ngOnDestroy(): void {
-    clearInterval(this.autoRetryInterval);
+  refreshNotes(): void {
+    this.loadNotes();
   }
 
-  saveNotes(): void {
-    const notes = this.editNotesText.trim();
+  openAddNoteDialog(): void {
+    const dialogRef = this.dialog.open(AddNoteDialogComponent, {
+      width: '1000px',
+      disableClose: true,
+    });
 
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        const now = new Date();
+        const newNote: NoteItem = {
+          id: this.currentUserName + '_' + Math.floor(now.getTime() / 1000),
+          user: this.currentUserName,
+          email: this.currentUserEmail,
+          createdAt: now.toISOString(),
+          title: result.title,
+          description: result.description,
+        };
+        this.notesList.push(newNote);
+        this.saveNotesToApi();
+        this.applyNotesFilter();
+      }
+    });
+  }
+
+  deleteNote(note: NoteItem): void {
+    const dialogRef = this.dialog.open(DeleteNoteDialogComponent, {
+      width: '434px',
+      data: { title: note.title },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.notesList = this.notesList.filter((n) => n.id !== note.id);
+        this.saveNotesToApi();
+        this.applyNotesFilter();
+      }
+    });
+  }
+
+  applyNotesFilter(): void {
+    let filtered = [...this.notesList];
+
+    if (this.searchText.trim()) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter(
+        (n) =>
+          n.title.toLowerCase().includes(search) ||
+          n.description.toLowerCase().includes(search) ||
+          n.user.toLowerCase().includes(search),
+      );
+    }
+
+    // Reset author filter if the selected author is not in filtered results
+    if (this.filterAuthor) {
+      const availableAuthors = [...new Set(filtered.map((n) => n.user))];
+      if (!availableAuthors.includes(this.filterAuthor)) {
+        this.filterAuthor = '';
+      } else {
+        filtered = filtered.filter((n) => n.user === this.filterAuthor);
+      }
+    }
+
+    // Sort
+    if (this.sortOrder === 'oldest') {
+      filtered.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    } else {
+      filtered.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    }
+
+    this.filteredNotesList = filtered;
+    this.cd.detectChanges();
+  }
+
+  private saveNotesToApi(): void {
+    const notesJson = JSON.stringify(this.notesList);
     this.cs
-      .updateQCNotes(this.projectName || '', this.fileName || '', notes)
+      .updateQCNotes(this.projectName || '', this.fileName || '', notesJson)
       .pipe(
         catchError((e) => {
           const errorMessage =
@@ -153,14 +322,14 @@ export class QcReportComponent {
       )
       .subscribe((res) => {
         if (res) {
-          this.notes = notes;
-          this.tstr.success('Notes saved successfully.', 'Success');
-          this.editNotes = false;
+          this.tstr.success('Notes updated successfully.', 'Success');
         } else {
           this.tstr.error('Failed to save notes.', 'Error');
         }
       });
   }
+
+  // ===== QC Methods =====
 
   async runAllQC(): Promise<void> {
     this.loading = true;
