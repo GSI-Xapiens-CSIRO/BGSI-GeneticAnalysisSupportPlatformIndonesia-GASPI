@@ -191,59 +191,34 @@
     }
 
     <h2>Diplotypes Table</h2>
-    <!-- @if (diplotypeHasRows) {
-      <div class="flex flex-row space-x-1 items-center mb-2">
-        @if (!diplotypeScopeReduced) {
-          <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
-            <mat-label>Filter term</mat-label>
-            <input matInput [formControl]="diplotypeFilterField" />
-          </mat-form-field>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="filterDiplotypes()"
-            class="w-[110px]"
-          >
-            Filter
-          </button>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="resetDiplotypes()"
-            class="w-[110px]"
-          >
-            Reset
-          </button>
-        } @else {
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="resetRelatedDiplotype()"
-            class="w-[200px]"
-          >
-            Clear Diplotype Filter
-          </button>
-        }
-        @if ((cs.selectedVariants | async)!.size > 0) {
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="openAnnotateDialog()"
-            class="w-[110px]"
-          >
-            Annotate
-          </button>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="openSaveForReportingDialog()"
-            class="w-[175px]"
-          >
-            Save for Reporting
-          </button>
-        }
-      </div>
-    } -->
+    @if (diplotypeHasRows) {
+    <div class="flex flex-row space-x-1 items-center justify-end mb-2">
+      <!-- @if (!diplotypeScopeReduced) {
+      <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+        <mat-label>Filter term</mat-label>
+        <input matInput [formControl]="diplotypeFilterField" />
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="filterDiplotypes()" class="w-[110px]">
+        Filter
+      </button>
+      <button mat-raised-button color="primary" (click)="resetDiplotypes()" class="w-[110px]">
+        Reset
+      </button>
+      } @else {
+      <button mat-raised-button color="primary" (click)="resetRelatedDiplotype()" class="w-[200px]">
+        Clear Diplotype Filter
+      </button>
+      } -->
+      @if ((cs.selectedVariants | async)!.size > 0) {
+      <button mat-raised-button color="primary" (click)="openAnnotateDialog()" class="w-[110px]">
+        Annotate
+      </button>
+      <button mat-raised-button color="primary" (click)="openSaveForReportingDialog()" class="w-[175px]">
+        Save for Reporting
+      </button>
+      }
+    </div>
+    }
 
     <!-- start advanced filter diplotypes -->
     <!-- @if (!diplotypeScopeReduced && diplotypeHasRows) {
@@ -396,7 +371,7 @@
     </div>
 
 
-    
+
 
     @if (diplotypeDataRows.value.length > 0) {
       <div
