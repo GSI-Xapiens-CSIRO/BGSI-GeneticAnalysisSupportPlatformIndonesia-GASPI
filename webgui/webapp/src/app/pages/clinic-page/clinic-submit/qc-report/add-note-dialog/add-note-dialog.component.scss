@@ -1,0 +1,31 @@
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #128f8a;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.dialog-title-icon {
+  color: #128f8a;
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 400px;
+  padding-top: 8px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.dialog-btn {
+  min-width: 100px;
+}

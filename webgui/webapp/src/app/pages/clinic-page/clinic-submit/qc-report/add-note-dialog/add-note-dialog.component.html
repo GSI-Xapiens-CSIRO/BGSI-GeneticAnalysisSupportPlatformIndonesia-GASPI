@@ -1,0 +1,37 @@
+<h1 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">note_add</mat-icon>
+  Add Note
+</h1>
+<div mat-dialog-content>
+  <form [formGroup]="noteForm" class="note-form">
+    <mat-form-field class="w-full" appearance="outline">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="Enter note title" />
+      <mat-error>Title is required</mat-error>
+    </mat-form-field>
+    <mat-form-field class="w-full" appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Enter note description"
+        rows="4"
+      ></textarea>
+      <mat-error>Description is required</mat-error>
+    </mat-form-field>
+  </form>
+</div>
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-stroked-button (click)="cancel()" class="dialog-btn">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="noteForm.invalid"
+    (click)="save()"
+    class="dialog-btn"
+  >
+    Save
+  </button>
+</div>

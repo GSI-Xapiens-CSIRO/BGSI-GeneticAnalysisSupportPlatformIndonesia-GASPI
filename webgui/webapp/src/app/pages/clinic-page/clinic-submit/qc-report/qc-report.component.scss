@@ -1,0 +1,231 @@
+// ===== Notes Section =====
+
+.notes-section {
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.notes-title {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #128f8a;
+}
+
+.notes-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.notes-action-btn {
+  background-color: #16B3AC !important;
+  color: white !important;
+  border-radius: 50%;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-content: center;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+
+  mat-icon {
+    color: white !important;
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  &:hover {
+    background-color: #128f8a !important;
+  }
+}
+
+// Row 2: Filters
+.notes-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.filter-search {
+  width: 100%;
+}
+
+.filter-select {
+  width: 100%;
+}
+
+.notes-list {
+  max-height: 500px;
+  overflow-y: auto;
+  border: none;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  padding-bottom: 20px;
+  scrollbar-width: none;
+}
+
+.notes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.notes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #9ca3af;
+  gap: 8px;
+
+  span {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.notes-empty-icon {
+  font-size: 2.5rem;
+  width: 40px;
+  height: 40px;
+  color: #d1d5db;
+}
+
+.note-item {
+  margin-top: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #FFFFFF;
+  transition: background-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #fafafa;
+  }
+}
+
+.note-row-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.note-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-avatar {
+  font-size: 2rem;
+  width: 32px;
+  height: 32px;
+  color: #128f8a;
+}
+
+.note-username {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.note-date {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.note-delete-btn {
+  background-color: #16B3AC !important;
+  color: white !important;
+  border-radius: 50%;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-content: center;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+
+  mat-icon {
+    color: white !important;
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  &:hover {
+    background-color: #128f8a !important;
+  }
+}
+
+.note-row-2 {
+  padding-left: 40px;
+}
+
+.note-content {
+  margin-top: 4px;
+  background-color: #F5F5F6;
+  border-left: 4px solid #16B3AC;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.note-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.4;
+  max-height: 80px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 2px;
+  }
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
