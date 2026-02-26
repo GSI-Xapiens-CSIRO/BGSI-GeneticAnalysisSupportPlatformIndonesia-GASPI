@@ -229,7 +229,7 @@ export class QcReportComponent {
 
   openAddNoteDialog(): void {
     const dialogRef = this.dialog.open(AddNoteDialogComponent, {
-      width: '500px',
+      width: '800px',
       disableClose: true,
     });
 
@@ -253,7 +253,7 @@ export class QcReportComponent {
 
   deleteNote(note: NoteItem): void {
     const dialogRef = this.dialog.open(DeleteNoteDialogComponent, {
-      width: '480px',
+      width: '434px',
       data: { title: note.title },
       disableClose: true,
     });

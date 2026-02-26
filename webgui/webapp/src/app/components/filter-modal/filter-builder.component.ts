@@ -41,6 +41,8 @@ export class FilterBuilderComponent {
   operatorMap = operatorMap;
   operatorLabels = OperatorLabels;
 
+  isArray = Array.isArray;
+
   // Search terms for searchable dropdowns
   fieldSearchTerm = '';
   operatorSearchTerm = '';
@@ -166,6 +168,10 @@ export class FilterBuilderComponent {
       }
     } else if (this.isNoValueOperator(rule.operator)) {
       rule.value = '';
+    } else if (this.isInOperator(rule.operator)) {
+      if (!Array.isArray(rule.value)) {
+        rule.value = rule.value ? [rule.value] : [];
+      }
     } else {
       if (Array.isArray(rule.value)) {
         rule.value = rule.value[0] ?? '';
@@ -225,15 +231,12 @@ export class FilterBuilderComponent {
   }
 
   onArrayInputChange(value: string, child: any) {
-    if (!value) {
+    if (value === null || value === undefined) {
       child.value = [];
       return;
     }
 
-    child.value = value
-      .split(',')
-      .map((v: string) => v.trim())
-      .filter((v: string) => v !== '');
+    child.value = value.split(',').map((v: string) => v.trim());
   }
 
   onGroupConditionChange(condition: 'AND' | 'OR') {

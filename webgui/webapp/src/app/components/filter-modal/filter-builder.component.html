@@ -107,6 +107,7 @@
                       matInput
                       type="date"
                       [(ngModel)]="child.value[0]"
+                      placeholder="Enter value to match"
                     />
                   </mat-form-field>
 
@@ -125,6 +126,7 @@
                       matInput
                       type="date"
                       [(ngModel)]="child.value[1]"
+                      placeholder="Enter date to match"
                     />
                   </mat-form-field>
                 </div>
@@ -193,7 +195,12 @@
                   >
                     <input
                       matInput
-                      [(ngModel)]="child.value"
+                      [ngModel]="
+                        isArray(child.value)
+                          ? child.value.join(',')
+                          : child.value
+                      "
+                      (ngModelChange)="onArrayInputChange($event, child)"
                       type="text"
                       placeholder="Enter value to match"
                     />

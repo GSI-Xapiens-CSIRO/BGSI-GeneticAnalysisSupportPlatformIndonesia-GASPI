@@ -266,35 +266,37 @@ export function evaluateRule(rule: any, item: any): boolean {
 
     case 'in':
       if (!Array.isArray(value)) return false;
+      const filteredInValue = value.filter((v: any) => v !== '');
 
       if (Array.isArray(normalizedData)) {
-        return normalizedData.some((v) => value.includes(v));
+        return normalizedData.some((v) => filteredInValue.includes(v));
       }
 
       if (
         typeof normalizedData === 'number' ||
         !isNaN(Number(normalizedData))
       ) {
-        return value.map(Number).includes(Number(normalizedData));
+        return filteredInValue.map(Number).includes(Number(normalizedData));
       }
 
-      return value.includes(normalizedData);
+      return filteredInValue.includes(normalizedData);
 
     case 'not_in':
       if (!Array.isArray(value)) return false;
+      const filteredNotInValue = value.filter((v: any) => v !== '');
 
       if (Array.isArray(normalizedData)) {
-        return !normalizedData.some((v) => value.includes(v));
+        return !normalizedData.some((v) => filteredNotInValue.includes(v));
       }
 
       if (
         typeof normalizedData === 'number' ||
         !isNaN(Number(normalizedData))
       ) {
-        return !value.map(Number).includes(Number(normalizedData));
+        return !filteredNotInValue.map(Number).includes(Number(normalizedData));
       }
 
-      return !value.includes(normalizedData);
+      return !filteredNotInValue.includes(normalizedData);
 
     /* =====================
          ARRAY FIELD
@@ -303,18 +305,24 @@ export function evaluateRule(rule: any, item: any): boolean {
     case 'array_contains':
       return Array.isArray(normalizedData) && normalizedData.includes(value);
 
+    case 'contains_any':
     case 'array_contains_any':
       return (
         Array.isArray(normalizedData) &&
         Array.isArray(value) &&
-        value.some((v) => normalizedData.includes(v))
+        value
+          .filter((v: any) => v !== '')
+          .some((v) => normalizedData.includes(v))
       );
 
+    case 'contains_all':
     case 'array_contains_all':
       return (
         Array.isArray(normalizedData) &&
         Array.isArray(value) &&
-        value.every((v) => normalizedData.includes(v))
+        value
+          .filter((v: any) => v !== '')
+          .every((v) => normalizedData.includes(v))
       );
 
     case 'array_length_equals':

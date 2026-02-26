@@ -703,8 +703,20 @@ export class PharmcatResultsViewerComponent implements OnInit {
 
   filterRelatedDiplotype(mappingId: string) {
     this.diplotypeScopeReduced = true;
-    this.diplotypeFilterField.setValue(mappingId);
-    this.filterDiplotypes();
+    this.groupDiplotypes = {
+      type: 'group',
+      condition: 'AND',
+      children: [
+        {
+          type: 'rule',
+          field: 'Related Variants',
+          operator: 'contains',
+          dataType: 'string',
+          value: mappingId,
+        },
+      ],
+    };
+    this.applyAdvancedFilterToDiplotypes(this.groupDiplotypes);
     this.cdr.detectChanges();
     this.filterValuesDyplotypes = {};
   }
@@ -717,7 +729,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
   }
 
   resetRelatedDiplotype() {
-    this.resetDiplotypes();
+    this.resetAdvanceFilter('diplotypes');
     this.diplotypeScopeReduced = false;
     this.filterValuesDyplotypes = {};
   }
@@ -738,17 +750,26 @@ export class PharmcatResultsViewerComponent implements OnInit {
 
   filterRelatedVariants = (mappingIds: string[]) => {
     this.variantScopeReduced = true;
-    this.variantFilterField.setValue('');
-    const terms = mappingIds;
-    clinicMultiFilter(this.variantOriginalRows, terms, (filtered) => {
-      this.variantDataRows.next(filtered);
-    });
+    this.groupVariants = {
+      type: 'group',
+      condition: 'AND',
+      children: [
+        {
+          type: 'rule',
+          field: 'Related Diplotypes',
+          operator: 'contains',
+          dataType: 'string',
+          value: mappingIds,
+        },
+      ],
+    };
+    this.applyAdvancedFilterToVariants(this.groupVariants);
     this.cdr.detectChanges();
     this.filterValuesVariants = {};
   };
 
   resetRelatedVariants() {
-    this.resetVariants();
+    this.resetAdvanceFilter('variants');
     this.variantScopeReduced = false;
     this.filterValuesVariants = {};
   }
@@ -961,12 +982,16 @@ export class PharmcatResultsViewerComponent implements OnInit {
   resetAdvanceFilter(type: 'variants' | 'diplotypes') {
     if (type === 'variants') {
       this.typeFilter = null;
+      this.variantScopeReduced = false;
+      this.variantFilterField.setValue('');
       this.variantDataRows.next([...this.variantOriginalRows]);
       this.groupVariants = { type: 'group', condition: 'AND', children: [] };
     }
 
     if (type === 'diplotypes') {
       this.typeFilter = null;
+      this.diplotypeScopeReduced = false;
+      this.diplotypeFilterField.setValue('');
       this.diplotypeDataRows.next([...this.diplotypeOriginalRows]);
       this.groupDiplotypes = { type: 'group', condition: 'AND', children: [] };
     }
