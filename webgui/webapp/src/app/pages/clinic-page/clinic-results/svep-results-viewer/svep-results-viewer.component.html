@@ -144,6 +144,27 @@
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
 
+      <div class="flex flex-row space-x-1 items-center justify-end mb-2">
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
+
       <!-- FAQ box -->
       <div
         class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"

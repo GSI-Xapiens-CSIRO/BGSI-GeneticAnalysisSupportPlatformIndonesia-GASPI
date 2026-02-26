@@ -102,38 +102,23 @@
     }
     <h2>Results Table</h2>
     @if (originalRows.length > 0) {
-      <!-- <div class="flex flex-row space-x-1 items-center mb-2">
-        <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
-          <mat-label>Filter term</mat-label>
-          <input matInput [formControl]="filterField" />
-        </mat-form-field>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="filter()"
-          class="w-[110px]"
-        >
-          Filter
-        </button>
-        @if ((cs.selectedVariants | async)!.size > 0) {
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="openAnnotateDialog()"
-            class="w-[110px]"
-          >
-            Annotate
-          </button>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="openSaveForReportingDialog()"
-            class="w-[175px]"
-          >
-            Save for Reporting
-          </button>
-        }
-      </div> -->
+    <div class="flex flex-row space-x-1 items-center justify-end mb-2">
+      <!-- <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+        <mat-label>Filter term</mat-label>
+        <input matInput [formControl]="filterField" />
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="filter()" class="w-[110px]">
+        Filter
+      </button> -->
+      @if ((cs.selectedVariants | async)!.size > 0) {
+      <button mat-raised-button color="primary" (click)="openAnnotateDialog()" class="w-[110px]">
+        Annotate
+      </button>
+      <button mat-raised-button color="primary" (click)="openSaveForReportingDialog()" class="w-[175px]">
+        Save for Reporting
+      </button>
+      }
+    </div>
 
       <!-- FAQ box -->
        <div

@@ -371,7 +371,7 @@ export class AdminUserClickDialogComponent implements OnInit, OnDestroy {
 
     this.ss.start();
     this.as
-      .createUser(formValue.firstName, formValue.lastName, formValue.email, {}, {})
+      .createUser(formValue.firstName, formValue.lastName, formValue.email, formValue.roleId)
       .pipe(
         catchError((e) => {
           if (_.get(e, 'response.data.error', '') === 'UsernameExistsException') {
@@ -391,7 +391,7 @@ export class AdminUserClickDialogComponent implements OnInit, OnDestroy {
           const uid = response?.uid ?? formValue.email;
           this.addUserQuota(uid);
           this.addUserInstitution(uid);
-          this.assignUserRole(uid);
+          // Role already assigned in backend, no need to call assignUserRole
           this.form.reset();
           this.dialogRef.close({ reload: true });
           this.tstr.success('User created successfully!', 'Success');

@@ -12,8 +12,7 @@ export class AdminService {
     firstName: string,
     lastName: string,
     email: string,
-    groups: any,
-    attributes: any,
+    roleId: string,
   ) {
     return from(
       API.post(environment.api_endpoint_sbeacon.name, 'admin/users', {
@@ -21,8 +20,7 @@ export class AdminService {
           first_name: firstName,
           last_name: lastName,
           email,
-          groups,
-          attributes,
+          role_id: roleId,
         },
       }),
     );

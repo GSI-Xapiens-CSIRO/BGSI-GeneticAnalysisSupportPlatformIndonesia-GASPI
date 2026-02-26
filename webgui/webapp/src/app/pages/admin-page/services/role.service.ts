@@ -15,11 +15,17 @@ export interface Role {
   users?: string[];
 }
 
+export interface PermissionObject {
+  id: string;
+  disabled: boolean;
+  exists: boolean;
+}
+
 export interface Permission {
   name: string;
   label: string;
   permissions: {
-    [action: string]: string;
+    [action: string]: PermissionObject;
   };
 }
 
