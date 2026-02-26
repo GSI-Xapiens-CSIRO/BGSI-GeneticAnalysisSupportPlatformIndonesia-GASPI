@@ -21,6 +21,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { RoleService, Role } from '../../services/role.service';
 import { catchError, of, debounceTime, distinctUntilChanged, BehaviorSubject, Subject } from 'rxjs';
 import * as _ from 'lodash';
@@ -70,6 +71,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatDialogModule,
     MatPaginatorModule,
     ComponentSpinnerComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
 })
 export class AdminRolesTabComponent implements OnInit {

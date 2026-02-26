@@ -8,6 +8,8 @@ import { UserNotebookListComponent } from './user-section/user-notebook-list/use
 import { UserProjectsListComponent } from './user-section/user-projects-list/user-projects-list.component';
 import { UserSectionComponent } from './user-section/user-section.component';
 import { AdminSectionComponent } from './admin-section/admin-section.component';
+import { HasPermissionDirective } from 'src/app/directives/permission.directive';
+import { PermissionService } from 'src/app/services/permission.service';
 
 @Component({
   selector: 'app-dportal-page',
@@ -21,10 +23,14 @@ import { AdminSectionComponent } from './admin-section/admin-section.component';
     UserProjectsListComponent,
     UserSectionComponent,
     AdminSectionComponent,
+    HasPermissionDirective,
   ],
   templateUrl: './dportal-page.component.html',
   styleUrl: './dportal-page.component.scss',
 })
 export class DportalPageComponent {
-  constructor(protected auth: AuthService) {}
+  constructor(
+    protected auth: AuthService,
+    protected permissionService: PermissionService,
+  ) { }
 }

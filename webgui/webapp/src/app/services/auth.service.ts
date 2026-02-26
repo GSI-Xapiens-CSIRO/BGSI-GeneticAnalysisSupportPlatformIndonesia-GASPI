@@ -4,6 +4,8 @@ import { BehaviorSubject } from 'rxjs';
 import _ from 'lodash';
 import { environment } from 'src/environments/environment';
 
+import { PermissionService } from './permission.service';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -13,7 +15,7 @@ export class AuthService {
   public promptReloadAndLogin = new BehaviorSubject<boolean>(false);
   private tempUser: any = null;
 
-  constructor() {
+  constructor(private permissionService: PermissionService) {
     this.refresh();
     Hub.listen('auth', async ({ payload: { event, data } }) => {
       switch (event) {
@@ -76,6 +78,7 @@ export class AuthService {
   async signOut() {
     await Auth.signOut();
     localStorage.removeItem('x-permissions-token');
+    this.permissionService.clearPermissions();
     await this.refresh();
     window.location.href = '/login';
   }
@@ -109,6 +112,7 @@ export class AuthService {
         );
         if (response && response.token) {
           localStorage.setItem('x-permissions-token', response.token);
+          this.permissionService.loadPermissions();
         }
       } catch (err) {
         console.error('Error fetching permissions token', err);

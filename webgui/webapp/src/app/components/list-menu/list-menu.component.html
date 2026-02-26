@@ -1,23 +1,21 @@
 <ul class="bui-menu-items">
   @if (auth.user | async) {
-    <li class="bui-menu-item" [routerLinkActive]="'active'">
-      <a [routerLink]="['home']" accesskey="1" title="">About</a>
-    </li>
-    <li class="bui-menu-item" [routerLinkActive]="'active'">
-      <a [routerLink]="['dportal']" accesskey="1" title="">Data Portal</a>
-    </li>
-    @if (["svep", "pgxflow"].includes(clinicMode)) {
-      <li class="bui-menu-item" [routerLinkActive]="'active'">
-        <a [routerLink]="['clinic']" accesskey="3" title="">Clinic</a>
-      </li>
-    }
-    <li class="bui-menu-item" [routerLinkActive]="'active'">
-      <a [routerLink]="['faq']" accesskey="1" title="">FAQs</a>
-    </li>
+  <li class="bui-menu-item" [routerLinkActive]="'active'">
+    <a [routerLink]="['home']" accesskey="1" title="">About</a>
+  </li>
+  <li *appHasPermission="'my_project.read'" class="bui-menu-item" [routerLinkActive]="'active'">
+    <a [routerLink]="['dportal']" accesskey="1" title="">Data Portal</a>
+  </li>
+  @if (["svep", "pgxflow"].includes(clinicMode)) {
+  <li *appHasPermission="'clinical_workflow_execution.read'" class="bui-menu-item" [routerLinkActive]="'active'">
+    <a [routerLink]="['clinic']" accesskey="3" title="">Clinic</a>
+  </li>
   }
-  @if ((auth.userGroups | async)!.has("administrators")) {
-    <li class="bui-menu-item" [routerLinkActive]="'active'">
-      <a [routerLink]="['admin']" title="">Admin</a>
-    </li>
+  <li *appHasPermission="'faq.read'" class="bui-menu-item" [routerLinkActive]="'active'">
+    <a [routerLink]="['faq']" accesskey="1" title="">FAQs</a>
+  </li>
+  <li *appHasPermission="'admin.read'" class="bui-menu-item" [routerLinkActive]="'active'">
+    <a [routerLink]="['admin']" title="">Admin</a>
+  </li>
   }
 </ul>

@@ -124,27 +124,37 @@
       }
     </div>
     @if (originalRows.length > 0) {
-    <div class="flex flex-row space-x-1 items-center justify-end mb-2">
-      <!-- <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
+      <div class="flex flex-row space-x-1 items-center justify-end mb-2">
+        <!-- <mat-form-field class="w-[200px]" [subscriptSizing]="'dynamic'">
         <mat-label>Filter term</mat-label>
         <input matInput [formControl]="filterField" />
       </mat-form-field>
       <button mat-raised-button color="primary" (click)="filter()" class="w-[110px]">
         Filter
       </button> -->
-      @if ((cs.selectedVariants | async)!.size > 0) {
-      <button mat-raised-button color="primary" (click)="openAnnotateDialog()" class="w-[110px]">
-        Annotate
-      </button>
-      <button mat-raised-button color="primary" (click)="openSaveForReportingDialog()" class="w-[175px]">
-        Save for Reporting
-      </button>
-      }
-    </div>
+        @if ((cs.selectedVariants | async)!.size > 0) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openAnnotateDialog()"
+            class="w-[110px]"
+          >
+            Annotate
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="openSaveForReportingDialog()"
+            class="w-[175px]"
+          >
+            Save for Reporting
+          </button>
+        }
+      </div>
 
       <!-- FAQ box -->
       <div
-        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-2 shadow-md border-2 border-red-500 rounded-md text-base"
+        class="bg-[#F1FDFD] flex flex-col md:flex-row gap-2 items-center text-black p-4 my-4 shadow-md border-2 border-red-500 rounded-md text-base"
       >
         <div class="flex flex-row gap-2 items-center">
           <mat-icon class="text-primary-50"> info </mat-icon>
@@ -187,6 +197,7 @@
                   mat-raised-button
                   color="primary"
                   class="min-w-[140px] shadow-none"
+                  [appDisableIfNoPermission]="'sbeacon_filter.read'"
                   (click)="openAdvancedFilter()"
                 >
                   + Add Filter

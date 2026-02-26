@@ -24,6 +24,7 @@ import {
   isStrongPassword,
   PasswordStrengthBarComponent,
 } from 'src/app/components/password-strength-bar/password-strength-bar.component';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { ToastrService } from 'ngx-toastr';
 
 /**
@@ -85,6 +86,8 @@ const mustNotMatch = (): ValidatorFn => {
     MatInputModule,
     MatButtonModule,
     PasswordStrengthBarComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   providers: [UserService],
 })
