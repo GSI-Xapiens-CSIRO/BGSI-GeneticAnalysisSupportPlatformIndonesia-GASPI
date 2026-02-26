@@ -32,6 +32,7 @@ import {
 import * as _ from 'lodash';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 export interface Project {
   name: string;
@@ -79,6 +80,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ReactiveFormsModule,
     MatInputModule,
     MatFormFieldModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './projects-list.component.html',
   styleUrl: './projects-list.component.scss',
@@ -108,7 +111,7 @@ export class ProjectsListComponent {
     private tstr: ToastrService,
     private dg: MatDialog,
     private cd: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.list(0, '');

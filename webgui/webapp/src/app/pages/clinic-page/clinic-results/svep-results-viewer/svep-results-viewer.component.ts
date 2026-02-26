@@ -62,6 +62,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { BoxDataComponent } from './box-data/box-data.component';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
@@ -138,6 +139,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     BoxDataComponent,
     NoResultsAlertComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -151,8 +154,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   styleUrl: './svep-results-viewer.component.scss',
 })
 export class SvepResultsViewerComponent
-  implements OnInit, OnChanges, AfterViewInit
-{
+  implements OnInit, OnChanges, AfterViewInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @Input() listData: any = []; // receive data from parent
@@ -204,7 +206,7 @@ export class SvepResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
     private router: Router,
-  ) {}
+  ) { }
 
   /**
    * Check if SVEP configuration is available and has data

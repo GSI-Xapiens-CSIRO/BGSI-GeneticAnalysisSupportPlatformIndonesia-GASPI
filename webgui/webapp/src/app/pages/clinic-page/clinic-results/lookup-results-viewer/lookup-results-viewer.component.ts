@@ -58,6 +58,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { environment } from 'src/environments/environment';
 import { COLUMNS } from '../hub_configs';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
@@ -111,6 +112,8 @@ interface FlagInfo {
     MatTooltipModule,
     MatAutocompleteModule,
     NoResultsAlertComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   providers: [
     {
@@ -123,8 +126,7 @@ interface FlagInfo {
   styleUrl: './lookup-results-viewer.component.scss',
 })
 export class LookupResultsViewerComponent
-  implements OnInit, OnChanges, AfterViewInit
-{
+  implements OnInit, OnChanges, AfterViewInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @Input() listReports: any = []; // receive data from parent
@@ -177,7 +179,7 @@ export class LookupResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
     private router: Router,
-  ) {}
+  ) { }
 
   // Flag generation methods
   private generateFlagInfo(row: any): FlagInfo {

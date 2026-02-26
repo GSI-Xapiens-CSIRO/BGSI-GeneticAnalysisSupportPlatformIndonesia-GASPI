@@ -29,8 +29,9 @@ import { ClinicService } from 'src/app/services/clinic.service';
 import { SpinnerService } from 'src/app/services/spinner.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
-import { MatTooltip } from '@angular/material/tooltip';
+import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { validationReportsArray } from 'src/app/utils/clinic';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 type ClinicalAnnotation = {
   name: string;
@@ -74,10 +75,12 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatButtonModule,
     MatIconModule,
     MatCardModule,
-    MatTooltip,
+    MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './annotation-viewer.component.html',
   styleUrl: './annotation-viewer.component.scss',
@@ -106,7 +109,7 @@ export class AnnotationViewerComponent implements OnChanges, OnInit, OnDestroy {
     private tstr: ToastrService,
     private dg: MatDialog,
     private ss: SpinnerService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.annotationChangedSubscription = this.cs.annotionsChanged.subscribe(

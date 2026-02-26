@@ -12,6 +12,8 @@ import { DportalService } from 'src/app/services/dportal.service';
 import { InstanceInfo } from '../admin-notebooks-list.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { catchError, of } from 'rxjs';
+import { ActionConfirmationDialogComponent } from '../../../../../../components/action-confirmation-dialog/action-confirmation-dialog.component';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 export enum Status {
   PENDING = 'Pending',
@@ -26,7 +28,13 @@ export enum Status {
 @Component({
   selector: 'app-admin-notebook-item',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
+  ],
   templateUrl: './admin-notebook-item.component.html',
   styleUrl: './admin-notebook-item.component.scss',
 })
@@ -39,7 +47,7 @@ export class AdminNotebookItemComponent implements OnChanges {
   constructor(
     private dps: DportalService,
     private dg: MatDialog,
-  ) {}
+  ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     // cache the initial status
