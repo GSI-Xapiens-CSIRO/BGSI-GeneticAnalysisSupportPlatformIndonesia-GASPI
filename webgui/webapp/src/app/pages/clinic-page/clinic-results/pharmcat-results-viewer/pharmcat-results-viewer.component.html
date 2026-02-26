@@ -387,7 +387,7 @@
             <div class="flex items-center gap-3">
               <!-- Reset button (only shown when filters are active) -->
               <button
-                *ngIf="summaryText && typeFilter === 'diplotypes'"
+                *ngIf="SummaryText('diplotypes')"
                 mat-raised-button
                 class="min-w-[120px] shadow-none"
                 style="background-color: #ffa705; color: white"
@@ -411,12 +411,9 @@
       </div>
     </div>
 
-    <div
-      *ngIf="summaryText && typeFilter === 'diplotypes'"
-      class="result-container"
-    >
+    <div *ngIf="SummaryText('diplotypes')" class="result-container">
       <div style="font-size: medium; font-weight: 400">Show data where</div>
-      <div class="filter-summary" [innerHTML]="summaryText"></div>
+      <div class="filter-summary" [innerHTML]="SummaryText('diplotypes')"></div>
     </div>
 
     @if (diplotypeDataRows.value.length > 0) {
@@ -470,7 +467,7 @@
             <div class="flex items-center gap-3">
               <!-- Reset button (only shown when filters are active) -->
               <button
-                *ngIf="summaryText && typeFilter === 'variants'"
+                *ngIf="SummaryText('variants')"
                 mat-raised-button
                 class="min-w-[120px] shadow-none"
                 style="background-color: #ffa705; color: white"
@@ -494,12 +491,9 @@
       </div>
     </div>
 
-    <div
-      *ngIf="summaryText && typeFilter === 'variants'"
-      class="result-container"
-    >
+    <div *ngIf="SummaryText('variants')" class="result-container">
       <div style="font-size: medium; font-weight: 400">Show data where</div>
-      <div class="filter-summary" [innerHTML]="summaryText"></div>
+      <div class="filter-summary" [innerHTML]="SummaryText('variants')"></div>
     </div>
 
     @if (variantDataRows.value.length > 0) {

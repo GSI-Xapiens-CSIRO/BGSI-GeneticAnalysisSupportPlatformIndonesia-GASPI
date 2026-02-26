@@ -104,24 +104,34 @@ button.mat-mdc-mini-fab {
 .filter-modal-searchable-panel {
   .select-search-box {
     position: sticky;
-    top: 0;
-    z-index: 1;
+    top: -10px;
+    z-index: 2;
     background: #fff;
-    padding: 8px;
-    border-bottom: 1px solid #e0e0e0;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .select-search-input {
     width: 100%;
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid #16b3ac !important;
+    border-radius: 6px;
+    font-size: 14px;
     outline: none;
     box-sizing: border-box;
+    display: block;
+    margin: 0;
 
     &:focus {
       border-color: #16b3ac;
+      box-shadow: 0 0 0 2px rgba(22, 179, 172, 0.1);
+    }
+
+    &::placeholder {
+      color: #999;
     }
   }
 }

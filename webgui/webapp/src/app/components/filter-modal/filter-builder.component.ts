@@ -53,7 +53,7 @@ export class FilterBuilderComponent {
   getFilteredFields(): FieldConfig[] {
     if (!this.fieldSearchTerm) return this.fields;
     const term = this.fieldSearchTerm.toLowerCase();
-    return this.fields.filter(f => f.field.toLowerCase().includes(term));
+    return this.fields.filter((f) => f.field.toLowerCase().includes(term));
   }
 
   /** Return operators filtered by search term */
@@ -61,7 +61,7 @@ export class FilterBuilderComponent {
     const ops = operatorMap[dataType] || [];
     if (!this.operatorSearchTerm) return ops;
     const term = this.operatorSearchTerm.toLowerCase();
-    return ops.filter(op => {
+    return ops.filter((op) => {
       const label = (this.operatorLabels[op] || op).toLowerCase();
       return label.includes(term);
     });
@@ -95,8 +95,13 @@ export class FilterBuilderComponent {
       condition: defaultCondition,
       type: 'rule',
       field: defaultField.field,
-      operator: '=',
-      dataType: defaultField.dataType as 'string' | 'number' | 'boolean',
+      operator: 'equals',
+      dataType: defaultField.dataType as
+        | 'string'
+        | 'number'
+        | 'boolean'
+        | 'date'
+        | 'array',
       value: defaultField.defaultValue ?? '',
     });
     this.emitChange();
@@ -149,8 +154,23 @@ export class FilterBuilderComponent {
     if (!selected) return;
 
     rule.dataType = selected.dataType;
-    rule.operator = '=';
+    rule.operator = 'equals';
     rule.value = selected.defaultValue ?? '';
+    this.emitChange();
+  }
+
+  onOperatorChange(rule: FilterRule) {
+    if (this.isBetweenOperator(rule.operator)) {
+      if (!Array.isArray(rule.value) || rule.value.length !== 2) {
+        rule.value = [null, null];
+      }
+    } else if (this.isNoValueOperator(rule.operator)) {
+      rule.value = '';
+    } else {
+      if (Array.isArray(rule.value)) {
+        rule.value = rule.value[0] ?? '';
+      }
+    }
     this.emitChange();
   }
 
@@ -159,6 +179,9 @@ export class FilterBuilderComponent {
   }
 
   isValueInvalid(rule: FilterRule): boolean {
+    if (this.isNoValueOperator(rule.operator)) {
+      return false;
+    }
     if (rule.dataType === 'boolean') {
       return rule.value !== true && rule.value !== false;
     }
