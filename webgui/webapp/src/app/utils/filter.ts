@@ -30,10 +30,10 @@ export const operatorMap: Record<DataType, string[]> = {
     'not_contains',
     'starts_with',
     'ends_with',
-    'regex',
-    'not_regex',
-    'is_empty',
-    'is_not_empty',
+    // 'regex',
+    // 'not_regex',
+    // 'is_empty',
+    // 'is_not_empty',
     'in',
     'not_in',
   ],
@@ -45,12 +45,12 @@ export const operatorMap: Record<DataType, string[]> = {
     'less_than',
     'greater_or_equal',
     'less_or_equal',
-    'between',
-    'not_between',
-    'in',
-    'not_in',
-    'is_null',
-    'is_not_null',
+    // 'between',
+    // 'not_between',
+    // 'in',
+    // 'not_in',
+    // 'is_null',
+    // 'is_not_null',
   ],
 
   boolean: [
@@ -58,8 +58,8 @@ export const operatorMap: Record<DataType, string[]> = {
     'not_equals',
     'is_true',
     'is_false',
-    'is_null',
-    'is_not_null',
+    // 'is_null',
+    // 'is_not_null',
   ],
 
   date: [
@@ -69,12 +69,12 @@ export const operatorMap: Record<DataType, string[]> = {
     'less_than',
     'greater_or_equal',
     'less_or_equal',
-    'between',
-    'not_between',
-    'before',
-    'after',
-    'is_null',
-    'is_not_null',
+    // 'between',
+    // 'not_between',
+    // 'before',
+    // 'after',
+    // 'is_null',
+    // 'is_not_null',
   ],
 
   array: [
@@ -82,11 +82,11 @@ export const operatorMap: Record<DataType, string[]> = {
     'not_contains',
     'contains_any',
     'contains_all',
-    'is_empty',
-    'is_not_empty',
-    'length_equals',
-    'length_greater',
-    'length_less',
+    // 'is_empty',
+    // 'is_not_empty',
+    // 'length_equals',
+    // 'length_greater',
+    // 'length_less',
   ],
 };
 
@@ -143,11 +143,17 @@ export function evaluateRule(rule: any, item: any): boolean {
       if (Array.isArray(normalizedData)) {
         return normalizedData.includes(value);
       }
+      if (typeof value === 'number' || !isNaN(Number(value))) {
+        return Number(normalizedData) === Number(value);
+      }
       return normalizedData === value;
 
     case 'not_equals':
       if (Array.isArray(normalizedData)) {
         return !normalizedData.includes(value);
+      }
+      if (typeof value === 'number' || !isNaN(Number(value))) {
+        return Number(normalizedData) !== Number(value);
       }
       return normalizedData !== value;
 
@@ -239,6 +245,13 @@ export function evaluateRule(rule: any, item: any): boolean {
         return normalizedData.some((v) => value.includes(v));
       }
 
+      if (
+        typeof normalizedData === 'number' ||
+        !isNaN(Number(normalizedData))
+      ) {
+        return value.map(Number).includes(Number(normalizedData));
+      }
+
       return value.includes(normalizedData);
 
     case 'not_in':
@@ -246,6 +259,13 @@ export function evaluateRule(rule: any, item: any): boolean {
 
       if (Array.isArray(normalizedData)) {
         return !normalizedData.some((v) => value.includes(v));
+      }
+
+      if (
+        typeof normalizedData === 'number' ||
+        !isNaN(Number(normalizedData))
+      ) {
+        return !value.map(Number).includes(Number(normalizedData));
       }
 
       return !value.includes(normalizedData);
@@ -312,7 +332,11 @@ function buildGroupText(group: FilterGroup): string {
     if (child.type === 'rule') {
       if (!isValidRule(child)) return;
 
-      validParts.push(`${child.field} ${OperatorLabels[child.operator]} ${formatValue(child)}`);
+      validParts.push(
+        `${child.field} ${OperatorLabels[child.operator]} ${formatValue(
+          child,
+        )}`,
+      );
     }
 
     // ===== GROUP =====
