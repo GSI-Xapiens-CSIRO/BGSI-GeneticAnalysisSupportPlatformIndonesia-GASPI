@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 interface ProjectFile {
   filename: string;
@@ -38,6 +39,8 @@ interface Project {
     MatInputModule,
     MatTooltipModule,
     ReactiveFormsModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './project-item.component.html',
   styleUrl: './project-item.component.scss',

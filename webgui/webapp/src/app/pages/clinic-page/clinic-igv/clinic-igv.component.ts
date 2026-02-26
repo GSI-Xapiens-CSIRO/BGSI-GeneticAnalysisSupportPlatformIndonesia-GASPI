@@ -17,6 +17,7 @@ import {
 import { isEmpty } from 'lodash';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
+import { DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 import { IgvViewerComponent } from './igv-viewer/igv-viewer.component';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
@@ -76,6 +77,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ComponentSpinnerComponent,
     MatCardModule,
     IgvViewerComponent,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './clinic-igv.component.html',
   styleUrl: './clinic-igv.component.scss',
@@ -95,7 +97,7 @@ export class ClinicIGVComponent {
     private dps: DportalService,
     private tstr: ToastrService,
     private cd: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.list(0);

@@ -62,6 +62,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
@@ -151,6 +152,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     RsponBoxDataViewComponent,
     NoResultsAlertComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -239,7 +242,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
     private router: Router,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly virtualScrollStrategy: TableVirtualScrollStrategy,
-  ) {}
+  ) { }
 
   //handle on init
   ngOnInit(): void {

@@ -1,26 +1,23 @@
 <mat-card>
   <mat-card-content>
-    <mat-tab-group
-      dynamicHeight="true"
-      [(selectedIndex)]="selectedIndex"
-      (selectedIndexChange)="onSubTabChange($event)"
-    >
-      <mat-tab label="Project Onboarding">
+    <mat-tab-group dynamicHeight="true" [(selectedIndex)]="selectedIndex"
+      (selectedIndexChange)="onSubTabChange($event)">
+      <mat-tab *appHasPermission="'project_onboarding.create'" label="Project Onboarding">
         <ng-template matTabContent>
           <app-data-submission-form />
         </ng-template>
       </mat-tab>
-      <mat-tab label="Project Management">
+      <mat-tab *appHasPermission="'project_management.read'" label="Project Management">
         <ng-template matTabContent>
           <app-projects-list />
         </ng-template>
       </mat-tab>
-      <mat-tab label="Notebook Management">
+      <mat-tab *appHasPermission="'notebook_management.read'" label="Notebook Management">
         <ng-template matTabContent>
           <app-notebooks />
         </ng-template>
       </mat-tab>
-      <mat-tab label="File Management">
+      <mat-tab *appHasPermission="'file_management.read'" label="File Management">
         <ng-template matTabContent>
           <app-admin-folder-list />
         </ng-template>

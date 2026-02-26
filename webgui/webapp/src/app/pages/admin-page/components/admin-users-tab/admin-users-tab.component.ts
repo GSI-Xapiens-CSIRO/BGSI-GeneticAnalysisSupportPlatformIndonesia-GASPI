@@ -38,6 +38,7 @@ import { bytesToGigabytes, formatBytes } from 'src/app/utils/file';
 import { MatIconModule } from '@angular/material/icon';
 import { AwsService } from 'src/app/services/aws.service';
 import { ToastrService } from 'ngx-toastr';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 @Injectable()
 export class MyCustomPaginatorIntl implements MatPaginatorIntl {
@@ -77,6 +78,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatPaginatorModule,
     MatIconModule,
     MatCardModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
 })
 export class AdminUsersTabComponent implements OnInit {
