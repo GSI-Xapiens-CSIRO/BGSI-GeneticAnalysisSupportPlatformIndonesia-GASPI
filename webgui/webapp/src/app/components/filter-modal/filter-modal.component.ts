@@ -17,7 +17,8 @@ export class FilterModalComponent {
 
   constructor(
     private dialogRef: MatDialogRef<FilterModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { fields: FieldConfig[]; existingFilter?: FilterGroup },
+    @Inject(MAT_DIALOG_DATA)
+    public data: { fields: FieldConfig[]; existingFilter?: FilterGroup },
   ) {
     // If an existing filter is provided, deep-clone it so edits don't mutate the caller's state
     this.filter = data.existingFilter
@@ -46,6 +47,19 @@ export class FilterModalComponent {
   private isValidRule(rule: any): boolean {
     if (!rule.field) return false;
     if (!rule.operator) return false;
+
+    // Skip value check for no-value operators
+    const noValueOps = [
+      'is_null',
+      'is_not_null',
+      'is_true',
+      'is_false',
+      'is_empty',
+      'is_not_empty',
+    ];
+    if (noValueOps.includes(rule.operator)) {
+      return true;
+    }
 
     if (rule.dataType === 'boolean') {
       return rule.value === true || rule.value === false;

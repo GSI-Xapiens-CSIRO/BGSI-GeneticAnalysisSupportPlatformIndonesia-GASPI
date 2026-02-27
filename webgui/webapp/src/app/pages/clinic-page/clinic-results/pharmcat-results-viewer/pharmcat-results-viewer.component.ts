@@ -62,7 +62,10 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
+import {
+  HasPermissionDirective,
+  DisableIfNoPermissionDirective,
+} from 'src/app/directives/permission.directive';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { RsponBoxDataViewComponent } from './rspon-box-data-view/rspon-box-data-view.component';
@@ -230,7 +233,8 @@ export class PharmcatResultsViewerComponent implements OnInit {
   filterValuesVariants: { [key: string]: string } = {};
   filterMasterDataVariants: { [key: string | number]: any[] } = {};
 
-  protected group!: FilterGroup;
+  protected groupVariants!: FilterGroup;
+  protected groupDiplotypes!: FilterGroup;
   protected typeFilter!: FilterType | null;
 
   constructor(
@@ -242,7 +246,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
     private router: Router,
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly virtualScrollStrategy: TableVirtualScrollStrategy,
-  ) { }
+  ) {}
 
   //handle on init
   ngOnInit(): void {
@@ -699,8 +703,20 @@ export class PharmcatResultsViewerComponent implements OnInit {
 
   filterRelatedDiplotype(mappingId: string) {
     this.diplotypeScopeReduced = true;
-    this.diplotypeFilterField.setValue(mappingId);
-    this.filterDiplotypes();
+    this.groupDiplotypes = {
+      type: 'group',
+      condition: 'AND',
+      children: [
+        {
+          type: 'rule',
+          field: 'Related Variants',
+          operator: 'contains',
+          dataType: 'string',
+          value: mappingId,
+        },
+      ],
+    };
+    this.applyAdvancedFilterToDiplotypes(this.groupDiplotypes);
     this.cdr.detectChanges();
     this.filterValuesDyplotypes = {};
   }
@@ -713,7 +729,7 @@ export class PharmcatResultsViewerComponent implements OnInit {
   }
 
   resetRelatedDiplotype() {
-    this.resetDiplotypes();
+    this.resetAdvanceFilter('diplotypes');
     this.diplotypeScopeReduced = false;
     this.filterValuesDyplotypes = {};
   }
@@ -734,17 +750,26 @@ export class PharmcatResultsViewerComponent implements OnInit {
 
   filterRelatedVariants = (mappingIds: string[]) => {
     this.variantScopeReduced = true;
-    this.variantFilterField.setValue('');
-    const terms = mappingIds;
-    clinicMultiFilter(this.variantOriginalRows, terms, (filtered) => {
-      this.variantDataRows.next(filtered);
-    });
+    this.groupVariants = {
+      type: 'group',
+      condition: 'AND',
+      children: [
+        {
+          type: 'rule',
+          field: 'Related Diplotypes',
+          operator: 'contains',
+          dataType: 'string',
+          value: mappingIds,
+        },
+      ],
+    };
+    this.applyAdvancedFilterToVariants(this.groupVariants);
     this.cdr.detectChanges();
     this.filterValuesVariants = {};
   };
 
   resetRelatedVariants() {
-    this.resetVariants();
+    this.resetAdvanceFilter('variants');
     this.variantScopeReduced = false;
     this.filterValuesVariants = {};
   }
@@ -912,16 +937,21 @@ export class PharmcatResultsViewerComponent implements OnInit {
       .open(FilterModalComponent, {
         width: '950px',
         maxHeight: '90vh',
-        data: { fields: colomnFields, existingFilter: this.group },
+        data: {
+          fields: colomnFields,
+          existingFilter:
+            type === 'variants' ? this.groupVariants : this.groupDiplotypes,
+        },
       })
       .afterClosed()
       .subscribe((result) => {
         if (!result) return;
-        this.group = result;
         this.typeFilter = type;
         if (type === 'variants') {
+          this.groupVariants = result;
           this.applyAdvancedFilterToVariants(result);
         } else {
+          this.groupDiplotypes = result;
           this.applyAdvancedFilterToDiplotypes(result);
         }
       });
@@ -943,21 +973,27 @@ export class PharmcatResultsViewerComponent implements OnInit {
     this.variantDataRows.next(filtered);
   }
 
-  get summaryText(): string {
-    return GetFilterSummaryText(this.group);
+  SummaryText(type: 'variants' | 'diplotypes'): string {
+    return GetFilterSummaryText(
+      type === 'variants' ? this.groupVariants : this.groupDiplotypes,
+    );
   }
 
   resetAdvanceFilter(type: 'variants' | 'diplotypes') {
     if (type === 'variants') {
       this.typeFilter = null;
+      this.variantScopeReduced = false;
+      this.variantFilterField.setValue('');
       this.variantDataRows.next([...this.variantOriginalRows]);
+      this.groupVariants = { type: 'group', condition: 'AND', children: [] };
     }
 
     if (type === 'diplotypes') {
       this.typeFilter = null;
+      this.diplotypeScopeReduced = false;
+      this.diplotypeFilterField.setValue('');
       this.diplotypeDataRows.next([...this.diplotypeOriginalRows]);
+      this.groupDiplotypes = { type: 'group', condition: 'AND', children: [] };
     }
-
-    this.group = { type: 'group', condition: 'AND', children: [] };
   }
 }
