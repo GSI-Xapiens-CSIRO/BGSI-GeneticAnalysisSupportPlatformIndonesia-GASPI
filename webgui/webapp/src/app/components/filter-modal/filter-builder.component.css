@@ -198,3 +198,44 @@
 .filter-summary b {
   font-weight: 600;
 }
+
+/* Search box inside mat-select */
+.select-search-box {
+  padding: 8px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.select-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.select-search-input:focus {
+  border-color: #16B3AC;
+}
+
+/* Empty state placeholder */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
