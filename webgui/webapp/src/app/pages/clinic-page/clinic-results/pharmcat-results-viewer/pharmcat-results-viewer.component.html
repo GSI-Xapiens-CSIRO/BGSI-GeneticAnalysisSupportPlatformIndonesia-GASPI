@@ -250,6 +250,7 @@
           <button
             mat-raised-button
             color="primary"
+            [appDisableIfNoPermission]="'clinic_workflow_annotation.create'"
             (click)="openAnnotateDialog()"
             class="w-[110px]"
           >
@@ -258,6 +259,7 @@
           <button
             mat-raised-button
             color="primary"
+            [appDisableIfNoPermission]="'clinic_workflow_result.create'"
             (click)="openSaveForReportingDialog()"
             class="w-[175px]"
           >

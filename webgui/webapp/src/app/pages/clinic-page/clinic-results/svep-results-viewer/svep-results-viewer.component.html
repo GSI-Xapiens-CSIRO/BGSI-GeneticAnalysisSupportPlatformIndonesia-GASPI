@@ -132,13 +132,13 @@
 
     <div class="flex flex-row space-x-1 items-center justify-end mb-2">
       @if ((cs.selectedVariants | async)!.size > 0) {
-      <button mat-raised-button color="primary" (click)="openAnnotateDialog()" class="w-[110px]"
-        [appDisableIfNoPermission]="'clinic_workflow_annotation.create'">
+      <button mat-raised-button color="primary" [appDisableIfNoPermission]="'clinic_workflow_annotation.create'"
+        (click)="openAnnotateDialog()" class="w-[110px]">
         Annotate
       </button>
-      <button mat-raised-button color="primary" (click)="openSaveForReportingDialog()" class="w-[175px]"
-        [appDisableIfNoPermission]="'clinic_workflow_result.create'">
-        Save for Reporting
+      <button mat-raised-button color="primary" [appDisableIfNoPermission]="'clinic_workflow_result.create'"
+        (click)="openSaveForReportingDialog()" class="w-[175px]">
+        Save for Reportings
       </button>
       }
     </div>
