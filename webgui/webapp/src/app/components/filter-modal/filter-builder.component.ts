@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,7 +31,7 @@ import {
   templateUrl: './filter-builder.component.html',
   styleUrls: ['./filter-builder.component.scss'],
 })
-export class FilterBuilderComponent implements OnInit {
+export class FilterBuilderComponent {
   @Input() group!: FilterGroup;
   @Input() fields: FieldConfig[] = [];
   @Input() isRoot = true;
@@ -41,127 +41,63 @@ export class FilterBuilderComponent implements OnInit {
   operatorMap = operatorMap;
   operatorLabels = OperatorLabels;
 
-  // Per-row state for field search
-  fieldSearchTerms: Map<number, string> = new Map();
-  filteredFieldsMap: Map<number, FieldConfig[]> = new Map();
-
-  // Per-row state for operator search
-  operatorSearchTerms: Map<number, string> = new Map();
-  filteredOperatorsMap: Map<number, string[]> = new Map();
-
-  // Track which row's select is currently open
-  activeFieldSelectIndex: number | null = null;
-  activeOperatorSelectIndex: number | null = null;
+  // Search terms for searchable dropdowns
+  fieldSearchTerm = '';
+  operatorSearchTerm = '';
 
   get summaryText(): string {
     return GetFilterSummaryText(this.group);
   }
 
-  ngOnInit() {
-    // Auto-add empty rule if no children
-    if (!this.group.children || this.group.children.length === 0) {
-      this.addRule();
-    }
+  /** Return fields filtered by search term */
+  getFilteredFields(): FieldConfig[] {
+    if (!this.fieldSearchTerm) return this.fields;
+    const term = this.fieldSearchTerm.toLowerCase();
+    return this.fields.filter(f => f.field.toLowerCase().includes(term));
   }
 
-  /** Get filtered fields for a specific row */
-  getFilteredFieldsForRow(index: number): FieldConfig[] {
-    return this.filteredFieldsMap.get(index) || this.fields;
-  }
-
-  /** Get filtered operators for a specific row */
-  getFilteredOperatorsForRow(index: number, dataType: DataType): string[] {
-    return this.filteredOperatorsMap.get(index) || (operatorMap[dataType] || []);
-  }
-
-  /** Called when field select opens/closes */
-  onFieldSelectOpened(opened: boolean, index: number) {
-    if (opened) {
-      this.activeFieldSelectIndex = index;
-      // Reset search and show all fields
-      this.fieldSearchTerms.set(index, '');
-      this.filteredFieldsMap.set(index, [...this.fields]);
-    } else {
-      this.activeFieldSelectIndex = null;
-      // Clear search term when closed
-      this.fieldSearchTerms.delete(index);
-    }
-  }
-
-  /** Called when operator select opens/closes */
-  onOperatorSelectOpened(opened: boolean, index: number, dataType: DataType) {
-    if (opened) {
-      this.activeOperatorSelectIndex = index;
-      // Reset search and show all operators
-      this.operatorSearchTerms.set(index, '');
-      this.filteredOperatorsMap.set(index, [...(operatorMap[dataType] || [])]);
-    } else {
-      this.activeOperatorSelectIndex = null;
-      // Clear search term when closed
-      this.operatorSearchTerms.delete(index);
-    }
-  }
-
-  /** Filter fields based on search input for a specific row */
-  onFieldSearchInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const term = input.value.toLowerCase();
-    this.fieldSearchTerms.set(index, term);
-
-    if (!term) {
-      this.filteredFieldsMap.set(index, [...this.fields]);
-    } else {
-      const filtered = this.fields.filter(f =>
-        f.field.toLowerCase().includes(term)
-      );
-      this.filteredFieldsMap.set(index, filtered);
-    }
-  }
-
-  /** Filter operators based on search input for a specific row */
-  onOperatorSearchInput(event: Event, index: number, dataType: DataType) {
-    const input = event.target as HTMLInputElement;
-    const term = input.value.toLowerCase();
-    this.operatorSearchTerms.set(index, term);
-
+  /** Return operators filtered by search term */
+  getFilteredOperators(dataType: DataType): string[] {
     const ops = operatorMap[dataType] || [];
-    if (!term) {
-      this.filteredOperatorsMap.set(index, [...ops]);
-    } else {
-      const filtered = ops.filter(op => {
-        const label = (this.operatorLabels[op] || op).toLowerCase();
-        return label.includes(term);
-      });
-      this.filteredOperatorsMap.set(index, filtered);
+    if (!this.operatorSearchTerm) return ops;
+    const term = this.operatorSearchTerm.toLowerCase();
+    return ops.filter(op => {
+      const label = (this.operatorLabels[op] || op).toLowerCase();
+      return label.includes(term);
+    });
+  }
+
+  /** Clear search term when a select panel is closed */
+  onSelectOpenedChange(opened: boolean, type: 'field' | 'operator') {
+    if (!opened) {
+      if (type === 'field') this.fieldSearchTerm = '';
+      if (type === 'operator') this.operatorSearchTerm = '';
     }
-  }
-
-  /** Prevent keyboard events from bubbling to mat-select */
-  onSearchKeydown(event: KeyboardEvent) {
-    event.stopPropagation();
-  }
-
-  /** Stop propagation for click events */
-  onSearchClick(event: MouseEvent) {
-    event.stopPropagation();
   }
 
   emitChange() {
     this.groupChange.emit(this.group);
   }
 
+  ngOnInit() {
+    if (!this.group.children || this.group.children.length === 0) {
+      this.addRule();
+    }
+  }
+
   addRule() {
+    const defaultField = this.fields.length
+      ? this.fields[0]
+      : { field: '', dataType: 'string', defaultValue: '' };
     const defaultCondition =
       this.group.children.length > 0 ? this.group.condition : undefined;
-
-    // Add empty rule with no default values - just placeholders
     this.group.children.push({
       condition: defaultCondition,
       type: 'rule',
-      field: '',           // Empty - will show placeholder
-      operator: '',        // Empty - will show placeholder
-      dataType: 'string',  // Default dataType
-      value: '',           // Empty - will show placeholder
+      field: defaultField.field,
+      operator: '=',
+      dataType: defaultField.dataType as 'string' | 'number' | 'boolean',
+      value: defaultField.defaultValue ?? '',
     });
     this.emitChange();
   }
@@ -176,12 +112,14 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   remove(index: number) {
-    this.group.children.splice(index, 1);
-    // Clean up search state for removed index
-    this.fieldSearchTerms.delete(index);
-    this.filteredFieldsMap.delete(index);
-    this.operatorSearchTerms.delete(index);
-    this.filteredOperatorsMap.delete(index);
+    const newChildren = [...this.group.children];
+    newChildren.splice(index, 1);
+
+    this.group = {
+      ...this.group,
+      children: newChildren,
+    };
+
     this.emitChange();
   }
 
@@ -190,11 +128,19 @@ export class FilterBuilderComponent implements OnInit {
   }
 
   updateChild(index: number, child: FilterGroup | null) {
+    const newChildren = [...this.group.children];
+
     if (child === null) {
-      this.group.children.splice(index, 1);
+      newChildren.splice(index, 1);
     } else {
-      this.group.children[index] = child;
+      newChildren[index] = child;
     }
+
+    this.group = {
+      ...this.group,
+      children: newChildren,
+    };
+
     this.emitChange();
   }
 
@@ -203,7 +149,7 @@ export class FilterBuilderComponent implements OnInit {
     if (!selected) return;
 
     rule.dataType = selected.dataType;
-    rule.operator = 'equals';
+    rule.operator = '=';
     rule.value = selected.defaultValue ?? '';
     this.emitChange();
   }
@@ -255,13 +201,37 @@ export class FilterBuilderComponent implements OnInit {
     return ['in', 'not_in', 'contains_any', 'contains_all'].includes(op);
   }
 
+  onArrayInputChange(value: string, child: any) {
+    if (!value) {
+      child.value = [];
+      return;
+    }
+
+    child.value = value
+      .split(',')
+      .map((v: string) => v.trim())
+      .filter((v: string) => v !== '');
+  }
+
   onGroupConditionChange(condition: 'AND' | 'OR') {
-    this.group.condition = condition;
-    this.group.children.forEach((child) => {
+    const newChildren = this.group.children.map((child) => {
       if (child.type === 'rule') {
-        (child as FilterRule).condition = condition;
+        return {
+          ...child,
+          condition: condition,
+        };
       }
+
+      // group child tidak disentuh isinya
+      return child;
     });
+
+    this.group = {
+      ...this.group,
+      condition,
+      children: newChildren,
+    };
+
     this.emitChange();
   }
 }
