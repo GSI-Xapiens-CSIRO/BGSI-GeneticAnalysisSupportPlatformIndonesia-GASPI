@@ -103,7 +103,7 @@ export class AppComponent implements OnInit, OnDestroy {
       (version) => (this.buildVersion = version.length < 64 ? version : ''),
     );
   }
-  @HostListener('window:resize', ['event'])
+  @HostListener('window:resize')
   onResize() {
     this.isCollapsed = this.el.nativeElement.offsetWidth < 1200;
   }

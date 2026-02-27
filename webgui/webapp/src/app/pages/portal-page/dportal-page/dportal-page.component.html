@@ -1,8 +1,12 @@
 @if (
-  (auth.userGroups | async)!.has("administrators") ||
-  (auth.userGroups | async)!.has("managers")
+permissionService.hasAnyPermission([
+'project_management.read',
+'project_onboarding.create',
+'notebook_management.read',
+'file_management.read'
+])
 ) {
-  <app-admin-section />
-  <br />
+<app-admin-section />
+<br />
 }
 <app-user-section />

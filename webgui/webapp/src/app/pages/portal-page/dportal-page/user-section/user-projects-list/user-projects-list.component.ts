@@ -18,6 +18,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
+import { DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import * as _ from 'lodash';
 import { ToastrService } from 'ngx-toastr';
 
@@ -59,6 +60,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     ClipboardModule,
     MatTableModule,
     MatPaginatorModule,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './user-projects-list.component.html',
   styleUrl: './user-projects-list.component.scss',

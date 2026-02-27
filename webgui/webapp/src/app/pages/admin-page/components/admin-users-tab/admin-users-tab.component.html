@@ -1,0 +1,55 @@
+<mat-card>
+  <mat-card-content class="overflow-x-auto relative">
+    <app-component-spinner [loading]="usersLoading"></app-component-spinner>
+    <div class="cu-header">
+      <h2 class="flex-1">Users</h2>
+      <div class="cu-btn-container">
+        <button class="w-[150px]" (click)="addNewUser()" form="filters" mat-raised-button color="primary"
+          [appDisableIfNoPermission]="'admin.create'">
+          <mat-icon aria-hidden="false" aria-label="person-add" fontIcon="person_add"></mat-icon>
+
+          Create user
+        </button>
+      </div>
+    </div>
+    <form [formGroup]="filterUsersForm" (ngSubmit)="filterUsers()">
+      <div class="grid max-w-[500px] md:max-w-full md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <mat-form-field>
+          <mat-label>Select filter</mat-label>
+          <mat-select required formControlName="key">
+            <mat-option [value]="false">None</mat-option>
+            <mat-option value="given_name">First name</mat-option>
+            <mat-option value="family_name">Last name</mat-option>
+            <mat-option value="email">Email</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Filter value</mat-label>
+          <input matInput formControlName="query" />
+        </mat-form-field>
+      </div>
+      <button (click)="filterUsers()" [disabled]="filterUsersForm.invalid" type="submit" form="filters"
+        mat-raised-button color="primary" class="w-[110px]">
+        Filter
+      </button>
+    </form>
+
+    <table mat-table [dataSource]="usersTableDataSource" matSort>
+      @for (column of usersTableDisplayedColumns; track column) {
+      <ng-container [matColumnDef]="column">
+        <th class="whitespace-nowrap" mat-header-cell *matHeaderCellDef mat-sort-header>
+          {{ column }}
+        </th>
+        <td (click)="userClick(element)" class="whitespace-nowrap" mat-cell *matCellDef="let element"
+          [appDisableIfNoPermission]="'admin.update'">
+          {{ element[column] }}
+        </td>
+      </ng-container>
+      }
+      <tr mat-header-row *matHeaderRowDef="usersTableDisplayedColumns"></tr>
+      <tr mat-row class="hover:bg-slate-100 cursor-pointer" *matRowDef="let row; columns: usersTableDisplayedColumns">
+      </tr>
+    </table>
+    <mat-paginator #paginator [pageSizeOptions]="[5, 10, 50]" [pageSize]="pageSize" length="9999"></mat-paginator>
+  </mat-card-content>
+</mat-card>

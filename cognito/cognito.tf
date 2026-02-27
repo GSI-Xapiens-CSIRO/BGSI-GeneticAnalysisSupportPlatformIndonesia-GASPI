@@ -1,73 +1,7 @@
-# 
+#
 # Pool and client
-# 
-resource "aws_cognito_user_pool" "gaspi_user_pool" {
-  name = "gaspi-users"
-  tags = var.common-tags
-
-  admin_create_user_config {
-    allow_admin_create_user_only = true
-  }
-
-  account_recovery_setting {
-    recovery_mechanism {
-      name     = "verified_email"
-      priority = 1
-    }
-  }
-
-  mfa_configuration = "OPTIONAL"
-
-  software_token_mfa_configuration {
-    enabled = true
-  }
-
-  password_policy {
-    minimum_length                   = 8
-    require_lowercase                = true
-    require_numbers                  = true
-    require_symbols                  = true
-    require_uppercase                = true
-    temporary_password_validity_days = 7
-  }
-
-  schema {
-    name                     = "terraform"
-    attribute_data_type      = "Boolean"
-    developer_only_attribute = false
-    mutable                  = false
-    required                 = false
-  }
-
-  schema {
-    name                     = "identity_id"
-    attribute_data_type      = "String"
-    developer_only_attribute = false
-    mutable                  = true
-    required                 = false
-
-    string_attribute_constraints {}
-  }
-
-  schema {
-    name                     = "is_medical_director"
-    attribute_data_type      = "Boolean"
-    developer_only_attribute = false
-    mutable                  = true
-    required                 = false
-  }
-
-  email_configuration {
-    configuration_set     = aws_ses_configuration_set.ses_feedback_config.name
-    email_sending_account = "DEVELOPER"
-    from_email_address    = var.ses-source-email
-    source_arn            = data.aws_ses_email_identity.ses_source_email.arn
-  }
-
-  lambda_config {
-    custom_message = module.lambda-customMessageLambdaTrigger.lambda_function_arn
-  }
-}
+#
+# User pool is now defined in migration.tf with proper dependency handling
 
 resource "aws_cognito_user_pool_client" "gaspi_user_pool_client" {
   name = "gaspi-users-client"
@@ -80,10 +14,10 @@ resource "aws_cognito_user_pool_client" "gaspi_user_pool_client" {
     "ALLOW_USER_PASSWORD_AUTH"
   ]
 
-  access_token_validity  = 5
+  access_token_validity  = var.access-token-minutes
+  id_token_validity      = var.id-token-minutes
+  refresh_token_validity = var.refresh-token-hours
   auth_session_validity  = 3
-  refresh_token_validity = 2
-  id_token_validity      = 5
 
   token_validity_units {
     access_token  = "minutes"
@@ -92,9 +26,9 @@ resource "aws_cognito_user_pool_client" "gaspi_user_pool_client" {
   }
 }
 
-# 
+#
 # groups
-# 
+#
 
 # admin group
 resource "aws_cognito_user_group" "admin_group" {
@@ -303,9 +237,9 @@ resource "aws_iam_role_policy_attachment" "manager_group_role_policy_attachment"
   policy_arn = aws_iam_policy.manager_group_role_policy.arn
 }
 
-# 
+#
 # default users
-# 
+#
 resource "aws_cognito_user" "guest" {
   user_pool_id = aws_cognito_user_pool.gaspi_user_pool.id
   username     = var.gaspi-guest-username
@@ -323,9 +257,10 @@ resource "aws_cognito_user" "guest" {
     ignore_changes = [
       password,
       attributes["identity_id"],
-      attributes["is_medical_director"],
     ]
   }
+
+  depends_on = [aws_lambda_permission.customMessageLambdaTrigger]
 }
 
 resource "aws_cognito_user" "admin" {
@@ -345,14 +280,15 @@ resource "aws_cognito_user" "admin" {
     ignore_changes = [
       password,
       attributes["identity_id"],
-      attributes["is_medical_director"],
     ]
   }
+
+  depends_on = [aws_lambda_permission.customMessageLambdaTrigger]
 }
 
-# 
+#
 # group assignments
-# 
+#
 # admin
 resource "aws_cognito_user_in_group" "admin_in_admin_group" {
   user_pool_id = aws_cognito_user_pool.gaspi_user_pool.id

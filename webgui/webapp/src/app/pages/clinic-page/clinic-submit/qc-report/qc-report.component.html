@@ -1,22 +1,14 @@
 <mat-card>
   <mat-card-content>
     <div class="flex flex-row gap-4 items-center">
-      <button
-        (click)="backToList()"
-        mat-mini-fab
-        color="primary"
-      >
+      <button (click)="backToList()" mat-mini-fab color="primary">
         <mat-icon style="color: white">keyboard_backspace</mat-icon>
       </button>
       <div class="text-base">
         Statistic Graph of
-        <b class="text-primary-60 text-xl">{{
-          fileName || ""
-        }}</b>
+        <b class="text-primary-60 text-xl">{{ fileName || "" }}</b>
         file from the
-        <b class="text-primary-60 text-xl"
-          >{{ projectName }}
-        </b>
+        <b class="text-primary-60 text-xl">{{ projectName }} </b>
       </div>
     </div>
   </mat-card-content>
@@ -67,39 +59,129 @@
         }
       }
     </div>
-    <div class="p-4">
-      <div class="font-semibold text-primary-60 text-3xl mb-2">Notes</div>
-      @if (editNotes) {
-        <textarea
+  </mat-card-content>
+</mat-card>
+<mat-card class="mt-2">
+  <!-- ===== NOTES SECTION ===== -->
+  <div class="notes-section">
+    <!-- Row 1: Header + Actions -->
+    <div class="notes-header">
+      <div class="notes-title">Notes</div>
+      <div class="notes-actions">
+        <button
+          mat-icon-button
+          matTooltip="Refresh Notes"
+          (click)="refreshNotes()"
+          class="notes-action-btn"
+        >
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          matTooltip="Add Note"
+          (click)="openAddNoteDialog()"
+          class="notes-action-btn"
+        >
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2: Filters -->
+    <div class="notes-filters">
+      <mat-form-field
+        class="filter-search"
+        appearance="outline"
+        subscriptSizing="dynamic"
+      >
+        <mat-icon matPrefix>search</mat-icon>
+        <input
           matInput
-          [(ngModel)]="editNotesText"
-          rows="4"
-          class="w-full p-2 border border-gray-300 rounded text-lg"
-        ></textarea>
-        <div class="flex flex-row space-x-2">
-          <button
-            color="primary"
-            mat-mini-fab
-            (click)="editNotesText = ''; editNotes = !editNotes"
-          >
-            <mat-icon>cancel</mat-icon>
-          </button>
-          <button color="primary" mat-mini-fab (click)="saveNotes()">
-            <mat-icon>save</mat-icon>
-          </button>
+          placeholder="Search notes..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="applyNotesFilter()"
+        />
+      </mat-form-field>
+
+      <mat-form-field
+        class="filter-select"
+        appearance="outline"
+        subscriptSizing="dynamic"
+      >
+        <mat-label>Comment By</mat-label>
+        <mat-select
+          [(ngModel)]="filterAuthor"
+          (ngModelChange)="applyNotesFilter()"
+        >
+          <mat-option value="">All</mat-option>
+          @for (author of filteredAuthors; track author) {
+            <mat-option [value]="author">{{ author }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field
+        class="filter-select"
+        appearance="outline"
+        subscriptSizing="dynamic"
+      >
+        <mat-label>Sort By</mat-label>
+        <mat-select
+          [(ngModel)]="sortOrder"
+          (ngModelChange)="applyNotesFilter()"
+        >
+          <mat-option value="newest">Most Recent</mat-option>
+          <mat-option value="oldest">Oldest</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Row 3: Notes List -->
+    <div class="notes-list">
+      @if (notesLoading) {
+        <div class="notes-loading">
+          <mat-icon class="spin">hourglass_empty</mat-icon>
+          Loading notes...
+        </div>
+      } @else if (filteredNotesList.length === 0) {
+        <div class="notes-empty">
+          <mat-icon class="notes-empty-icon">speaker_notes_off</mat-icon>
+          <span>No Notes Available</span>
         </div>
       } @else {
-        <div class="text-lg text-black">
-          {{ notes || "No notes available." }}
-        </div>
-        <button
-          color="primary"
-          mat-mini-fab
-          (click)="editNotesText = notes; editNotes = !editNotes"
-        >
-          <mat-icon>edit</mat-icon>
-        </button>
+        @for (note of filteredNotesList; track note.id) {
+          <div class="note-item">
+            <div class="note-row-1">
+              <div class="note-user-info">
+                <mat-icon class="note-avatar">account_circle</mat-icon>
+                <span class="note-username"
+                  >{{ note.user }}
+                  @if (note.email) {
+                    ({{ note.email }})
+                  }
+                </span>
+                <span class="note-date">{{
+                  note.createdAt | date: "dd MMM yyyy, HH:mm"
+                }}</span>
+              </div>
+              <button
+                mat-icon-button
+                matTooltip="Delete Note"
+                (click)="deleteNote(note)"
+                class="note-delete-btn"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div class="note-row-2">
+              <div class="note-content">
+                <div class="note-title">{{ note.title }}</div>
+                <div class="note-description">{{ note.description }}</div>
+              </div>
+            </div>
+          </div>
+        }
       }
     </div>
-  </mat-card-content>
+  </div>
 </mat-card>

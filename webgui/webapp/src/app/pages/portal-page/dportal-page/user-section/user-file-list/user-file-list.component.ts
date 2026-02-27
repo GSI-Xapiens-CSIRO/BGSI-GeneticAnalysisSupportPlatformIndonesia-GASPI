@@ -9,7 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { formatBytes, getTotalStorageSize } from 'src/app/utils/file';
 import { UserQuotaService } from 'src/app/services/userquota.service';
-import { timer } from 'rxjs';
+import { DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 @Component({
   selector: 'app-user-file-list',
@@ -18,6 +18,7 @@ import { timer } from 'rxjs';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    DisableIfNoPermissionDirective,
     ClipboardModule,
     MatDialogModule,
     CommonModule,
@@ -33,7 +34,7 @@ export class UserFileListComponent implements OnInit {
   costEstimation: number = 0;
   totalSize: number = 0;
   totalSizeFormatted: string = '';
-  totalSizeRemainingText: string = '';
+  totalSizeRemainingText: string = '0 B';
 
   loadingUsage: boolean = false;
 
@@ -41,7 +42,7 @@ export class UserFileListComponent implements OnInit {
     private dg: MatDialog,
     private uq: UserQuotaService,
     private cb: Clipboard,
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
     this.loadList();
@@ -61,26 +62,39 @@ export class UserFileListComponent implements OnInit {
     this.currentUsage(this.myFiles);
   }
 
-  generateTotalSize(files: any[], quotaSize: number = 0) {
+  generateTotalSize(files: any[], quotaSize?: number) {
     const bytesTotal = getTotalStorageSize(files);
 
     this.totalSize = bytesTotal;
     this.totalSizeFormatted = formatBytes(bytesTotal, 2);
 
-    this.totalSizeRemainingText = formatBytes(
-      Math.floor(quotaSize - this.totalSize),
-      2,
-    );
+    // Use provided quotaSize or fall back to the stored quotaSize
+    const effectiveQuotaSize =
+      quotaSize !== undefined ? quotaSize : this.quotaSize;
+
+    // Calculate remaining, ensure it's not negative
+    const remaining = Math.max(0, effectiveQuotaSize - this.totalSize);
+
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
   }
 
   async currentUsage(files: any[]) {
     this.loadingUsage = true;
 
-    const { quotaSize, costEstimation } = await firstValueFrom(
+    const { quotaSize, costEstimation, usageSize } = await firstValueFrom(
       this.uq.getCurrentUsage(),
     );
 
-    this.generateTotalSize(files, quotaSize);
+    // Store quotaSize for later use (e.g., after delete)
+    this.quotaSize = quotaSize;
+
+    // Use usageSize from backend instead of calculating from files
+    this.totalSize = usageSize;
+    this.totalSizeFormatted = formatBytes(usageSize, 2);
+
+    // Calculate remaining based on backend usageSize
+    const remaining = Math.max(0, quotaSize - usageSize);
+    this.totalSizeRemainingText = formatBytes(remaining, 2);
 
     this.quotaSizeFormatted = formatBytes(quotaSize, 2);
     this.costEstimation = costEstimation;

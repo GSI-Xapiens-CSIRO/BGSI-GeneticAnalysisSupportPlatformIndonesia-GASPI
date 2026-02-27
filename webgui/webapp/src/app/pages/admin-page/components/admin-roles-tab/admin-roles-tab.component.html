@@ -1,0 +1,92 @@
+<mat-card>
+  <mat-card-content class="overflow-x-auto relative">
+    <app-component-spinner [loading]="loading"></app-component-spinner>
+
+    <!-- Header -->
+    <div class="cu-header">
+      <h2 class="flex-1">Role</h2>
+      <div class="cu-btn-container">
+        <button class="w-[150px]" (click)="addRole()" mat-raised-button color="primary"
+          [appDisableIfNoPermission]="'admin.create'">
+          <mat-icon aria-hidden="false" aria-label="add" fontIcon="add"></mat-icon>
+          Add Role
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Form -->
+    <form [formGroup]="filterForm" (ngSubmit)="filterRoles()">
+      <div class="grid max-w-[500px] md:max-w-full md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <mat-form-field>
+          <mat-label>Status Filter</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="all">All</mat-option>
+            <mat-option value="active">Active</mat-option>
+            <mat-option value="inactive">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Search</mat-label>
+          <input matInput placeholder="Search by role name" [formControl]="searchControl" />
+        </mat-form-field>
+      </div>
+      <button type="submit" mat-raised-button color="primary" class="w-[110px]">
+        Filter
+      </button>
+    </form>
+
+    <!-- Roles Table -->
+    <table mat-table [dataSource]="dataSource" class="w-full mt-4">
+      <!-- Role Name Column -->
+      <ng-container matColumnDef="Role Name">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Role Name</th>
+        <td mat-cell *matCellDef="let role">{{ role.role_name }}</td>
+      </ng-container>
+
+      <!-- Function Column -->
+      <ng-container matColumnDef="Function">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Function</th>
+        <td mat-cell *matCellDef="let role">{{ role.permission_count }} function</td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="Status">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Status</th>
+        <td mat-cell *matCellDef="let role">
+          <span [class]="role.is_active ? 'text-green-600' : 'text-red-600'">
+            {{ role.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- User Count Column -->
+      <ng-container matColumnDef="User Count">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">User Count</th>
+        <td mat-cell *matCellDef="let role">{{ role.user_count }}</td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="Actions">
+        <th mat-header-cell *matHeaderCellDef class="font-bold">Actions</th>
+        <td mat-cell *matCellDef="let role">
+          <div class="action-buttons">
+            <button mat-mini-fab color="primary" (click)="editRole(role); $event.stopPropagation()"
+              matTooltip="Edit role" class="action-btn" [appDisableIfNoPermission]="'admin.update'">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-mini-fab color="warn" (click)="deleteRole(role); $event.stopPropagation()"
+              matTooltip="Delete role" class="action-btn" [appDisableIfNoPermission]="'admin.delete'">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row class="hover:bg-slate-100" *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <!-- Paginator -->
+    <mat-paginator #paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="pageSize" length="9999"></mat-paginator>
+  </mat-card-content>
+</mat-card>

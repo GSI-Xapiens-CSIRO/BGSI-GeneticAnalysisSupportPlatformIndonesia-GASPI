@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
+import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DportalService } from 'src/app/services/dportal.service';
@@ -31,7 +33,15 @@ export interface SignedNotebookUrl {
 @Component({
   selector: 'app-notebook-item',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    MatTooltipModule,
+    CommonModule,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
+  ],
   templateUrl: './notebook-item.component.html',
   styleUrl: './notebook-item.component.scss',
 })
@@ -46,7 +56,7 @@ export class NotebookItemComponent implements OnInit {
     private dps: DportalService,
     private dg: MatDialog,
     private aws: AwsService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.getStatus();

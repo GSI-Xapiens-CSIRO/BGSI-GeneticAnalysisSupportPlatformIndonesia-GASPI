@@ -1,0 +1,15 @@
+<div class="delete-dialog">
+  <!-- Row 1: Title -->
+  <div class="delete-dialog-title">Delete "{{ data.title }}"</div>
+
+  <!-- Row 2: Confirmation message -->
+  <div class="delete-dialog-message">
+    Are you sure you want to delete this item? This action cannot be undone.
+  </div>
+
+  <!-- Row 3: Actions -->
+  <div class="delete-dialog-actions">
+    <button class="btn-cancel" (click)="cancel()">Cancel</button>
+    <button class="btn-delete" (click)="confirmDelete()">Delete</button>
+  </div>
+</div>
