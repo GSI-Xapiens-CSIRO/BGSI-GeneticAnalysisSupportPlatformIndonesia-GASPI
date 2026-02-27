@@ -47,7 +47,6 @@
   overflow-x: hidden;
   padding: 20px;
   padding-bottom: 40px;
-  min-height: 350px;
   background: #ffffff;
 }
 
@@ -91,7 +90,7 @@
 }
 
 .cancel-btn {
-  background: #FFA705;
+  background: #ffa705;
   border: none;
   color: #111827;
   padding: 10px;
@@ -103,7 +102,7 @@
 }
 
 .apply-btn {
-  background: #16B3AC;
+  background: #16b3ac;
   border: none;
   color: #ffffff;
   padding: 10px;

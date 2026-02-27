@@ -107,6 +107,7 @@
 .nested-group .rule-controls {
   display: flex;
   align-items: center;
+  justify-content: space-evenly;
   width: 100%;
 }
 .nested-group .rule-row {
@@ -121,6 +122,10 @@
 .nested-group .rule-controls mat-form-field .mat-select-trigger {
   line-height: normal;
   text-align: left;
+}
+
+.nested-group .between-inputs .value-field {
+  width: 80px !important;
 }
 
 .group-delete {
@@ -197,4 +202,43 @@
 
 .filter-summary b {
   font-weight: 600;
+}
+
+.between-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-controls .between-inputs .value-field {
+  width: 100px !important;
+}
+
+.to-label {
+  font-weight: 500;
+  color: #666;
+  padding: 0 4px;
+}
+
+/* Search box inside mat-select */
+.select-search-box {
+  padding: 8px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.select-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.select-search-input:focus {
+  border-color: #16B3AC;
 }

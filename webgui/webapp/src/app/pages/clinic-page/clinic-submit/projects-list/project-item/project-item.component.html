@@ -52,7 +52,7 @@
                             <button (click)="viewQcReport.emit(file)" mat-mini-fab matTooltip="See QC Report"
                                 [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
                                 [style.background]="file.disabled ? 'gray' : '#16B3AC'"
-                                [appDisableIfNoPermission]="'clinical_workflow_execution.read'">
+                                [appDisableIfNoPermission]="'clinical_workflow_execution.create'">
                                 <mat-icon fontSet="material-symbols-outlined" style="color: white;">bar_chart</mat-icon>
                             </button>
                         </div>
