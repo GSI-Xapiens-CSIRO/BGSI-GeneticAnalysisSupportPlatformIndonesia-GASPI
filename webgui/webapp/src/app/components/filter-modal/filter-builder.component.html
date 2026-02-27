@@ -58,6 +58,7 @@
             >
               <mat-select
                 [(value)]="child.operator"
+                (selectionChange)="onOperatorChange(child)"
                 disableOptionCentering
                 panelClass="filter-modal-select-panel filter-modal-searchable-panel"
                 (openedChange)="onSelectOpenedChange($event, 'operator')"
@@ -92,25 +93,43 @@
               <ng-container
                 *ngIf="isBetweenOperator(child.operator); else normalInput"
               >
-                <mat-form-field appearance="outline" class="value-field">
-                  <input
-                    matInput
-                    type="number"
-                    [ngModel]="child.value?.[0]"
-                    (ngModelChange)="child.value = [$event, child.value?.[1]]"
-                    placeholder="Min"
-                  />
-                </mat-form-field>
+                <div class="between-inputs">
+                  <mat-form-field appearance="outline" class="value-field">
+                    <input
+                      *ngIf="child.dataType === 'number'"
+                      matInput
+                      type="number"
+                      [(ngModel)]="child.value[0]"
+                      placeholder="Min"
+                    />
+                    <input
+                      *ngIf="child.dataType === 'date'"
+                      matInput
+                      type="date"
+                      [(ngModel)]="child.value[0]"
+                      placeholder="Enter value to match"
+                    />
+                  </mat-form-field>
 
-                <mat-form-field appearance="outline" class="value-field">
-                  <input
-                    matInput
-                    type="number"
-                    [ngModel]="child.value?.[1]"
-                    (ngModelChange)="child.value = [child.value?.[0], $event]"
-                    placeholder="Max"
-                  />
-                </mat-form-field>
+                  <span class="to-label">to</span>
+
+                  <mat-form-field appearance="outline" class="value-field">
+                    <input
+                      *ngIf="child.dataType === 'number'"
+                      matInput
+                      type="number"
+                      [(ngModel)]="child.value[1]"
+                      placeholder="Max"
+                    />
+                    <input
+                      *ngIf="child.dataType === 'date'"
+                      matInput
+                      type="date"
+                      [(ngModel)]="child.value[1]"
+                      placeholder="Enter date to match"
+                    />
+                  </mat-form-field>
+                </div>
               </ng-container>
 
               <!-- NORMAL INPUT -->
@@ -136,13 +155,18 @@
                     <input matInput [(ngModel)]="child.value" type="number" />
                   </mat-form-field>
 
-                  <!-- BOOLEAN -->
+                  <!-- BOOLEAN - Note: Boolean usually uses is_true/is_false (NoValueOperator), but keeping this for fallback -->
                   <mat-form-field
                     *ngSwitchCase="'boolean'"
                     appearance="outline"
                     class="value-field"
                   >
-                    <mat-select [(value)]="child.value" disableOptionCentering panelClass="filter-modal-select-panel">
+                    <mat-select
+                      [(value)]="child.value"
+                      (selectionChange)="emitChange()"
+                      disableOptionCentering
+                      panelClass="filter-modal-select-panel"
+                    >
                       <mat-option [value]="true">True</mat-option>
                       <mat-option [value]="false">False</mat-option>
                     </mat-select>
@@ -154,7 +178,12 @@
                     appearance="outline"
                     class="value-field"
                   >
-                    <input matInput [(ngModel)]="child.value" type="date" />
+                    <input
+                      matInput
+                      [(ngModel)]="child.value"
+                      (ngModelChange)="emitChange()"
+                      type="date"
+                    />
                   </mat-form-field>
 
                   <!-- ARRAY / IN / MULTI VALUE -->
@@ -166,7 +195,12 @@
                   >
                     <input
                       matInput
-                      [(ngModel)]="child.value"
+                      [ngModel]="
+                        isArray(child.value)
+                          ? child.value.join(',')
+                          : child.value
+                      "
+                      (ngModelChange)="onArrayInputChange($event, child)"
                       type="text"
                       placeholder="Enter value to match"
                     />

@@ -19,6 +19,7 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { DportalService } from 'src/app/services/dportal.service';
+import { DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 interface User {
   firstName: string;
@@ -35,6 +36,7 @@ interface User {
     MatTableModule,
     MatSortModule,
     MatDialogModule,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './project-users-dialog.component.html',
   styleUrl: './project-users-dialog.component.scss',

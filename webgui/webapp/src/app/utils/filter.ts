@@ -12,7 +12,7 @@ export interface FilterRule {
   type: 'rule';
   field: string;
   operator: string;
-  dataType: 'string' | 'number' | 'boolean';
+  dataType: DataType;
   value: any;
 }
 
@@ -30,12 +30,6 @@ export const operatorMap: Record<DataType, string[]> = {
     'not_contains',
     'starts_with',
     'ends_with',
-    // 'regex',
-    // 'not_regex',
-    // 'is_empty',
-    // 'is_not_empty',
-    'in',
-    'not_in',
   ],
 
   number: [
@@ -45,37 +39,13 @@ export const operatorMap: Record<DataType, string[]> = {
     'less_than',
     'greater_or_equal',
     'less_or_equal',
-    // 'between',
-    // 'not_between',
-    // 'in',
-    // 'not_in',
-    // 'is_null',
-    // 'is_not_null',
+    'between',
+    'not_between',
   ],
 
-  boolean: [
-    'equals',
-    'not_equals',
-    'is_true',
-    'is_false',
-    // 'is_null',
-    // 'is_not_null',
-  ],
+  boolean: ['is_true', 'is_false'],
 
-  date: [
-    'equals',
-    'not_equals',
-    'greater_than',
-    'less_than',
-    'greater_or_equal',
-    'less_or_equal',
-    // 'between',
-    // 'not_between',
-    // 'before',
-    // 'after',
-    // 'is_null',
-    // 'is_not_null',
-  ],
+  date: ['equals', 'not_equals', 'between', 'not_between', 'before', 'after'],
 
   array: [
     'contains',
@@ -130,6 +100,11 @@ export const OperatorLabels: Record<string, string> = {
 
   before: 'Before',
   after: 'After',
+
+  array_contains: 'Array Contains',
+  array_contains_any: 'Array Contains Any',
+  array_contains_all: 'Array Contains All',
+  array_length_equals: 'Array Length Equals',
 };
 
 export function evaluateRule(rule: any, item: any): boolean {
@@ -143,6 +118,10 @@ export function evaluateRule(rule: any, item: any): boolean {
       if (Array.isArray(normalizedData)) {
         return normalizedData.includes(value);
       }
+      if (rule.dataType === 'date') {
+        if (!normalizedData || !value) return false;
+        return new Date(normalizedData).getTime() === new Date(value).getTime();
+      }
       if (typeof value === 'number' || !isNaN(Number(value))) {
         return Number(normalizedData) === Number(value);
       }
@@ -151,6 +130,10 @@ export function evaluateRule(rule: any, item: any): boolean {
     case 'not_equals':
       if (Array.isArray(normalizedData)) {
         return !normalizedData.includes(value);
+      }
+      if (rule.dataType === 'date') {
+        if (!normalizedData || !value) return true;
+        return new Date(normalizedData).getTime() !== new Date(value).getTime();
       }
       if (typeof value === 'number' || !isNaN(Number(value))) {
         return Number(normalizedData) !== Number(value);
@@ -180,23 +163,66 @@ export function evaluateRule(rule: any, item: any): boolean {
       ====================== */
 
     case 'greater_than':
+      if (rule.dataType === 'date') {
+        return new Date(normalizedData).getTime() > new Date(value).getTime();
+      }
       return Number(normalizedData) > Number(value);
 
     case 'less_than':
+      if (rule.dataType === 'date') {
+        return new Date(normalizedData).getTime() < new Date(value).getTime();
+      }
       return Number(normalizedData) < Number(value);
 
     case 'greater_or_equal':
+      if (rule.dataType === 'date') {
+        return new Date(normalizedData).getTime() >= new Date(value).getTime();
+      }
       return Number(normalizedData) >= Number(value);
 
     case 'less_or_equal':
+      if (rule.dataType === 'date') {
+        return new Date(normalizedData).getTime() <= new Date(value).getTime();
+      }
       return Number(normalizedData) <= Number(value);
 
     case 'between':
       if (!Array.isArray(value) || value.length !== 2) return false;
+      if (rule.dataType === 'date') {
+        const d = new Date(normalizedData).getTime();
+        const start = new Date(value[0]).getTime();
+        const end = new Date(value[1]).getTime();
+        return d >= start && d <= end;
+      }
       return (
         Number(normalizedData) >= Number(value[0]) &&
         Number(normalizedData) <= Number(value[1])
       );
+
+    case 'not_between':
+      if (!Array.isArray(value) || value.length !== 2) return false;
+      if (rule.dataType === 'date') {
+        const d = new Date(normalizedData).getTime();
+        const start = new Date(value[0]).getTime();
+        const end = new Date(value[1]).getTime();
+        return d < start || d > end;
+      }
+      return (
+        Number(normalizedData) < Number(value[0]) ||
+        Number(normalizedData) > Number(value[1])
+      );
+
+    case 'before':
+      return new Date(normalizedData).getTime() < new Date(value).getTime();
+
+    case 'after':
+      return new Date(normalizedData).getTime() > new Date(value).getTime();
+
+    case 'is_true':
+      return Boolean(normalizedData) === true;
+
+    case 'is_false':
+      return Boolean(normalizedData) === false;
 
     /* =====================
          STRING (AUTO SUPPORT ARRAY)
@@ -240,35 +266,37 @@ export function evaluateRule(rule: any, item: any): boolean {
 
     case 'in':
       if (!Array.isArray(value)) return false;
+      const filteredInValue = value.filter((v: any) => v !== '');
 
       if (Array.isArray(normalizedData)) {
-        return normalizedData.some((v) => value.includes(v));
+        return normalizedData.some((v) => filteredInValue.includes(v));
       }
 
       if (
         typeof normalizedData === 'number' ||
         !isNaN(Number(normalizedData))
       ) {
-        return value.map(Number).includes(Number(normalizedData));
+        return filteredInValue.map(Number).includes(Number(normalizedData));
       }
 
-      return value.includes(normalizedData);
+      return filteredInValue.includes(normalizedData);
 
     case 'not_in':
       if (!Array.isArray(value)) return false;
+      const filteredNotInValue = value.filter((v: any) => v !== '');
 
       if (Array.isArray(normalizedData)) {
-        return !normalizedData.some((v) => value.includes(v));
+        return !normalizedData.some((v) => filteredNotInValue.includes(v));
       }
 
       if (
         typeof normalizedData === 'number' ||
         !isNaN(Number(normalizedData))
       ) {
-        return !value.map(Number).includes(Number(normalizedData));
+        return !filteredNotInValue.map(Number).includes(Number(normalizedData));
       }
 
-      return !value.includes(normalizedData);
+      return !filteredNotInValue.includes(normalizedData);
 
     /* =====================
          ARRAY FIELD
@@ -277,18 +305,24 @@ export function evaluateRule(rule: any, item: any): boolean {
     case 'array_contains':
       return Array.isArray(normalizedData) && normalizedData.includes(value);
 
+    case 'contains_any':
     case 'array_contains_any':
       return (
         Array.isArray(normalizedData) &&
         Array.isArray(value) &&
-        value.some((v) => normalizedData.includes(v))
+        value
+          .filter((v: any) => v !== '')
+          .some((v) => normalizedData.includes(v))
       );
 
+    case 'contains_all':
     case 'array_contains_all':
       return (
         Array.isArray(normalizedData) &&
         Array.isArray(value) &&
-        value.every((v) => normalizedData.includes(v))
+        value
+          .filter((v: any) => v !== '')
+          .every((v) => normalizedData.includes(v))
       );
 
     case 'array_length_equals':
@@ -357,6 +391,34 @@ function isValidRule(rule: FilterRule): boolean {
   if (!rule.field) return false;
   if (!rule.operator) return false;
 
+  // No-value operators
+  if (
+    [
+      'is_null',
+      'is_not_null',
+      'is_empty',
+      'is_not_empty',
+      'is_true',
+      'is_false',
+    ].includes(rule.operator)
+  ) {
+    return true;
+  }
+
+  // Between operators (Expect array of 2)
+  if (['between', 'not_between'].includes(rule.operator)) {
+    return (
+      Array.isArray(rule.value) &&
+      rule.value.length === 2 &&
+      rule.value[0] !== null &&
+      rule.value[0] !== undefined &&
+      rule.value[0] !== '' &&
+      rule.value[1] !== null &&
+      rule.value[1] !== undefined &&
+      rule.value[1] !== ''
+    );
+  }
+
   if (rule.dataType === 'boolean') {
     return rule.value === true || rule.value === false;
   }
@@ -370,6 +432,9 @@ function formatValue(rule: FilterRule): string {
   }
 
   if (Array.isArray(rule.value)) {
+    if (['between', 'not_between'].includes(rule.operator)) {
+      return `${rule.value[0]} to ${rule.value[1]}`;
+    }
     return `[${rule.value.join(', ')}]`;
   }
 
