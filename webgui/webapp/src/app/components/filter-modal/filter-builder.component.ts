@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,7 +31,7 @@ import {
   templateUrl: './filter-builder.component.html',
   styleUrls: ['./filter-builder.component.scss'],
 })
-export class FilterBuilderComponent {
+export class FilterBuilderComponent implements OnInit {
   @Input() group!: FilterGroup;
   @Input() fields: FieldConfig[] = [];
   @Input() isRoot = true;
@@ -40,45 +40,16 @@ export class FilterBuilderComponent {
 
   operatorMap = operatorMap;
   operatorLabels = OperatorLabels;
-
   isArray = Array.isArray;
 
-  // Search terms for searchable dropdowns
-  fieldSearchTerm = '';
-  operatorSearchTerm = '';
+  // Per-row state for field search (keyed by row index)
+  filteredFieldsMap: Map<number, FieldConfig[]> = new Map();
+
+  // Per-row state for operator search (keyed by row index)
+  filteredOperatorsMap: Map<number, string[]> = new Map();
 
   get summaryText(): string {
     return GetFilterSummaryText(this.group);
-  }
-
-  /** Return fields filtered by search term */
-  getFilteredFields(): FieldConfig[] {
-    if (!this.fieldSearchTerm) return this.fields;
-    const term = this.fieldSearchTerm.toLowerCase();
-    return this.fields.filter((f) => f.field.toLowerCase().includes(term));
-  }
-
-  /** Return operators filtered by search term */
-  getFilteredOperators(dataType: DataType): string[] {
-    const ops = operatorMap[dataType] || [];
-    if (!this.operatorSearchTerm) return ops;
-    const term = this.operatorSearchTerm.toLowerCase();
-    return ops.filter((op) => {
-      const label = (this.operatorLabels[op] || op).toLowerCase();
-      return label.includes(term);
-    });
-  }
-
-  /** Clear search term when a select panel is closed */
-  onSelectOpenedChange(opened: boolean, type: 'field' | 'operator') {
-    if (!opened) {
-      if (type === 'field') this.fieldSearchTerm = '';
-      if (type === 'operator') this.operatorSearchTerm = '';
-    }
-  }
-
-  emitChange() {
-    this.groupChange.emit(this.group);
   }
 
   ngOnInit() {
@@ -87,24 +58,96 @@ export class FilterBuilderComponent {
     }
   }
 
+  /** Get filtered fields for a specific row */
+  getFilteredFieldsForRow(index: number): FieldConfig[] {
+    return this.filteredFieldsMap.get(index) || this.fields;
+  }
+
+  /** Get filtered operators for a specific row */
+  getFilteredOperatorsForRow(index: number, dataType: DataType): string[] {
+    return this.filteredOperatorsMap.get(index) || (operatorMap[dataType] || []);
+  }
+
+  /** Called when field select opens/closes */
+  onFieldSelectOpened(opened: boolean, index: number) {
+    if (opened) {
+      // Reset to show all fields when opening
+      this.filteredFieldsMap.set(index, [...this.fields]);
+    } else {
+      // Clear when closed
+      this.filteredFieldsMap.delete(index);
+    }
+  }
+
+  /** Called when operator select opens/closes */
+  onOperatorSelectOpened(opened: boolean, index: number, dataType: DataType) {
+    if (opened) {
+      // Reset to show all operators when opening
+      this.filteredOperatorsMap.set(index, [...(operatorMap[dataType] || [])]);
+    } else {
+      // Clear when closed
+      this.filteredOperatorsMap.delete(index);
+    }
+  }
+
+  /** Filter fields based on search input for a specific row */
+  onFieldSearchInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    const term = input.value.toLowerCase();
+
+    if (!term) {
+      this.filteredFieldsMap.set(index, [...this.fields]);
+    } else {
+      const filtered = this.fields.filter(f =>
+        f.field.toLowerCase().includes(term)
+      );
+      this.filteredFieldsMap.set(index, filtered);
+    }
+  }
+
+  /** Filter operators based on search input for a specific row */
+  onOperatorSearchInput(event: Event, index: number, dataType: DataType) {
+    const input = event.target as HTMLInputElement;
+    const term = input.value.toLowerCase();
+    const ops = operatorMap[dataType] || [];
+
+    if (!term) {
+      this.filteredOperatorsMap.set(index, [...ops]);
+    } else {
+      const filtered = ops.filter(op => {
+        const label = (this.operatorLabels[op] || op).toLowerCase();
+        return label.includes(term);
+      });
+      this.filteredOperatorsMap.set(index, filtered);
+    }
+  }
+
+  /** Prevent keyboard events from bubbling to mat-select */
+  onSearchKeydown(event: KeyboardEvent) {
+    event.stopPropagation();
+  }
+
+  /** Stop propagation for click events */
+  onSearchClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
+  emitChange() {
+    this.groupChange.emit(this.group);
+  }
+
   addRule() {
-    const defaultField = this.fields.length
-      ? this.fields[0]
-      : { field: '', dataType: 'string', defaultValue: '' };
     const defaultCondition =
       this.group.children.length > 0 ? this.group.condition : undefined;
+
+    // Create empty rule - just placeholders, no default values
     this.group.children.push({
       condition: defaultCondition,
       type: 'rule',
-      field: defaultField.field,
-      operator: 'equals',
-      dataType: defaultField.dataType as
-        | 'string'
-        | 'number'
-        | 'boolean'
-        | 'date'
-        | 'array',
-      value: defaultField.defaultValue ?? '',
+      field: '',        // Empty - will show placeholder
+      operator: '',     // Empty - will show placeholder
+      dataType: 'string',
+      value: '',        // Empty - will show placeholder
     });
     this.emitChange();
   }
@@ -119,14 +162,10 @@ export class FilterBuilderComponent {
   }
 
   remove(index: number) {
-    const newChildren = [...this.group.children];
-    newChildren.splice(index, 1);
-
-    this.group = {
-      ...this.group,
-      children: newChildren,
-    };
-
+    this.group.children.splice(index, 1);
+    // Clean up search state
+    this.filteredFieldsMap.delete(index);
+    this.filteredOperatorsMap.delete(index);
     this.emitChange();
   }
 
@@ -135,19 +174,11 @@ export class FilterBuilderComponent {
   }
 
   updateChild(index: number, child: FilterGroup | null) {
-    const newChildren = [...this.group.children];
-
     if (child === null) {
-      newChildren.splice(index, 1);
+      this.group.children.splice(index, 1);
     } else {
-      newChildren[index] = child;
+      this.group.children[index] = child;
     }
-
-    this.group = {
-      ...this.group,
-      children: newChildren,
-    };
-
     this.emitChange();
   }
 
@@ -155,7 +186,7 @@ export class FilterBuilderComponent {
     const selected = this.fields.find((f) => f.field === rule.field);
     if (!selected) return;
 
-    rule.dataType = selected.dataType;
+    rule.dataType = selected.dataType as DataType;
     rule.operator = 'equals';
     rule.value = selected.defaultValue ?? '';
     this.emitChange();
@@ -193,20 +224,7 @@ export class FilterBuilderComponent {
     }
     return rule.value === null || rule.value === undefined || rule.value === '';
   }
-  private isValidRule(rule: FilterRule): boolean {
-    if (!rule.field) return false;
-    if (!rule.operator) return false;
 
-    if (rule.dataType === 'boolean') {
-      return rule.value === true || rule.value === false;
-    }
-
-    if (rule.value === null || rule.value === undefined || rule.value === '') {
-      return false;
-    }
-
-    return true;
-  }
   getOperators(dataType: DataType): string[] {
     return operatorMap[dataType] || [];
   }
@@ -235,29 +253,16 @@ export class FilterBuilderComponent {
       child.value = [];
       return;
     }
-
     child.value = value.split(',').map((v: string) => v.trim());
   }
 
   onGroupConditionChange(condition: 'AND' | 'OR') {
-    const newChildren = this.group.children.map((child) => {
+    this.group.condition = condition;
+    this.group.children.forEach((child) => {
       if (child.type === 'rule') {
-        return {
-          ...child,
-          condition: condition,
-        };
+        (child as FilterRule).condition = condition;
       }
-
-      // group child tidak disentuh isinya
-      return child;
     });
-
-    this.group = {
-      ...this.group,
-      condition,
-      children: newChildren,
-    };
-
     this.emitChange();
   }
 }
