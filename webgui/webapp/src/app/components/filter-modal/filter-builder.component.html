@@ -22,36 +22,36 @@
         </div>
 
         <div class="rule-controls">
-          <!-- FIELD -->
           <div class="rule-inputs">
+            <!-- FIELD SELECT -->
             <mat-form-field appearance="outline">
               <mat-select
                 [(value)]="child.field"
                 (selectionChange)="onFieldChange(child)"
+                (openedChange)="onFieldSelectOpened($event, i)"
                 disableOptionCentering
                 panelClass="filter-modal-select-panel filter-modal-searchable-panel"
-                (openedChange)="onSelectOpenedChange($event, 'field')"
+                placeholder="Select field"
               >
-                <div class="select-search-box">
+                <div class="select-search-box"
+                     (click)="onSearchClick($event)"
+                     (keydown)="onSearchKeydown($event)">
                   <input
-                    matInput
                     type="text"
                     placeholder="Search field..."
-                    [(ngModel)]="fieldSearchTerm"
-                    (keydown)="$event.stopPropagation()"
+                    (input)="onFieldSearchInput($event, i)"
+                    (keydown)="onSearchKeydown($event)"
+                    (click)="onSearchClick($event)"
                     class="select-search-input"
                   />
                 </div>
-                <mat-option
-                  *ngFor="let f of getFilteredFields()"
-                  [value]="f.field"
-                >
+                <mat-option *ngFor="let f of getFilteredFieldsForRow(i)" [value]="f.field">
                   {{ f.field }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
 
-            <!-- OPERATOR -->
+            <!-- OPERATOR SELECT -->
             <mat-form-field
               appearance="outline"
               [color]="isOperatorInvalid(child) ? 'warn' : 'primary'"
@@ -59,40 +59,36 @@
               <mat-select
                 [(value)]="child.operator"
                 (selectionChange)="onOperatorChange(child)"
+                (openedChange)="onOperatorSelectOpened($event, i, child.dataType)"
                 disableOptionCentering
                 panelClass="filter-modal-select-panel filter-modal-searchable-panel"
-                (openedChange)="onSelectOpenedChange($event, 'operator')"
+                placeholder="Select operator"
               >
-                <div class="select-search-box">
+                <div class="select-search-box"
+                     (click)="onSearchClick($event)"
+                     (keydown)="onSearchKeydown($event)">
                   <input
-                    matInput
                     type="text"
                     placeholder="Search operator..."
-                    [(ngModel)]="operatorSearchTerm"
-                    (keydown)="$event.stopPropagation()"
+                    (input)="onOperatorSearchInput($event, i, child.dataType)"
+                    (keydown)="onSearchKeydown($event)"
+                    (click)="onSearchClick($event)"
                     class="select-search-input"
                   />
                 </div>
-                <mat-option
-                  *ngFor="let op of getFilteredOperators(child.dataType)"
-                  [value]="op"
-                >
+                <mat-option *ngFor="let op of getFilteredOperatorsForRow(i, child.dataType)" [value]="op">
                   {{ operatorLabels[op] || op }}
                 </mat-option>
               </mat-select>
-
               <mat-error *ngIf="isOperatorInvalid(child)">
                 Operator required
               </mat-error>
             </mat-form-field>
 
-            <!-- VALUE -->
-            <!-- HIDE VALUE IF OPERATOR DOES NOT NEED VALUE -->
+            <!-- VALUE INPUTS -->
             <ng-container *ngIf="!isNoValueOperator(child.operator)">
-              <!-- BETWEEN OPERATOR (2 INPUTS) -->
-              <ng-container
-                *ngIf="isBetweenOperator(child.operator); else normalInput"
-              >
+              <!-- BETWEEN OPERATOR -->
+              <ng-container *ngIf="isBetweenOperator(child.operator); else normalInput">
                 <div class="between-inputs">
                   <mat-form-field appearance="outline" class="value-field">
                     <input
@@ -107,12 +103,9 @@
                       matInput
                       type="date"
                       [(ngModel)]="child.value[0]"
-                      placeholder="Enter value to match"
                     />
                   </mat-form-field>
-
                   <span class="to-label">to</span>
-
                   <mat-form-field appearance="outline" class="value-field">
                     <input
                       *ngIf="child.dataType === 'number'"
@@ -126,7 +119,6 @@
                       matInput
                       type="date"
                       [(ngModel)]="child.value[1]"
-                      placeholder="Enter date to match"
                     />
                   </mat-form-field>
                 </div>
@@ -135,91 +127,43 @@
               <!-- NORMAL INPUT -->
               <ng-template #normalInput>
                 <ng-container [ngSwitch]="child.dataType">
-                  <!-- STRING -->
-                  <mat-form-field
-                    *ngSwitchCase="'string'"
-                    appearance="outline"
-                    class="value-field"
-                    placeholder="Enter value to match"
-                  >
-                    <input matInput [(ngModel)]="child.value" type="text" />
+                  <mat-form-field *ngSwitchCase="'string'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="text" placeholder="Enter value" />
                   </mat-form-field>
 
-                  <!-- NUMBER -->
-                  <mat-form-field
-                    *ngSwitchCase="'number'"
-                    appearance="outline"
-                    class="value-field"
-                    placeholder="Enter value to match"
-                  >
-                    <input matInput [(ngModel)]="child.value" type="number" />
+                  <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="number" placeholder="Enter value" />
                   </mat-form-field>
 
-                  <!-- BOOLEAN - Note: Boolean usually uses is_true/is_false (NoValueOperator), but keeping this for fallback -->
-                  <mat-form-field
-                    *ngSwitchCase="'boolean'"
-                    appearance="outline"
-                    class="value-field"
-                  >
-                    <mat-select
-                      [(value)]="child.value"
-                      (selectionChange)="emitChange()"
-                      disableOptionCentering
-                      panelClass="filter-modal-select-panel"
-                    >
+                  <mat-form-field *ngSwitchCase="'boolean'" appearance="outline" class="value-field">
+                    <mat-select [(value)]="child.value" disableOptionCentering panelClass="filter-modal-select-panel">
                       <mat-option [value]="true">True</mat-option>
                       <mat-option [value]="false">False</mat-option>
                     </mat-select>
                   </mat-form-field>
 
-                  <!-- DATE -->
-                  <mat-form-field
-                    *ngSwitchCase="'date'"
-                    appearance="outline"
-                    class="value-field"
-                  >
-                    <input
-                      matInput
-                      [(ngModel)]="child.value"
-                      (ngModelChange)="emitChange()"
-                      type="date"
-                    />
+                  <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="date" />
                   </mat-form-field>
 
-                  <!-- ARRAY / IN / MULTI VALUE -->
-                  <mat-form-field
-                    *ngSwitchCase="'array'"
-                    appearance="outline"
-                    class="value-field"
-                    [color]="isValueInvalid(child) ? 'warn' : 'primary'"
-                  >
+                  <mat-form-field *ngSwitchCase="'array'" appearance="outline" class="value-field"
+                    [color]="isValueInvalid(child) ? 'warn' : 'primary'">
                     <input
                       matInput
-                      [ngModel]="
-                        isArray(child.value)
-                          ? child.value.join(',')
-                          : child.value
-                      "
+                      [ngModel]="isArray(child.value) ? child.value.join(',') : child.value"
                       (ngModelChange)="onArrayInputChange($event, child)"
                       type="text"
-                      placeholder="Enter value to match"
+                      placeholder="Enter values (comma separated)"
                     />
-
-                    <mat-error *ngIf="isValueInvalid(child)">
-                      Value required
-                    </mat-error>
+                    <mat-error *ngIf="isValueInvalid(child)">Value required</mat-error>
                   </mat-form-field>
                 </ng-container>
               </ng-template>
             </ng-container>
           </div>
+
           <button
-            [style.visibility]="
-              (group.children.length === 1 && child.type === 'rule') ||
-              (i === 0 && group.children[1].type === 'group')
-                ? 'hidden'
-                : 'visible'
-            "
+            [style.visibility]="(group.children.length === 1 && child.type === 'rule') || (i === 0 && group.children[1]?.type === 'group') ? 'hidden' : 'visible'"
             class="delete-btn"
             mat-icon-button
             color="warn"
@@ -230,11 +174,12 @@
         </div>
       </div>
 
+      <!-- NESTED GROUP -->
       <div *ngIf="child.type === 'group'" class="nested-group-row">
         <div class="group-condition">
           <mat-form-field appearance="outline" class="select-condition">
             <mat-select
-              [(value)]="group.condition"
+              [value]="group.condition"
               (selectionChange)="onGroupConditionChange($event.value)"
               disableOptionCentering
               panelClass="filter-modal-select-panel"
@@ -251,41 +196,32 @@
             [fields]="fields"
             [isRoot]="false"
             (groupChange)="updateChild(i, $event)"
-          >
-          </app-filter-builder>
+          ></app-filter-builder>
         </div>
       </div>
     </ng-container>
   </div>
 
-  <!-- GROUP FOOTER: tombol Add Filter di nested group, rata kanan -->
+  <!-- GROUP FOOTER -->
   <div class="group-footer" *ngIf="!isRoot">
-    <button
-      class="link-btn delete-group"
-      style="color: #d32f2f"
-      (click)="removeSelf()"
-    >
+    <button class="link-btn delete-group" style="color: #d32f2f" (click)="removeSelf()">
       Delete Group
     </button>
-    <button class="link-btn add-filter" (click)="addRule()">
-      + Add Filter
-    </button>
+    <button class="link-btn add-filter" (click)="addRule()">+ Add Filter</button>
   </div>
 
+  <!-- SUMMARY -->
   <div *ngIf="summaryText && isRoot" class="result-container">
     <div style="font-size: medium; font-weight: 400">Show data where</div>
     <div class="filter-summary" [innerHTML]="summaryText"></div>
   </div>
 
+  <!-- ROOT FOOTER -->
   <div *ngIf="isRoot" class="root-footer">
     <div class="right-actions">
       <div style="display: flex; gap: 8px">
-        <button class="link-btn add-filter" (click)="addRule()">
-          + Add Filter
-        </button>
-        <button class="link-btn add-group" (click)="addGroup()">
-          + Add Group
-        </button>
+        <button class="link-btn add-filter" (click)="addRule()">+ Add Filter</button>
+        <button class="link-btn add-group" (click)="addGroup()">+ Add Group</button>
       </div>
       <div style="margin-left: auto; display: flex; gap: 8px">
         <ng-content></ng-content>
