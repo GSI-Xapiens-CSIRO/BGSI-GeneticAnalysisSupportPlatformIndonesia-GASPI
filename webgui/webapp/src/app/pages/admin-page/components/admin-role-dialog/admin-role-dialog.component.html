@@ -1,0 +1,84 @@
+<div class="role-dialog">
+  <app-component-spinner [loading]="loading"></app-component-spinner>
+
+  <h2 mat-dialog-title>{{ isEditMode ? 'Edit Role' : 'Add New Role' }}</h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="roleForm" class="role-form">
+      <!-- Role Name -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Role Name</mat-label>
+        <input matInput formControlName="role_name" placeholder="e.g., Data Manager" required />
+        <mat-error *ngIf="roleForm.get('role_name')?.hasError('required')">
+          Role name is required
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Status Toggle -->
+      <div class="status-toggle">
+        <label>Status:</label>
+        <mat-slide-toggle formControlName="is_active" color="primary">
+          {{ roleForm.get('is_active')?.value ? 'Active' : 'Inactive' }}
+        </mat-slide-toggle>
+      </div>
+
+      <!-- Permissions Matrix -->
+      <div class="permissions-section" *ngIf="permissionsMatrix">
+        <h3>Permissions ({{ selectedPermissions.size }} selected)</h3>
+        <p class="permissions-hint">Select permissions for this role</p>
+
+        <div class="permissions-matrix">
+          <!-- Header Row -->
+          <div class="matrix-header">
+            <div class="resource-header">Resource</div>
+            <div class="actions-header">
+              <div class="action-cell" *ngFor="let action of permissionsMatrix.actions">
+                {{ action | titlecase }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Resource Rows -->
+          <div class="matrix-row" *ngFor="let resource of permissionsMatrix.resources">
+            <div class="resource-cell">
+              <mat-checkbox
+                [checked]="areAllResourcePermissionsChecked(resource)"
+                [indeterminate]="areSomeResourcePermissionsChecked(resource)"
+                (change)="toggleAllResourcePermissions(resource)"
+                color="primary"
+              >
+                {{ resource.label }}
+              </mat-checkbox>
+            </div>
+            <div class="actions-cell">
+              <div class="action-checkbox" *ngFor="let action of permissionsMatrix.actions">
+                <mat-checkbox
+                  *ngIf="resource.permissions[action]"
+                  [checked]="isPermissionChecked(resource.permissions[action])"
+                  [disabled]="isPermissionDisabled(resource.permissions[action])"
+                  (change)="togglePermission(resource.permissions[action])"
+                  [color]="isPermissionDisabled(resource.permissions[action]) ? 'warn' : 'primary'"
+                  [matTooltip]="isPermissionDisabled(resource.permissions[action]) ? 'This permission combination is not available' : ''"
+                >
+                </mat-checkbox>
+                <span *ngIf="!resource.permissions[action]" class="no-permission">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-raised-button (click)="onCancel()" [disabled]="loading">Cancel</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onSubmit()"
+      [disabled]="loading || roleForm.invalid"
+    >
+      {{ isEditMode ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</div>

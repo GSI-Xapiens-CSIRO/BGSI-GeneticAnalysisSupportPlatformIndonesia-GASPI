@@ -6,6 +6,7 @@ import { ProjectsListComponent } from './projects-list/projects-list.component';
 import { NotebooksComponent } from './admin-notebooks-list/admin-notebooks-list.component';
 import { Router } from '@angular/router';
 import { AdminFolderListComponent } from './admin-folder-list/admin-folder-list.component';
+import { HasPermissionDirective } from 'src/app/directives/permission.directive';
 
 @Component({
   selector: 'app-admin-section',
@@ -17,13 +18,14 @@ import { AdminFolderListComponent } from './admin-folder-list/admin-folder-list.
     ProjectsListComponent,
     NotebooksComponent,
     AdminFolderListComponent,
+    HasPermissionDirective,
   ],
   templateUrl: './admin-section.component.html',
   styleUrl: './admin-section.component.scss',
 })
 export class AdminSectionComponent implements AfterViewInit {
   protected selectedIndex = 0;
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
   ngAfterViewInit(): void {
     this.router.events.subscribe(() => {
       this.onSubTabChange(0);

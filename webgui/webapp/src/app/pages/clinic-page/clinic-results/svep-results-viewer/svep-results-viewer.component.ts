@@ -62,12 +62,23 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { BoxDataComponent } from './box-data/box-data.component';
 import { COLUMNS } from '../hub_configs';
 import { environment } from 'src/environments/environment';
 import { isEqual } from 'lodash';
 import { NoResultsAlertComponent } from '../no-results-alert/no-results-alert.component';
 import { Router } from '@angular/router';
+import { FilterModalComponent } from '../../../../components/filter-modal/filter-modal.component';
+import {
+  DX_FILTER_FIELDS_RSCM,
+  DX_FILTER_FIELDS_RSSARDJITO,
+} from './svep-results-viewer.types';
+import {
+  evaluateGroup,
+  GetFilterSummaryText,
+  FilterGroup,
+} from 'src/app/utils/filter';
 
 type SVEPResult = {
   url?: string;
@@ -128,6 +139,8 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
     MatAutocompleteModule,
     BoxDataComponent,
     NoResultsAlertComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MyCustomPaginatorIntl },
@@ -141,8 +154,7 @@ export class MyCustomPaginatorIntl implements MatPaginatorIntl {
   styleUrl: './svep-results-viewer.component.scss',
 })
 export class SvepResultsViewerComponent
-  implements OnInit, OnChanges, AfterViewInit
-{
+  implements OnInit, OnChanges, AfterViewInit {
   @Input({ required: true }) requestId!: string;
   @Input({ required: true }) projectName!: string;
   @Input() listData: any = []; // receive data from parent
@@ -153,7 +165,8 @@ export class SvepResultsViewerComponent
   @ViewChild(MatSort) sort!: MatSort;
   readonly panelOpenState = signal(false);
   protected results: SVEPResult | null = null;
-  protected columns: string[] = COLUMNS[environment.hub_name].svepCols;
+  protected hubName: string = environment.hub_name;
+  protected columns: string[] = COLUMNS[this.hubName].svepCols;
   filterValues: { [key: string]: string } = {};
   filterMasterData: { [key: string]: any[] } = {};
   protected originalRows: any[] = [];
@@ -182,6 +195,9 @@ export class SvepResultsViewerComponent
   expandedMap = new Map<string, boolean>();
   protected isLoading = false;
 
+  protected group!: FilterGroup;
+  protected hasAppliedAdvancedFilter = false;
+
   constructor(
     protected cs: ClinicService,
     private ss: SpinnerService,
@@ -190,7 +206,7 @@ export class SvepResultsViewerComponent
     @Inject(VIRTUAL_SCROLL_STRATEGY)
     private readonly scrollStrategy: TableVirtualScrollStrategy,
     private router: Router,
-  ) {}
+  ) { }
 
   /**
    * Check if SVEP configuration is available and has data
@@ -649,4 +665,45 @@ export class SvepResultsViewerComponent
     const isMarked = validationReportsObject(this.listReports, bObj);
     return isMarked;
   };
+
+  openAdvancedFilter() {
+    const hubName = this.hubName;
+    const colomnFields = ['RSCM'].includes(hubName)
+      ? DX_FILTER_FIELDS_RSCM
+      : ['RSSARDJITO'].includes(hubName)
+        ? DX_FILTER_FIELDS_RSSARDJITO
+        : [];
+
+    this.dg
+      .open(FilterModalComponent, {
+        width: '950px',
+        maxHeight: '90vh',
+        data: { fields: colomnFields, existingFilter: this.group },
+      })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) return;
+        this.group = result;
+        this.applyAdvancedFilter(result);
+      });
+  }
+
+  private applyAdvancedFilter(filter: FilterGroup) {
+    const filtered = this.originalRows.filter((row) =>
+      evaluateGroup(filter, row),
+    );
+
+    this.hasAppliedAdvancedFilter = true;
+    this.dataRows.next(filtered);
+  }
+
+  get summaryText(): string {
+    return GetFilterSummaryText(this.group);
+  }
+
+  resetAdvanceFilter() {
+    this.hasAppliedAdvancedFilter = false;
+    this.group = { type: 'group', condition: 'AND', children: [] };
+    this.dataRows.next([...this.originalRows]);
+  }
 }

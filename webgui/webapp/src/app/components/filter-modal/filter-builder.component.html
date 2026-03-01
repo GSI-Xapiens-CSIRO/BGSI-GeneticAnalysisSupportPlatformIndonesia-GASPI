@@ -1,0 +1,231 @@
+<div class="group-wrapper">
+  <div class="group-body">
+    <ng-container *ngFor="let child of group.children; let i = index">
+      <!-- RULE -->
+      <div *ngIf="child.type === 'rule'" class="rule-row">
+        <div *ngIf="i === 0" class="where-label">
+          <span>Where</span>
+        </div>
+
+        <div *ngIf="i > 0" class="group-condition">
+          <mat-form-field appearance="outline" class="select-condition">
+            <mat-select
+              [value]="group.condition"
+              (selectionChange)="onGroupConditionChange($event.value)"
+              disableOptionCentering
+              panelClass="filter-modal-select-panel"
+            >
+              <mat-option value="AND">AND</mat-option>
+              <mat-option value="OR">OR</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="rule-controls">
+          <div class="rule-inputs">
+            <!-- FIELD SELECT -->
+            <mat-form-field appearance="outline">
+              <mat-select
+                [(value)]="child.field"
+                (selectionChange)="onFieldChange(child)"
+                (openedChange)="onFieldSelectOpened($event, i)"
+                disableOptionCentering
+                panelClass="filter-modal-select-panel filter-modal-searchable-panel"
+                placeholder="Select field"
+              >
+                <div class="select-search-box"
+                     (click)="onSearchClick($event)"
+                     (keydown)="onSearchKeydown($event)">
+                  <input
+                    type="text"
+                    placeholder="Search field..."
+                    (input)="onFieldSearchInput($event, i)"
+                    (keydown)="onSearchKeydown($event)"
+                    (click)="onSearchClick($event)"
+                    class="select-search-input"
+                  />
+                </div>
+                <mat-option *ngFor="let f of getFilteredFieldsForRow(i)" [value]="f.field">
+                  {{ f.field }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- OPERATOR SELECT -->
+            <mat-form-field
+              appearance="outline"
+              [color]="isOperatorInvalid(child) ? 'warn' : 'primary'"
+            >
+              <mat-select
+                [(value)]="child.operator"
+                (selectionChange)="onOperatorChange(child)"
+                (openedChange)="onOperatorSelectOpened($event, i, child.dataType)"
+                disableOptionCentering
+                panelClass="filter-modal-select-panel filter-modal-searchable-panel"
+                placeholder="Select operator"
+              >
+                <div class="select-search-box"
+                     (click)="onSearchClick($event)"
+                     (keydown)="onSearchKeydown($event)">
+                  <input
+                    type="text"
+                    placeholder="Search operator..."
+                    (input)="onOperatorSearchInput($event, i, child.dataType)"
+                    (keydown)="onSearchKeydown($event)"
+                    (click)="onSearchClick($event)"
+                    class="select-search-input"
+                  />
+                </div>
+                <mat-option *ngFor="let op of getFilteredOperatorsForRow(i, child.dataType)" [value]="op">
+                  {{ operatorLabels[op] || op }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="isOperatorInvalid(child)">
+                Operator required
+              </mat-error>
+            </mat-form-field>
+
+            <!-- VALUE INPUTS -->
+            <ng-container *ngIf="!isNoValueOperator(child.operator)">
+              <!-- BETWEEN OPERATOR -->
+              <ng-container *ngIf="isBetweenOperator(child.operator); else normalInput">
+                <div class="between-inputs">
+                  <mat-form-field appearance="outline" class="value-field">
+                    <input
+                      *ngIf="child.dataType === 'number'"
+                      matInput
+                      type="number"
+                      [(ngModel)]="child.value[0]"
+                      placeholder="Min"
+                    />
+                    <input
+                      *ngIf="child.dataType === 'date'"
+                      matInput
+                      type="date"
+                      [(ngModel)]="child.value[0]"
+                    />
+                  </mat-form-field>
+                  <span class="to-label">to</span>
+                  <mat-form-field appearance="outline" class="value-field">
+                    <input
+                      *ngIf="child.dataType === 'number'"
+                      matInput
+                      type="number"
+                      [(ngModel)]="child.value[1]"
+                      placeholder="Max"
+                    />
+                    <input
+                      *ngIf="child.dataType === 'date'"
+                      matInput
+                      type="date"
+                      [(ngModel)]="child.value[1]"
+                    />
+                  </mat-form-field>
+                </div>
+              </ng-container>
+
+              <!-- NORMAL INPUT -->
+              <ng-template #normalInput>
+                <ng-container [ngSwitch]="child.dataType">
+                  <mat-form-field *ngSwitchCase="'string'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="text" placeholder="Enter value" />
+                  </mat-form-field>
+
+                  <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="number" placeholder="Enter value" />
+                  </mat-form-field>
+
+                  <mat-form-field *ngSwitchCase="'boolean'" appearance="outline" class="value-field">
+                    <mat-select [(value)]="child.value" disableOptionCentering panelClass="filter-modal-select-panel">
+                      <mat-option [value]="true">True</mat-option>
+                      <mat-option [value]="false">False</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="value-field">
+                    <input matInput [(ngModel)]="child.value" type="date" />
+                  </mat-form-field>
+
+                  <mat-form-field *ngSwitchCase="'array'" appearance="outline" class="value-field"
+                    [color]="isValueInvalid(child) ? 'warn' : 'primary'">
+                    <input
+                      matInput
+                      [ngModel]="isArray(child.value) ? child.value.join(',') : child.value"
+                      (ngModelChange)="onArrayInputChange($event, child)"
+                      type="text"
+                      placeholder="Enter values (comma separated)"
+                    />
+                    <mat-error *ngIf="isValueInvalid(child)">Value required</mat-error>
+                  </mat-form-field>
+                </ng-container>
+              </ng-template>
+            </ng-container>
+          </div>
+
+          <button
+            [style.visibility]="(group.children.length === 1 && child.type === 'rule') || (i === 0 && group.children[1]?.type === 'group') ? 'hidden' : 'visible'"
+            class="delete-btn"
+            mat-icon-button
+            color="warn"
+            (click)="remove(i)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- NESTED GROUP -->
+      <div *ngIf="child.type === 'group'" class="nested-group-row">
+        <div class="group-condition">
+          <mat-form-field appearance="outline" class="select-condition">
+            <mat-select
+              [value]="group.condition"
+              (selectionChange)="onGroupConditionChange($event.value)"
+              disableOptionCentering
+              panelClass="filter-modal-select-panel"
+            >
+              <mat-option value="AND">AND</mat-option>
+              <mat-option value="OR">OR</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="nested-group">
+          <app-filter-builder
+            [group]="child"
+            [fields]="fields"
+            [isRoot]="false"
+            (groupChange)="updateChild(i, $event)"
+          ></app-filter-builder>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- GROUP FOOTER -->
+  <div class="group-footer" *ngIf="!isRoot">
+    <button class="link-btn delete-group" style="color: #d32f2f" (click)="removeSelf()">
+      Delete Group
+    </button>
+    <button class="link-btn add-filter" (click)="addRule()">+ Add Filter</button>
+  </div>
+
+  <!-- SUMMARY -->
+  <div *ngIf="summaryText && isRoot" class="result-container">
+    <div style="font-size: medium; font-weight: 400">Show data where</div>
+    <div class="filter-summary" [innerHTML]="summaryText"></div>
+  </div>
+
+  <!-- ROOT FOOTER -->
+  <div *ngIf="isRoot" class="root-footer">
+    <div class="right-actions">
+      <div style="display: flex; gap: 8px">
+        <button class="link-btn add-filter" (click)="addRule()">+ Add Filter</button>
+        <button class="link-btn add-group" (click)="addGroup()">+ Add Group</button>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+</div>

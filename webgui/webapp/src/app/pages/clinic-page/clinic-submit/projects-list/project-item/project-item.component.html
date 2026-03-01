@@ -1,9 +1,6 @@
 <div class="flex flex-row gap-2 mb-2 mt-2 items-center">
     <mat-accordion style="width: 100%" class="mr-2">
-        <mat-expansion-panel
-            (opened)="togglePanel(true)"
-            (closed)="togglePanel(false)"
-        >
+        <mat-expansion-panel (opened)="togglePanel(true)" (closed)="togglePanel(false)">
             <mat-expansion-panel-header style="padding: 1rem">
                 <mat-panel-title>
                     <div class="flex items-center w-[20vw] md:w-full lg:w-full xl:w-full font-normal">
@@ -17,68 +14,49 @@
             <div>
                 <mat-form-field class="w-full">
                     <mat-label>Search files</mat-label>
-                    <input
-                        matInput
-                        type="text"
-                        [formControl]="searchControl"
-                        placeholder="File Name"
-                    />
+                    <input matInput type="text" [formControl]="searchControl" placeholder="File Name" />
                 </mat-form-field>
                 <div class="flex justify-between items-center mb-2 px-4">
-                    <mat-checkbox
-                        (change)="checkAllFiles()"
-                        [checked]="allFilesSelected"
-                        [disabled]="enabledFiles.length === 0"
-                    >Select All
+                    <mat-checkbox (change)="checkAllFiles()" [checked]="allFilesSelected"
+                        [disabled]="enabledFiles.length === 0">Select All
                     </mat-checkbox>
                     <div class="justify-end flex items-center gap-2">
                         @if (checkedFiles.size > 100) {
-                            <span class="text-red-500 text-sm">
-                                You can only submit up to 100 files at a time.
-                            </span>
+                        <span class="text-red-500 text-sm">
+                            You can only submit up to 100 files at a time.
+                        </span>
                         }
-                        <button
-                            (click)="batchSubmitQuery.emit(checkedFiles)"
-                            mat-raised-button
-                            color="primary"
+                        <button (click)="batchSubmitQuery.emit(checkedFiles)" mat-raised-button color="primary"
                             [disabled]="checkedFiles.size === 0 || checkedFiles.size > 100"
-                        >
+                            [appDisableIfNoPermission]="'clinic_workflow_result.create'">
                             Batch Submit
                         </button>
                     </div>
                 </div>
                 <div class="mt-4 flex flex-col gap-4">
                     @for (file of projectFiles; track $index) {
-                        <div class="flex flex-row items-center justify-between p-2 border-b">
-                            <div class="text-sm">
-                                <mat-checkbox
-                                    (change)="updateCheckedFile(file)"
-                                    [checked]="checkedFiles!.has(file.filename)"
-                                    [disabled]="file.disabled"
-                                >{{ file.filename }}</mat-checkbox>
-                            </div>
-                            <div class="flex flex-row gap-2">
-                            <button
-                                (click)="submitQuery.emit(file)"
-                                mat-mini-fab
-                                color="primary"
+                    <div class="flex flex-row items-center justify-between p-2 border-b">
+                        <div class="text-sm">
+                            <mat-checkbox (change)="updateCheckedFile(file)"
+                                [checked]="checkedFiles!.has(file.filename)" [disabled]="file.disabled">{{ file.filename
+                                }}</mat-checkbox>
+                        </div>
+                        <div class="flex flex-row gap-2">
+                            <button (click)="submitQuery.emit(file)" mat-mini-fab color="primary"
                                 matTooltip="Run Clinical Workflow"
                                 [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
                                 [style.background]="file.disabled ? 'gray' : '#16B3AC'"
-                            >
+                                [appDisableIfNoPermission]="'clinic_workflow_result.create'">
                                 <mat-icon fontSet="material-symbols-outlined" style="color: white;">genetics</mat-icon>
                             </button>
-                            <button
-                                (click)="viewQcReport.emit(file)"
-                                mat-mini-fab
-                                matTooltip="See QC Report"
+                            <button (click)="viewQcReport.emit(file)" mat-mini-fab matTooltip="See QC Report"
                                 [style.cursor]="file.disabled ? 'not-allowed' : 'pointer'"
                                 [style.background]="file.disabled ? 'gray' : '#16B3AC'"
-                            >
+                                [appDisableIfNoPermission]="'clinical_workflow_execution.create'">
                                 <mat-icon fontSet="material-symbols-outlined" style="color: white;">bar_chart</mat-icon>
                             </button>
-                            </div>
                         </div>
+                    </div>
                     }
                 </div>
             </div>

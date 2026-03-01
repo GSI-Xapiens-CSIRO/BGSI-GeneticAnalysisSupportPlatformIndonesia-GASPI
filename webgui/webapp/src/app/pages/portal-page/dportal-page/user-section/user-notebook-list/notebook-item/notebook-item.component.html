@@ -1,63 +1,50 @@
 <div class="flex flex-col space-y-1 border border-solid rounded-md p-2">
   <span><strong>Name:</strong> {{ notebook }}</span>
   @if (status) {
-    <span
-      class="flex flex-row items-center gap-1"
-      [style.color]="getStatusColor(status.status)"
-    >
-      <strong>Status:</strong>
-      @if (status.status !== Status.IN_SERVICE) {
-        <div
-          class="flex justify-center items-center bg-red-600 rounded-full"
-          [matTooltip]="showTooltip(status.status)"
-        >
-          <mat-icon class="text-white">priority_high</mat-icon>
-        </div>
-      }
-      {{ status.status }}
-    </span>
-    <span> <strong>Volume (GB):</strong> {{ status.volumeSize }} </span>
-    <span> <strong>Type (GB):</strong> {{ status.instanceType }} </span>
-    <span class="text-red-500">
-      <strong>Cost Estimation:</strong> ${{ costEstimation }} / Month</span
-    >
-
-    <span class="text-sm text-gray-500 italic"
-      >Instance must be stopped before deleting or changing. Changes in notebook
-      instances can take few minutes to come in to effect.</span
-    >
-    <div class="flex flex-row justify-between">
-      <div class="flex flex-row space-x-1">
-        @if (status.status == Status.IN_SERVICE) {
-          <button mat-mini-fab color="warn" (click)="stop()">
-            <mat-icon>stop_circle</mat-icon>
-          </button>
-        }
-        @if (status.status == Status.STOPPED) {
-          <button mat-mini-fab color="primary" (click)="start()">
-            <mat-icon>play_circle</mat-icon>
-          </button>
-
-          <button mat-mini-fab color="warn" (click)="delete()">
-            <mat-icon>cancel</mat-icon>
-          </button>
-        }
-        <button mat-mini-fab color="primary" (click)="getStatus()">
-          <mat-icon>change_circle</mat-icon>
-        </button>
-      </div>
-      @if (status.status == Status.IN_SERVICE) {
-        <div class="flex flex-row space-x-1">
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="url()"
-            class="w-[160px]"
-          >
-            Open Notebook
-          </button>
-        </div>
-      }
+  <span class="flex flex-row items-center gap-1" [style.color]="getStatusColor(status.status)">
+    <strong>Status:</strong>
+    @if (status.status !== Status.IN_SERVICE) {
+    <div class="flex justify-center items-center bg-red-600 rounded-full" [matTooltip]="showTooltip(status.status)">
+      <mat-icon class="text-white">priority_high</mat-icon>
     </div>
+    }
+    {{ status.status }}
+  </span>
+  <span> <strong>Volume (GB):</strong> {{ status.volumeSize }} </span>
+  <span> <strong>Type (GB):</strong> {{ status.instanceType }} </span>
+  <span class="text-red-500">
+    <strong>Cost Estimation:</strong> ${{ costEstimation }} / Month</span>
+
+  <span class="text-sm text-gray-500 italic">Instance must be stopped before deleting or changing. Changes in notebook
+    instances can take few minutes to come in to effect.</span>
+  <div class="flex flex-row justify-between">
+    <div class="flex flex-row space-x-1">
+      @if (status.status == Status.IN_SERVICE) {
+      <button mat-mini-fab color="warn" (click)="stop()" [appDisableIfNoPermission]="'my_notebook.update'">
+        <mat-icon>stop_circle</mat-icon>
+      </button>
+      }
+      @if (status.status == Status.STOPPED) {
+      <button mat-mini-fab color="primary" (click)="start()" [appDisableIfNoPermission]="'my_notebook.update'">
+        <mat-icon>play_circle</mat-icon>
+      </button>
+
+      <button mat-mini-fab color="warn" (click)="delete()" [appDisableIfNoPermission]="'my_notebook.delete'">
+        <mat-icon>cancel</mat-icon>
+      </button>
+      }
+      <button mat-mini-fab color="primary" (click)="getStatus()">
+        <mat-icon>change_circle</mat-icon>
+      </button>
+    </div>
+    @if (status.status == Status.IN_SERVICE) {
+    <div class="flex flex-row space-x-1">
+      <button mat-raised-button color="primary" (click)="url()" class="w-[160px]"
+        [appDisableIfNoPermission]="'my_notebook.read'">
+        Open Notebook
+      </button>
+    </div>
+    }
+  </div>
   }
 </div>

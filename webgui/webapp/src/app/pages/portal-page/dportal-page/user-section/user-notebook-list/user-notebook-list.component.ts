@@ -38,6 +38,9 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { AwsService } from 'src/app/services/aws.service';
 import { ToastrService } from 'ngx-toastr';
+import { SpinnerService } from 'src/app/services/spinner.service';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
+import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 import { NotebookRole } from 'src/app/pages/admin-page/components/enums';
@@ -67,6 +70,8 @@ export interface InstanceStartInfo {
     NotebookItemComponent,
     MatExpansionModule,
     MatTooltip,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './user-notebook-list.component.html',
   styleUrl: './user-notebook-list.component.scss',
@@ -204,7 +209,7 @@ export class UserNotebookListComponent implements OnInit {
       maxHeight: '90vh',
     });
 
-    dialog.afterClosed().subscribe(() => {});
+    dialog.afterClosed().subscribe(() => { });
   }
 
   remove(notebook: InstanceName) {

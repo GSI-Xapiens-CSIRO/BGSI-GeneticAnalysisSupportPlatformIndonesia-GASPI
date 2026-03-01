@@ -52,6 +52,7 @@ import {
 import { customQueries } from './custom-queries';
 import { UserQuotaService } from 'src/app/services/userquota.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 import { ToastrService } from 'ngx-toastr';
 // import { result, query, endpoint } from './test_responses/individuals';
 // import { result, query } from './test_responses/biosamples';
@@ -112,6 +113,8 @@ const allowedReturns = {
     QueryResultViewerContainerComponent,
     FilterEditorComponent,
     VariantEditorComponent,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
 })
 export class QueryTabComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -47,18 +47,15 @@ $custom-color: (
 $bui-primary: mat.define-palette($custom-color, 50);
 $bui-accent: mat.define-palette(mat.$cyan-palette, A400, A200, A700);
 
-$bui-theme: mat.define-light-theme(
-  (
-    color: (
-      primary: $bui-primary,
-      accent: $bui-accent,
-    ),
-    typography: mat.define-typography-config(),
-    density: 0,
-  )
-);
+$bui-theme: mat.define-light-theme((color: (primary: $bui-primary,
+        accent: $bui-accent,
+      ),
+      typography: mat.define-typography-config(),
+      density: 0,
+    ));
 
 @include mat.all-component-themes($bui-theme);
+
 /*
 Overloads
 */
@@ -66,6 +63,7 @@ html,
 body {
   height: 100vh;
 }
+
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
@@ -83,6 +81,57 @@ body {
   background-color: theme("colors.primary-10");
 }
 
-button {
-  color: white !important;
+// Only apply white text to raised/flat buttons with color background
+button.mat-mdc-raised-button,
+button.mat-mdc-flat-button,
+button.mat-mdc-fab,
+button.mat-mdc-mini-fab {
+
+  &[color="primary"],
+  &[color="accent"],
+  &[color="warn"] {
+    color: white !important;
+  }
+}
+
+// Filter modal select dropdown panel - constrain height so it stays
+// visually within the modal boundary
+.filter-modal-select-panel {
+  max-height: 200px !important;
+}
+
+// Searchable select panel - styles for the embedded search input
+.filter-modal-searchable-panel {
+  .select-search-box {
+    position: sticky;
+    top: -10px;
+    z-index: 2;
+    background: #fff;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .select-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #16b3ac !important;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+
+    &:focus {
+      border-color: #16b3ac;
+      box-shadow: 0 0 0 2px rgba(22, 179, 172, 0.1);
+    }
+
+    &::placeholder {
+      color: #999;
+    }
+  }
 }
