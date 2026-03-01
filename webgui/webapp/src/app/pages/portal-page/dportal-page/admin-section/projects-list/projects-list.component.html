@@ -5,24 +5,14 @@
     <div class="w-2/4">
       <mat-form-field class="w-full">
         <mat-label>Search</mat-label>
-        <input
-          matInput
-          type="text"
-          [formControl]="searchControl"
-          placeholder="Project Name/Description"
-        />
+        <input matInput type="text" [formControl]="searchControl" placeholder="Project Name/Description" />
       </mat-form-field>
     </div>
   </div>
   <div class="flex flex-row space-x-[10px] items-center justify-end">
-    <button
-      mat-raised-button
-      color="primary"
-      class="w-[110px]"
-      (click)="index()"
-      type="button"
+    <button mat-raised-button color="primary" class="w-[110px]" (click)="index()" type="button"
       matTooltip="Run the index after ingesting/un-ingesting files"
-    >
+      [appDisableIfNoPermission]="'project_management.create'">
       Index
     </button>
     <button mat-mini-fab color="primary" (click)="refresh()">
@@ -31,13 +21,7 @@
   </div>
 </div>
 <div class="w-full overflow-x-auto">
-  <table
-    mat-table
-    [dataSource]="dataSource"
-    matSort
-    style="margin-bottom: 1rem"
-    class="table w-full"
-  >
+  <table mat-table [dataSource]="dataSource" matSort style="margin-bottom: 1rem" class="table w-full">
     <!-- Name Column -->
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
@@ -50,36 +34,28 @@
       <td mat-cell *matCellDef="let element">
         <p>{{ element.description }}</p>
         @if (element.errorMessages.length > 0) {
-          <br />
-          @for (error of element.errorMessages; track error) {
-            <div class="text-red-600">
-              <strong>File:</strong> {{ error.file }}
-            </div>
-            <div class="text-red-600">
-              <strong>Error:</strong>
-              <pre class="overflow-x-auto">{{ error.error.trim() }}</pre>
-            </div>
-          }
-          <button
-            mat-mini-fab
-            (click)="clearErrors(element.name)"
-            color="warn"
-            matTooltip="Clear Errors"
-            class="mb-3"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
+        <br />
+        @for (error of element.errorMessages; track error) {
+        <div class="text-red-600">
+          <strong>File:</strong> {{ error.file }}
+        </div>
+        <div class="text-red-600">
+          <strong>Error:</strong>
+          <pre class="overflow-x-auto">{{ error.error.trim() }}</pre>
+        </div>
+        }
+        <button mat-mini-fab (click)="clearErrors(element.name)" color="warn" matTooltip="Clear Errors" class="mb-3"
+          [appDisableIfNoPermission]="'project_management.delete'">
+          <mat-icon>close</mat-icon>
+        </button>
         }
         @if (element.pendingFiles.length > 0) {
-          <br />
-          <div class="flex flex-row items-center space-x-2 text-red-600">
-            <mat-icon
-              class="text-white bg-red-600 rounded-full"
-              matTooltip="This project has files that are still being deindeified, until they are deidentified, they cannot be ingested to sBeacon"
-              >priority_high</mat-icon
-            >
-            <p>There are pending files that are still being deidentified</p>
-          </div>
+        <br />
+        <div class="flex flex-row items-center space-x-2 text-red-600">
+          <mat-icon class="text-white bg-red-600 rounded-full"
+            matTooltip="This project has files that are still being deindeified, until they are deidentified, they cannot be ingested to sBeacon">priority_high</mat-icon>
+          <p>There are pending files that are still being deidentified</p>
+        </div>
         }
       </td>
     </ng-container>
@@ -89,9 +65,9 @@
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Files</th>
       <td mat-cell *matCellDef="let element">
         @if (element.files.length > 0) {
-          <span class="text-cyan-900">{{ element.files.length }} file(s)</span>
+        <span class="text-cyan-900">{{ element.files.length }} file(s)</span>
         } @else {
-          <span class="text-red-900">No</span>
+        <span class="text-red-900">No</span>
         }
       </td>
     </ng-container>
@@ -103,11 +79,9 @@
       </th>
       <td mat-cell *matCellDef="let element">
         @if (element.ingestedDatasets.length > 0) {
-          <span class="text-cyan-900"
-            >{{ element.ingestedDatasets.length }} dataset(s)</span
-          >
+        <span class="text-cyan-900">{{ element.ingestedDatasets.length }} dataset(s)</span>
         } @else {
-          <span class="text-red-900">No</span>
+        <span class="text-red-900">No</span>
         }
       </td>
     </ng-container>
@@ -119,52 +93,27 @@
       </th>
       <td mat-cell *matCellDef="let element">
         <div class="flex flex-row space-x-1 py-1 justify-center">
-          <button
-            mat-mini-fab
-            (click)="addUserDialog(element)"
-            color="primary"
-            matTooltip="Add user"
-          >
+          <button mat-mini-fab (click)="addUserDialog(element)" color="primary" matTooltip="Add user"
+            [appDisableIfNoPermission]="'project_management.update'">
             <mat-icon>person_add</mat-icon>
           </button>
-          <button
-            mat-mini-fab
-            (click)="manageUsersDialog(element)"
-            color="primary"
-            matTooltip="Manage users"
-          >
+          <button mat-mini-fab (click)="manageUsersDialog(element)" color="primary" matTooltip="Manage users">
             <mat-icon>manage_accounts</mat-icon>
           </button>
-          <button
-            mat-mini-fab
-            (click)="updateProject(element)"
-            color="primary"
-            matTooltip="Edit project"
-          >
+          <button mat-mini-fab (click)="updateProject(element)" color="primary" matTooltip="Edit project"
+            [appDisableIfNoPermission]="'project_management.update'">
             <mat-icon>folder_managed</mat-icon>
           </button>
-          <button
-            mat-mini-fab
-            (click)="manageUploads(element)"
-            color="primary"
-            matTooltip="Manage allowed uploads"
-          >
+          <button mat-mini-fab (click)="manageUploads(element)" color="primary" matTooltip="Manage allowed uploads"
+            [appDisableIfNoPermission]="'project_management.create'">
             <mat-icon>upload_file</mat-icon>
           </button>
-          <button
-            mat-mini-fab
-            (click)="ingest(element)"
-            color="primary"
-            matTooltip="Ingest files to sBeacon"
-          >
+          <button mat-mini-fab (click)="ingest(element)" color="primary" matTooltip="Ingest files to sBeacon"
+            [appDisableIfNoPermission]="'project_management.create'">
             <mat-icon>publish</mat-icon>
           </button>
-          <button
-            mat-mini-fab
-            (click)="delete(element.name)"
-            color="warn"
-            matTooltip="Delete project"
-          >
+          <button mat-mini-fab (click)="delete(element.name)" color="warn" matTooltip="Delete project"
+            [appDisableIfNoPermission]="'project_management.delete'">
             <mat-icon>delete</mat-icon>
           </button>
         </div>
@@ -175,10 +124,5 @@
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
 </div>
-<mat-paginator
-  #paginator
-  [pageSizeOptions]="[5, 10, 50]"
-  [pageSize]="pageSize"
-  length="9999"
-></mat-paginator>
+<mat-paginator #paginator [pageSizeOptions]="[5, 10, 50]" [pageSize]="pageSize" length="9999"></mat-paginator>
 <br />

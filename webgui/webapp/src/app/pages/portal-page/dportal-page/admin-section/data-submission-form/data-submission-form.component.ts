@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DecimalPipe } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/services/auth.service';
+import { HasPermissionDirective, DisableIfNoPermissionDirective } from 'src/app/directives/permission.directive';
 
 @Component({
   selector: 'app-data-submission-form',
@@ -33,6 +34,8 @@ import { AuthService } from 'src/app/services/auth.service';
     MatProgressSpinnerModule,
     MatIconModule,
     DecimalPipe,
+    HasPermissionDirective,
+    DisableIfNoPermissionDirective,
   ],
   templateUrl: './data-submission-form.component.html',
   styleUrl: './data-submission-form.component.scss',

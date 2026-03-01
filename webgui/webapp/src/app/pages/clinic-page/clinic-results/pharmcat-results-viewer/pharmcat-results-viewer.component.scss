@@ -1,0 +1,22 @@
+
+.result-container {
+    margin: 16px 0px;
+    padding: 20px;
+    background: #f5f5f5;
+    color: #094b48;
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+
+  }
+  
+  .filter-summary {
+    font-size: large;
+    font-weight: 400;
+  }
+  
+  .filter-summary b {
+    font-weight: 600;
+  }

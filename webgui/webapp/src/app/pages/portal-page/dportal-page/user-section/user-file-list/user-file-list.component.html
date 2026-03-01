@@ -2,64 +2,47 @@
   <div>
     <div class="flex flex-row justify-between w-full items-center">
       <h2 class="flex">My Data</h2>
-      <button
-        mat-mini-fab
-        color="primary"
-        class="flex items-center"
-        (click)="loadList()"
-      >
+      <button mat-mini-fab color="primary" class="flex items-center" (click)="loadList()">
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
     <div class="flex flex-col" *ngIf="!loadingUsage">
       <div>
-        The size of your data should not reach <b>{{ quotaSizeFormatted }}</b
-        >.
+        The size of your data should not reach <b>{{ quotaSizeFormatted }}</b>.
       </div>
       <div>
         Currently, your data usage are <b> {{ totalSizeFormatted }} -</b>
       </div>
       <div class="text-red-500 flex flex-row items-center">
-        <mat-icon class="text-base">error</mat-icon><span>Your remaining storage size is <b> {{ totalSizeRemainingText }}</b></span>
+        <mat-icon class="text-base">error</mat-icon><span>Your remaining storage size is <b> {{ totalSizeRemainingText
+            }}</b></span>
       </div>
       <div>
         Estimated Cost of your data is <b>${{ costEstimation }}</b> per month.
       </div>
     </div>
   </div>
-  <div
-    class="flex flex-col space-y-1 overflow-scroll no-scrollbar overflow-x-hidden mt-2"
-  >
+  <div class="flex flex-col space-y-1 overflow-scroll no-scrollbar overflow-x-hidden mt-2">
     @for (file of myFiles; track file) {
-      <div class="flex flex-row justify-between w-full items-center">
-        <div class="ellipsis" [matTooltip]="getFilename(file.key)">
-          {{ file.key }}
-        </div>
-        <div class="flex space-x-1">
-          <button
-            mat-mini-fab
-            color="primary"
-            class="flex items-center"
-            (click)="copy(file)"
-            matTooltip="Copy command for notebook download"
-          >
-            <mat-icon>file_copy</mat-icon>
-          </button>
-          <button
-            mat-mini-fab
-            color="warn"
-            class="flex items-center"
-            (click)="delete(file)"
-            matTooltip="Delete file"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
+    <div class="flex flex-row justify-between w-full items-center">
+      <div class="ellipsis" [matTooltip]="getFilename(file.key)">
+        {{ file.key }}
       </div>
+      <div class="flex space-x-1">
+        <button mat-mini-fab color="primary" class="flex items-center" (click)="copy(file)"
+          [appDisableIfNoPermission]="'my_data.download'" matTooltip="Copy command for notebook download">
+          <mat-icon>file_copy</mat-icon>
+        </button>
+        <button *appHasPermission="'my_data.delete'" mat-mini-fab color="warn" class="flex items-center"
+          (click)="delete(file)" matTooltip="Delete file">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
     } @empty {
-      <div class="my-2">
-        No files yet! Please perform a query and save results to continue.
-      </div>
+    <div class="my-2">
+      No files yet! Please perform a query and save results to continue.
+    </div>
     }
   </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -17,19 +17,23 @@ import {
   Validators,
 } from '@angular/forms';
 import { AdminService } from 'src/app/pages/admin-page/services/admin.service';
+import { Role, RoleService } from 'src/app/pages/admin-page/services/role.service';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   forkJoin,
   of,
+  Subscription,
   tap,
 } from 'rxjs';
 import * as _ from 'lodash';
 import { ComponentSpinnerComponent } from 'src/app/components/component-spinner/component-spinner.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { AwsService } from 'src/app/services/aws.service';
+import { SpinnerService } from 'src/app/services/spinner.service';
 import {
   bytesToGigabytes,
   formatBytes,
@@ -41,8 +45,18 @@ import { MatRadioModule } from '@angular/material/radio';
 import { ToastrService } from 'ngx-toastr';
 import { UserInfoService } from 'src/app/services/userinfo.service';
 
+export interface UserDialogData {
+  mode: 'create' | 'edit';
+  sub?: string;
+  name?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  mfaActive?: boolean;
+}
+
 @Component({
-  selector: 'app-admin-user-click-dialog',
+  selector: 'app-admin-user-dialog',
   standalone: true,
   imports: [
     CommonModule,
@@ -54,19 +68,24 @@ import { UserInfoService } from 'src/app/services/userinfo.service';
     ComponentSpinnerComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatRadioModule,
   ],
   templateUrl: './admin-user-click-dialog.component.html',
   styleUrls: ['./admin-user-click-dialog.component.scss'],
-  providers: [AdminService],
+  providers: [AdminService, RoleService],
 })
-export class AdminUserClickDialogComponent implements OnInit {
-  protected initialGroups: any = {
-    administrators: false,
-  };
+export class AdminUserClickDialogComponent implements OnInit, OnDestroy {
+  protected initialRoleId: string | null = null;
   protected form: FormGroup;
   protected loading = false;
   protected disableDelete = false;
+
+  // mode
+  protected isCreateMode: boolean;
+
+  // roles
+  protected availableRoles: Role[] = [];
 
   // quota
   protected costEstimation: number | null = 0;
@@ -77,37 +96,80 @@ export class AdminUserClickDialogComponent implements OnInit {
   noteBookRoleValue = NotebookRole;
   institutionTypeValue = UserInstitutionType;
 
+  // subscriptions
+  private emailSubscription: Subscription | undefined;
+
   constructor(
     public dialogRef: MatDialogRef<AdminUserClickDialogComponent>,
     private fb: FormBuilder,
     private as: AdminService,
+    private rs: RoleService,
     private uq: UserQuotaService,
     private aws: AwsService,
     private dg: MatDialog,
     private tstr: ToastrService,
     private ui: UserInfoService,
+    private ss: SpinnerService,
 
-    @Inject(MAT_DIALOG_DATA) public data: any,
+    @Inject(MAT_DIALOG_DATA) public data: UserDialogData,
   ) {
+    this.isCreateMode = data.mode === 'create';
+
     this.form = this.fb.group({
-      administrators: [false],
-      managers: [false],
+      firstName: [data.firstName || '', Validators.required],
+      lastName: [data.lastName || '', Validators.required],
+      email: [data.email || '', [Validators.required, Validators.email]],
+      roleId: ['', Validators.required],
       quotaSize: ['', [Validators.required, Validators.min(0)]],
       quotaQueryCount: ['', [Validators.required, Validators.min(0)]],
-      notebookRole: [NotebookRole.BASIC, Validators.required], // default role
-      institutionType: [UserInstitutionType.INTERNAL, Validators.required], // default institution type
+      notebookRole: [NotebookRole.BASIC, Validators.required],
+      institutionType: [UserInstitutionType.INTERNAL, Validators.required],
       institutionName: ['', Validators.required],
-      isMedicalDirector: [false],
     });
+
+    // Disable user info fields in edit mode
+    if (!this.isCreateMode) {
+      this.form.get('firstName')?.disable();
+      this.form.get('lastName')?.disable();
+      this.form.get('email')?.disable();
+    }
   }
 
   updateDataUser: (userData: any, quotaSize: number | null) => void = () => {};
 
   ngOnInit(): void {
-    this.dialogRef.afterOpened().subscribe(() => {
-      this.getUserGroups();
-    });
+    if (this.isCreateMode) {
+      this.loadActiveRoles();
+      this.setupEmailLowercase();
+      this.loadingCostEstimation = false;
+    } else {
+      this.dialogRef.afterOpened().subscribe(() => {
+        this.loadUserData();
+      });
+    }
     this.onChangeCalculateCost();
+  }
+
+  ngOnDestroy(): void {
+    if (this.emailSubscription) {
+      this.emailSubscription.unsubscribe();
+    }
+  }
+
+  setupEmailLowercase(): void {
+    this.emailSubscription = this.form.get('email')?.valueChanges.subscribe((value: string | null) => {
+      if (value && value !== value.toLowerCase()) {
+        this.form.get('email')?.setValue(value.toLowerCase(), { emitEvent: false });
+      }
+    });
+  }
+
+  loadActiveRoles(): void {
+    this.rs.getActiveRoles().pipe(catchError(() => of(null))).subscribe((response) => {
+      if (response?.roles) {
+        this.availableRoles = response.roles;
+      }
+    });
   }
 
   onChangeCalculateCost() {
@@ -121,23 +183,26 @@ export class AdminUserClickDialogComponent implements OnInit {
 
         this.usageSizeText = formatBytes(this.usageSize);
 
-        if (gigabytesToBytes(values.quotaSize) < this.usageSize) {
-          quotaSizeCtrl?.setErrors({ quotaExceeded: true });
-          return;
-        }
+        // Only check exceeded for edit mode
+        if (!this.isCreateMode) {
+          if (gigabytesToBytes(values.quotaSize) < this.usageSize) {
+            quotaSizeCtrl?.setErrors({ quotaExceeded: true });
+            return;
+          }
 
-        if (values.quotaQueryCount < this.usageCount) {
-          queryCountCtrl?.setErrors({ quotaExceeded: true });
-          return;
-        }
+          if (values.quotaQueryCount < this.usageCount) {
+            queryCountCtrl?.setErrors({ quotaExceeded: true });
+            return;
+          }
 
-        // Clear error if condition no longer applies
-        if (queryCountCtrl?.hasError('quotaExceeded')) {
-          queryCountCtrl.setErrors(null);
-        }
+          // Clear error if condition no longer applies
+          if (queryCountCtrl?.hasError('quotaExceeded')) {
+            queryCountCtrl.setErrors(null);
+          }
 
-        if (quotaSizeCtrl?.hasError('quotaExceeded')) {
-          quotaSizeCtrl.setErrors(null);
+          if (quotaSizeCtrl?.hasError('quotaExceeded')) {
+            quotaSizeCtrl.setErrors(null);
+          }
         }
 
         if (values.quotaQueryCount && values.quotaSize) {
@@ -169,7 +234,7 @@ export class AdminUserClickDialogComponent implements OnInit {
       if (result) {
         this.loading = true;
         this.as
-          .clearUserMfa(this.data.email)
+          .clearUserMfa(this.data.email!)
           .pipe(catchError(() => of(null)))
           .subscribe(() => {
             this.loading = false;
@@ -179,20 +244,28 @@ export class AdminUserClickDialogComponent implements OnInit {
     });
   }
 
-  getUserGroups() {
+  loadUserData() {
     this.loading = true;
 
-    // Define both observables
+    // Define all observables for edit mode
     const userQuota$ = this.uq
-      .getUserQuota(this.data.sub)
+      .getUserQuota(this.data.sub!)
       .pipe(catchError(() => of(null)));
 
     const userGroups$ = this.as
-      .listUsersGroups(this.data.email)
+      .listUsersGroups(this.data.email!)
       .pipe(catchError(() => of(null)));
 
     const userInfo$ = this.ui
-      .getUserInfo(this.data.sub)
+      .getUserInfo(this.data.sub!)
+      .pipe(catchError(() => of(null)));
+
+    const activeRoles$ = this.rs
+      .getActiveRoles()
+      .pipe(catchError(() => of(null)));
+
+    const userRole$ = this.rs
+      .getUserRole(this.data.sub!)
       .pipe(catchError(() => of(null)));
 
     // Use forkJoin to run them in parallel
@@ -200,11 +273,13 @@ export class AdminUserClickDialogComponent implements OnInit {
       userQuota: userQuota$,
       userGroups: userGroups$,
       userInfo: userInfo$,
+      activeRoles: activeRoles$,
+      userRole: userRole$,
     }).subscribe(
-      ({ userQuota, userGroups, userInfo }) => {
+      ({ userQuota, userGroups, userInfo, activeRoles, userRole }) => {
         // Process user quota response
-        const { success, data } = userQuota;
-        if (success) {
+        if (userQuota?.success) {
+          const { data } = userQuota;
           this.costEstimation = data.CostEstimation;
           this.usageSize = data.Usage.usageSize;
           this.usageCount = data.Usage.usageCount;
@@ -219,27 +294,24 @@ export class AdminUserClickDialogComponent implements OnInit {
           });
         }
 
-        // Process user groups response
+        // Process active roles for dropdown
+        if (activeRoles?.roles) {
+          this.availableRoles = activeRoles.roles;
+        }
+
+        // Process user's current role
+        if (userRole?.roles && userRole.roles.length > 0) {
+          const currentRole = userRole.roles[0];
+          this.initialRoleId = currentRole.role_id;
+          this.form.patchValue({ roleId: currentRole.role_id });
+        }
+
+        // Process user groups response for admin check
         if (userGroups) {
-          const groups = _.get(userGroups, 'groups', []);
-          const attributes = _.get(userGroups, 'attributes', {});
           const user = _.get(userGroups, 'user', null);
           const authorizer = _.get(userGroups, 'authorizer', null);
-          const groupNames = _.map(
-            groups,
-            (group) => _.split(group.GroupName, '-')[0],
-          );
-          const userGroupsObj: { [key: string]: boolean } = {};
-          _.each(groupNames, (gn: string) => {
-            userGroupsObj[gn] = true;
-          });
-          _.merge(this.initialGroups, userGroupsObj);
-          userGroupsObj['isMedicalDirector'] =
-            attributes['isMedicalDirector'] || false;
-          this.form.patchValue(userGroupsObj);
 
           if (user === authorizer) {
-            this.form.get('administrators')?.disable();
             this.disableDelete = true;
           }
         }
@@ -268,10 +340,9 @@ export class AdminUserClickDialogComponent implements OnInit {
       if (result) {
         this.loading = true;
         this.as
-          .deleteUser(this.data.email)
+          .deleteUser(this.data.email!)
           .pipe(catchError(() => of(null)))
           .subscribe((res: null | { success: boolean; message: string }) => {
-            let deleted = false;
             if (!res) {
               this.tstr.error(
                 'Operation failed, please try again later',
@@ -293,54 +364,126 @@ export class AdminUserClickDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  // ====== Create mode methods ======
+
+  createUser(): void {
+    const formValue = this.form.getRawValue();
+
+    this.ss.start();
+    this.as
+      .createUser(formValue.firstName, formValue.lastName, formValue.email, formValue.roleId)
+      .pipe(
+        catchError((e) => {
+          if (_.get(e, 'response.data.error', '') === 'UsernameExistsException') {
+            this.tstr.warning('This user already exists!', 'Warning');
+          } else {
+            this.tstr.error(
+              e.response?.data?.message ?? 'Please Try Again Later',
+              'Error',
+            );
+          }
+          return of(null);
+        }),
+      )
+      .subscribe((response) => {
+        this.ss.end();
+        if (response) {
+          const uid = response?.uid ?? formValue.email;
+          this.addUserQuota(uid);
+          this.addUserInstitution(uid);
+          // Role already assigned in backend, no need to call assignUserRole
+          this.form.reset();
+          this.dialogRef.close({ reload: true });
+          this.tstr.success('User created successfully!', 'Success');
+        }
+      });
+  }
+
+  addUserQuota(uid: string): void {
+    const formValue = this.form.getRawValue();
+    this.uq
+      .upsertUserQuota(uid, this.costEstimation, {
+        quotaSize: gigabytesToBytes(formValue.quotaSize),
+        quotaQueryCount: formValue.quotaQueryCount,
+        usageSize: 0,
+        usageCount: 0,
+        notebookRole: formValue.notebookRole,
+      })
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+  }
+
+  addUserInstitution(uid: string): void {
+    const formValue = this.form.getRawValue();
+    this.ui
+      .storeUserInfo(uid, formValue.institutionType, formValue.institutionName)
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+  }
+
+  assignUserRole(uid: string): void {
+    const formValue = this.form.getRawValue();
+    if (formValue.roleId) {
+      this.rs.setUserRole(uid, formValue.roleId).pipe(catchError(() => of(null))).subscribe();
+    }
+  }
+
+  // ====== Edit mode methods ======
+
   updateQuota() {
+    const formValue = this.form.getRawValue();
     return this.uq
-      .upsertUserQuota(this.data.sub, this.costEstimation, {
-        quotaSize: gigabytesToBytes(this.form.value.quotaSize),
-        quotaQueryCount: this.form.value.quotaQueryCount,
-        usageSize: this.usageSize, // bytes
+      .upsertUserQuota(this.data.sub!, this.costEstimation, {
+        quotaSize: gigabytesToBytes(formValue.quotaSize),
+        quotaQueryCount: formValue.quotaQueryCount,
+        usageSize: this.usageSize,
         usageCount: this.usageCount,
-        notebookRole: this.form.value.notebookRole,
+        notebookRole: formValue.notebookRole,
       })
       .pipe(catchError(() => of(null)));
   }
 
   updateUserInstitution() {
+    const formValue = this.form.getRawValue();
     return this.ui
       .storeUserInfo(
-        this.data.sub,
-        this.form.value.institutionType,
-        this.form.value.institutionName,
+        this.data.sub!,
+        formValue.institutionType,
+        formValue.institutionName,
       )
       .pipe(catchError(() => of(null)));
   }
 
-  updateUser() {
-    const groups = _.pick(this.form.value, ['administrators', 'managers']);
-    const attributes = _.pick(this.form.value, ['isMedicalDirector']);
+  updateUserRole() {
+    const formValue = this.form.getRawValue();
+    const newRoleId = formValue.roleId;
 
-    return this.as.updateUsersGroups(this.data.email, groups, attributes).pipe(
-      // when update success call parent function to update data.
+    // Only update if role changed
+    if (newRoleId === this.initialRoleId) {
+      return of({ success: true, message: 'Role unchanged' });
+    }
+
+    return this.rs.setUserRole(this.data.sub!, newRoleId).pipe(
       tap((response) => {
-        if (response) {
-          this.updateDataUser(this.form.value, this.costEstimation);
+        if (response?.success) {
+          this.initialRoleId = newRoleId;
         }
       }),
       catchError((error) => {
-        console.error('Update failed', error);
+        console.error('Update role failed', error);
         return of(null);
       }),
     );
   }
 
-  done(): void {
+  updateUser(): void {
     this.loading = true;
 
     const updateQuota$ = this.updateQuota();
-    const updateUser$ = this.updateUser();
     const updateUserInstitution$ = this.updateUserInstitution();
+    const updateUserRole$ = this.updateUserRole();
 
-    forkJoin([updateQuota$, updateUserInstitution$, updateUser$]).subscribe(
+    forkJoin([updateQuota$, updateUserInstitution$, updateUserRole$]).subscribe(
       () => {
         this.loading = false;
         this.dialogRef.close({
@@ -348,5 +491,15 @@ export class AdminUserClickDialogComponent implements OnInit {
         });
       },
     );
+  }
+
+  // ====== Main submit method ======
+
+  done(): void {
+    if (this.isCreateMode) {
+      this.createUser();
+    } else {
+      this.updateUser();
+    }
   }
 }
